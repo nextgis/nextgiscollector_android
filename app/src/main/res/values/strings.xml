@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">NextGIS Collector</string>
+    <string name="join_project">Join project</string>
+    <string name="join_message">Would you like to join to project \"%1$s\"?</string>
+</resources>
