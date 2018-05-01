@@ -43,8 +43,8 @@ class ProjectModel {
                 val jsonLayer = jsonLayers.getJSONObject(j)
                 var layer: RemoteLayer? = null
                 val type = jsonLayer.optString("type")
-                val layerTitle = jsonLayer.optString("type")
-                val url = jsonLayer.optString("type")
+                val layerTitle = jsonLayer.optString("title")
+                val url = jsonLayer.optString("url")
                 when (type) {
                     "tms" -> {
                         val lifetime = jsonLayer.optLong("lifetime")
@@ -59,6 +59,9 @@ class ProjectModel {
                         val editable= jsonLayer.optBoolean("editable")
                         val syncable = jsonLayer.optBoolean("syncable")
                         layer = RemoteLayerNGW(layerTitle, type, url, login, password, editable, syncable)
+                    }
+                    "ngfp" -> {
+
                     }
                 }
                 layer?.let { layers.add(it) }

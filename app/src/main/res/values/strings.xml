@@ -2,4 +2,6 @@
     <string name="app_name">NextGIS Collector</string>
     <string name="join_project">Join project</string>
     <string name="join_message">Would you like to join to project \"%1$s\"?</string>
+    <string name="change_project">Change project</string>
+    <string name="change_message">Are you sure you want to change the project? Current map and data will be deleted.</string>
 </resources>
