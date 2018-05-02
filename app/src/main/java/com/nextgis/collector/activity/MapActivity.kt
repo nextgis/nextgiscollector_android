@@ -23,6 +23,7 @@ package com.nextgis.collector.activity
 
 import android.databinding.DataBindingUtil
 import android.os.Bundle
+import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.AlertDialog
 import android.view.Menu
 import android.view.MenuItem
@@ -31,12 +32,17 @@ import android.widget.FrameLayout
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ActivityMainBinding
 import com.pawegio.kandroid.startActivity
-import kotlinx.android.synthetic.main.activity_main.*
 import com.nextgis.maplib.datasource.GeoPoint
+import com.nextgis.maplib.map.NGWVectorLayer
+import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v7.widget.DividerItemDecoration
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.Toolbar
+import com.nextgis.collector.adapter.LayersAdapter
+import com.nextgis.maplib.map.Layer
 
 
-
-class MapActivity : BaseActivity(), View.OnClickListener {
+class MapActivity : BaseActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener {
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,10 +54,32 @@ class MapActivity : BaseActivity(), View.OnClickListener {
         binding.apply {
             map.setZoomAndCenter(map.minZoom, GeoPoint(0.0, 0.0))
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
-            container.addView(map, FrameLayout.LayoutParams(matchParent, matchParent))
+            container.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
             zoomIn.setOnClickListener(this@MapActivity)
             zoomOut.setOnClickListener(this@MapActivity)
         }
+
+        val layers = ArrayList<Layer>()
+        for (i in 0 until map.layerCount)
+            if (map.getLayer(i) is Layer)
+                layers.add(map.getLayer(i) as Layer)
+
+        val layersAdapter = LayersAdapter(layers.reversed(), this)
+        binding.layers.adapter = layersAdapter
+        val manager = LinearLayoutManager(this)
+        binding.layers.layoutManager = manager
+        val dividerItemDecoration = DividerItemDecoration(binding.layers.context, manager.orientation)
+        binding.layers.addItemDecoration(dividerItemDecoration)
+
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        val toggle = ActionBarDrawerToggle(this, binding.drawer, toolbar, R.string.layers_drawer_open, R.string.layers_drawer_close)
+        binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        binding.drawer.addDrawerListener(toggle)
+
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setHomeButtonEnabled(true)
+        toggle.syncState()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -69,13 +97,25 @@ class MapActivity : BaseActivity(), View.OnClickListener {
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.zoom_in -> if (map.canZoomIn()) map.zoomIn()
-            R.id.zoom_out -> if (map.canZoomOut()) map.zoomOut()
+            R.id.zoom_in -> if (mapView.canZoomIn()) mapView.zoomIn()
+            R.id.zoom_out -> if (mapView.canZoomOut()) mapView.zoomOut()
         }
     }
 
+    override fun onItemClick(layer: Layer) {
+
+    }
+
     private fun change() {
-        map.map.delete()
+        for (i in 0 until map.layerCount) {
+            val layer = map.getLayer(i)
+            if (layer is NGWVectorLayer) {
+                val account = app.getAccount(layer.accountName)
+                app.removeAccount(account)
+            }
+        }
+
+        map.delete()
         startActivity<ProjectListActivity>()
         preferences.edit().remove("project").apply()
     }

@@ -23,17 +23,16 @@ package com.nextgis.collector.data
 
 import android.os.Parcel
 import com.handicap.surpriseme.util.parcelableCreator
+import com.handicap.surpriseme.util.readBoolean
 
+class RemoteLayerTMS(title: String, type: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val lifetime: Long, val tmsType: Int) : RemoteLayer(title, type, url, visible, minZoom, maxZoom) {
 
-class RemoteLayerTMS(title: String, type: String, url: String, val lifetime: Long) : RemoteLayer(title, type, url) {
-
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readLong())
+    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong(), parcel.readInt())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
-        dest.writeString(title)
-        dest.writeString(type)
-        dest.writeString(url)
+        super.writeToParcel(dest, flags)
         dest.writeLong(lifetime)
+        dest.writeInt(tmsType)
     }
 
     companion object {

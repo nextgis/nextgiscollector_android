@@ -42,7 +42,7 @@ class CollectorApplication : GISApplication() {
     }
 
     override fun getAccountsType(): String {
-        return Constants.NGW_ACCOUNT_TYPE
+        return "com.nextgiscollector.account"//Constants.NGW_ACCOUNT_TYPE
     }
 
 }

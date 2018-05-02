@@ -25,16 +25,21 @@ import android.databinding.BaseObservable
 import android.os.Parcel
 import com.handicap.surpriseme.util.KParcelable
 import com.handicap.surpriseme.util.parcelableCreator
+import com.handicap.surpriseme.util.readBoolean
+import com.handicap.surpriseme.util.writeBoolean
 
 
-open class RemoteLayer(val title: String, val type: String, val url: String) : BaseObservable(), KParcelable {
+open class RemoteLayer(val title: String, val type: String, val url: String, val visible: Boolean, val minZoom: Float, val maxZoom: Float) : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString())
+    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
         dest.writeString(type)
         dest.writeString(url)
+        dest.writeBoolean(visible)
+        dest.writeFloat(minZoom)
+        dest.writeFloat(maxZoom)
     }
 
     companion object {

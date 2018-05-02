@@ -31,6 +31,7 @@ import com.nextgis.collector.model.ProjectModel
 class ProjectViewModel : ViewModel() {
     var projectModel: ProjectModel = ProjectModel()
     var projects = MutableLiveData<ArrayList<Project>>()
+    val selectedProject: ObservableField<Project> = ObservableField()
     val isLoading = ObservableField(true)
 
     val onDataReadyCallback = object : ProjectModel.OnDataReadyCallback {

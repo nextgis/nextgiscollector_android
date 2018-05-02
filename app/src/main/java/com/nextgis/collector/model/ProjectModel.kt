@@ -30,7 +30,7 @@ import org.json.JSONArray
 
 class ProjectModel {
     fun getProjects(onDataReadyCallback: OnDataReadyCallback) {
-        val data = "[{\"title\":\"Project 1\",\"description\":\"Explore the history of the classic Lorem Ipsum passage and generate your own text using any number of characters, words, sentences or paragraphs. Commonly used as placeholder text in the graphic and print industries, Lorem Ipsum's origins extend far back to a scrambled Latin passage from Cicero in the middle ages.\",\"layers\":[{\"title\":\"Layer default OSM\",\"type\":\"tms\",\"url\":\"http://{a,b,c}.tile.openstreetmap.org/{z}/{x}/{y}.png\",\"lifetime\":4233600000},{\"title\":\"Layer TMS cached\",\"type\":\"ngrc\",\"url\":\"http://4ert.com/nextgis/layer.ngrc\"},{\"title\":\"Layer vector\",\"type\":\"ngw\",\"url\":\"http://source.nextgis.com/resource/45\",\"editable\":true,\"syncable\":true,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector NS NE\",\"type\":\"ngw\",\"url\":\"http://source.nextgis.com/resource/45\",\"editable\":false,\"syncable\":false,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector not editable\",\"type\":\"ngw\",\"url\":\"http://source.nextgis.com/resource/45\",\"editable\":false,\"syncable\":true,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector not editable\",\"type\":\"ngw\",\"url\":\"http://source.nextgis.com/resource/45\",\"editable\":true,\"syncable\":false,\"login\":\"administrator\",\"password\":\"admin\"}]}]"
+        val data = "[{\"title\":\"Project 1\",\"description\":\"Explore the history of the classic Lorem Ipsum passage and generate your own text using any number of characters, words, sentences or paragraphs. Commonly used as placeholder text in the graphic and print industries, Lorem Ipsum's origins extend far back to a scrambled Latin passage from Cicero in the middle ages.\",\"layers\":[{\"title\":\"Layer default OSM\",\"type\":\"tms\",\"visible\":true,\"min_zoom\":0,\"max_zoom\":25,\"tms_type\":2,\"url\":\"http://{a,b,c}.tile.openstreetmap.org/{z}/{x}/{y}.png\",\"lifetime\":4233600000},{\"title\":\"Layer TMS cached\",\"type\":\"ngrc\",\"min_zoom\":0,\"max_zoom\":25,\"visible\":true,\"url\":\"http://4ert.com/nextgis/layer.ngrc\"},{\"title\":\"Layer vector\",\"type\":\"ngw\",\"min_zoom\":0,\"max_zoom\":5,\"url\":\"http://source.nextgis.com/resource/207\",\"editable\":true,\"syncable\":true,\"visible\":true,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector NS NE\",\"type\":\"ngw\",\"min_zoom\":5,\"max_zoom\":10,\"url\":\"http://source.nextgis.com/resource/207\",\"editable\":false,\"visible\":true,\"syncable\":false,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector not editable\",\"type\":\"ngw\",\"min_zoom\":10,\"max_zoom\":15,\"visible\":true,\"url\":\"http://source.nextgis.com/resource/207\",\"editable\":false,\"syncable\":true,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector not syncable\",\"type\":\"ngw\",\"min_zoom\":15,\"max_zoom\":25,\"url\":\"http://source.nextgis.com/resource/207\",\"editable\":true,\"visible\":false,\"syncable\":false,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer NGFP\",\"type\":\"ngfp\",\"min_zoom\":0,\"max_zoom\":25,\"visible\":true,\"url\":\"http://source.nextgis.com/resource/207\"}]}]"
         val json = JSONArray(data)
         val list = ArrayList<Project>()
         for (i in 0 until json.length()) {
@@ -42,23 +42,28 @@ class ProjectModel {
             for (j in 0 until jsonLayers.length()) {
                 val jsonLayer = jsonLayers.getJSONObject(j)
                 var layer: RemoteLayer? = null
+                // TODO min/max zoom, visibility
                 val type = jsonLayer.optString("type")
                 val layerTitle = jsonLayer.optString("title")
                 val url = jsonLayer.optString("url")
+                val visible = jsonLayer.optBoolean("visible")
+                val minZoom = jsonLayer.optDouble("min_zoom").toFloat()
+                val maxZoom = jsonLayer.optDouble("max_zoom").toFloat()
                 when (type) {
                     "tms" -> {
                         val lifetime = jsonLayer.optLong("lifetime")
-                        layer = RemoteLayerTMS(layerTitle, type, url, lifetime)
+                        val tmsType = jsonLayer.optInt("tms_type")
+                        layer = RemoteLayerTMS(layerTitle, type, url, visible, minZoom, maxZoom, lifetime, tmsType)
                     }
                     "ngrc" -> {
 
                     }
                     "ngw" -> {
-                        val login = jsonProject.optString("login")
-                        val password = jsonLayer.optString("password")
-                        val editable= jsonLayer.optBoolean("editable")
+                        val login = jsonLayer.optString("login")
+                        val password = if (jsonLayer.isNull("password")) null else jsonLayer.optString("password")
+                        val editable = jsonLayer.optBoolean("editable")
                         val syncable = jsonLayer.optBoolean("syncable")
-                        layer = RemoteLayerNGW(layerTitle, type, url, login, password, editable, syncable)
+                        layer = RemoteLayerNGW(layerTitle, type, url, visible, minZoom, maxZoom, login, password, editable, syncable)
                     }
                     "ngfp" -> {
 

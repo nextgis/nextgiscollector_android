@@ -23,16 +23,15 @@ package com.nextgis.collector.data
 
 import android.os.Parcel
 import com.handicap.surpriseme.util.parcelableCreator
+import com.handicap.surpriseme.util.readBoolean
 
 
-class RemoteLayerNGRC(title: String, type: String, url: String) : RemoteLayer(title, type, url) {
+class RemoteLayerNGRC(title: String, type: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float) : RemoteLayer(title, type, url, visible, minZoom, maxZoom) {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString())
+    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
-        dest.writeString(title)
-        dest.writeString(type)
-        dest.writeString(url)
+        super.writeToParcel(dest, flags)
     }
 
     companion object {

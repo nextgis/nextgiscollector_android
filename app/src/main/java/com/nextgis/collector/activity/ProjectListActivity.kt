@@ -23,25 +23,37 @@ package com.nextgis.collector.activity
 
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.databinding.DataBindingUtil
+import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.ProjectAdapter
 import com.nextgis.collector.data.Project
+import com.nextgis.collector.data.RemoteLayerNGW
 import com.nextgis.collector.data.RemoteLayerTMS
 import com.nextgis.collector.databinding.ActivityProjectListBinding
 import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
-import com.nextgis.maplib.util.GeoConstants
-import com.nextgis.maplib.util.GeoConstants.TMSTYPE_OSM
+import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.util.Constants
+import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
+import com.nextgis.maplibui.service.LayerFillService
+import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
+import com.pawegio.kandroid.toast
 
 class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     private lateinit var binding: ActivityProjectListBinding
     private var projectAdapter = ProjectAdapter(arrayListOf(), this)
+    private lateinit var receiver: BroadcastReceiver
+    private var total = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,11 +75,59 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         })
         projectModel.load()
 
+        receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val serviceStatus = intent.getShortExtra(LayerFillService.KEY_STATUS, 0)
+                when (serviceStatus) {
+                    LayerFillService.STATUS_STOP -> {
+                        val canceled = intent.getBooleanExtra(LayerFillService.KEY_CANCELLED, false)
+                        val success = intent.getBooleanExtra(LayerFillService.KEY_RESULT, false)
+                        if (!success) {
+                            if (canceled)
+                                toast(R.string.canceled)
+                            else if (intent.hasExtra(LayerFillService.KEY_MESSAGE))
+                                longToast(intent.getStringExtra(LayerFillService.KEY_MESSAGE))
+                        }
+
+                        val isNgwSync = intent.getBooleanExtra(LayerFillService.KEY_SYNC, false)
+                        if (success && !canceled && isNgwSync) {
+                            val id = intent.getIntExtra(LayerFillService.KEY_REMOTE_ID, -1)
+                            val ngwLayer = map.getLayerById(id) as NGWVectorLayer
+                            val account = app.getAccount(ngwLayer.accountName)
+
+                            // TODO editable
+                            NGWSettingsFragment.setAccountSyncEnabled(account, app.authority, true)
+                            ngwLayer.syncType = Constants.SYNC_ALL
+                            ngwLayer.save()
+                        }
+
+                        total--
+                        check()
+                    }
+                }
+            }
+        }
+
 //         Example of a call to a native method
 //        sample_text.text = stringFromJNI()
     }
 
+    override fun onStart() {
+        super.onStart()
+        val intentFilter = IntentFilter(LayerFillService.ACTION_UPDATE)
+        registerReceiver(receiver, intentFilter)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        try {
+            unregisterReceiver(receiver)
+        } catch (e: Exception) {
+        }
+    }
+
     override fun onItemClick(project: Project) {
+        binding.projectModel?.selectedProject?.set(project)
         AlertDialog.Builder(this).setTitle(R.string.join_project)
                 .setMessage(getString(R.string.join_message, project.title))
                 .setNegativeButton(R.string.no, null)
@@ -75,27 +135,71 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                 .show()
     }
 
+    private fun check() {
+        if (total <= 0) {
+            binding.projectModel?.selectedProject?.get()?.let {
+                val names = it.layers.map { it.title }
+                for (i in 0 until map.layerCount) {
+                    val layer = map.getLayer(i)
+                    map.moveLayer(names.indexOf(layer.name), layer) // TODO keyname not name
+                }
+                startActivity<MapActivity>()
+            }
+        }
+    }
+
     private fun create(project: Project) {
+        binding.projectModel?.isLoading?.set(true)
         preferences.edit().putString("project", project.title).apply()
-        val map = map.map
+        total = project.layers.size
         for (layer in project.layers) {
             var mapLayer: ILayer? = null
             when (layer.type) {
                 "tms" -> {
-                    val tmsLayer = RemoteTMSLayerUI(this, map.createLayerStorage())
-                    tmsLayer.isVisible = true
-                    tmsLayer.name = layer.title
-                    tmsLayer.url = layer.url
-                    tmsLayer.tileMaxAge = (layer as RemoteLayerTMS).lifetime
-                    tmsLayer.maxZoom = GeoConstants.DEFAULT_MAX_ZOOM.toFloat()
-                    tmsLayer.tmsType = TMSTYPE_OSM
-                    mapLayer = tmsLayer
+                    mapLayer = createTMS(layer as RemoteLayerTMS)
+                    total--
+                }
+                "ngw" -> {
+                    addNGW(layer as RemoteLayerNGW)
                 }
             }
             mapLayer?.let { map.addLayer(mapLayer) }
         }
         map.save()
-        startActivity<MapActivity>()
+        check()
+    }
+
+    private fun addNGW(layer: RemoteLayerNGW) {
+        val uri = Uri.parse(layer.url)
+        val fullUrl = uri.scheme + "://" + uri.authority
+        val accountName = "Collector " + System.currentTimeMillis()
+        app.addAccount(accountName, fullUrl, layer.login, layer.password, "ngw")
+        val id = uri.lastPathSegment.toLongOrNull()
+
+        val intent = Intent(this, LayerFillService::class.java)
+        intent.action = LayerFillService.ACTION_ADD_TASK
+        intent.putExtra(LayerFillService.KEY_NAME, layer.title)
+        intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
+        intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
+        intent.putExtra(LayerFillService.KEY_LAYER_GROUP_ID, map.id)
+        intent.putExtra(LayerFillService.KEY_INPUT_TYPE, LayerFillService.NGW_LAYER)
+        intent.putExtra(LayerFillService.KEY_SYNC, layer.syncable)
+        intent.putExtra(LayerFillService.KEY_VISIBLE, layer.visible)
+        intent.putExtra(LayerFillService.KEY_MIN_ZOOM, layer.minZoom)
+        intent.putExtra(LayerFillService.KEY_MAX_ZOOM, layer.maxZoom)
+        startService(intent)
+    }
+
+    private fun createTMS(layer: RemoteLayerTMS): ILayer {
+        val tmsLayer = RemoteTMSLayerUI(this, map.createLayerStorage())
+        tmsLayer.isVisible = layer.visible
+        tmsLayer.minZoom = layer.minZoom
+        tmsLayer.maxZoom = layer.maxZoom
+        tmsLayer.name = layer.title
+        tmsLayer.url = layer.url
+        tmsLayer.tileMaxAge = layer.lifetime
+        tmsLayer.tmsType = layer.tmsType
+        return tmsLayer
     }
 
     /**

@@ -27,14 +27,12 @@ import com.handicap.surpriseme.util.readBoolean
 import com.handicap.surpriseme.util.writeBoolean
 
 
-class RemoteLayerNGW(title: String, type: String, url: String, val login: String, val password: String, val editable: Boolean, val syncable: Boolean) : RemoteLayer(title, type, url) {
+class RemoteLayerNGW(title: String, type: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val login: String, val password: String?, val editable: Boolean, val syncable: Boolean) : RemoteLayer(title, type, url, visible, minZoom, maxZoom) {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readBoolean())
+    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readBoolean())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
-        dest.writeString(title)
-        dest.writeString(type)
-        dest.writeString(url)
+        super.writeToParcel(dest, flags)
         dest.writeString(login)
         dest.writeString(password)
         dest.writeBoolean(editable)
