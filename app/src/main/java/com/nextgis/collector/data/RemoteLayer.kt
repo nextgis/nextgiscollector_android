@@ -27,6 +27,7 @@ import com.handicap.surpriseme.util.KParcelable
 import com.handicap.surpriseme.util.parcelableCreator
 import com.handicap.surpriseme.util.readBoolean
 import com.handicap.surpriseme.util.writeBoolean
+import com.nextgis.maplib.util.Constants
 
 
 open class RemoteLayer(val title: String, val type: String, val url: String, val visible: Boolean, val minZoom: Float, val maxZoom: Float) : BaseObservable(), KParcelable {
@@ -46,4 +47,9 @@ open class RemoteLayer(val title: String, val type: String, val url: String, val
         @JvmField
         val CREATOR = parcelableCreator(::RemoteLayer)
     }
+
+    val path: String
+        get() {
+            return Constants.LAYER_PREFIX + String.format("%X", (title + type + url).hashCode()).toLowerCase()
+        }
 }

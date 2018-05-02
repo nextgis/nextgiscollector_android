@@ -34,9 +34,7 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.ProjectAdapter
-import com.nextgis.collector.data.Project
-import com.nextgis.collector.data.RemoteLayerNGW
-import com.nextgis.collector.data.RemoteLayerTMS
+import com.nextgis.collector.data.*
 import com.nextgis.collector.databinding.ActivityProjectListBinding
 import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
@@ -53,7 +51,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     private lateinit var binding: ActivityProjectListBinding
     private var projectAdapter = ProjectAdapter(arrayListOf(), this)
     private lateinit var receiver: BroadcastReceiver
-    private var total = 0
+    @Volatile private var total = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,6 +94,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                             val account = app.getAccount(ngwLayer.accountName)
 
                             // TODO editable
+                            // TODO check sync
                             NGWSettingsFragment.setAccountSyncEnabled(account, app.authority, true)
                             ngwLayer.syncType = Constants.SYNC_ALL
                             ngwLayer.save()
@@ -138,10 +137,17 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     private fun check() {
         if (total <= 0) {
             binding.projectModel?.selectedProject?.get()?.let {
-                val names = it.layers.map { it.title }
-                for (i in 0 until map.layerCount) {
+                val paths = it.layers.map { it.path }
+                var i = 0
+                while (i < map.layerCount) {
                     val layer = map.getLayer(i)
-                    map.moveLayer(names.indexOf(layer.name), layer) // TODO keyname not name
+                    val name = layer.path.name
+                    val id = paths.indexOf(name)
+                    if (id != i) {
+                        map.moveLayer(id, layer)
+                        i = 0
+                    } else
+                        i++
                 }
                 startActivity<MapActivity>()
             }
@@ -159,8 +165,11 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                     mapLayer = createTMS(layer as RemoteLayerTMS)
                     total--
                 }
-                "ngw" -> {
-                    addNGW(layer as RemoteLayerNGW)
+                "ngrc" -> {
+                    addRaster(layer)
+                }
+                "ngw", "ngfp" -> {
+                    addVector(layer as RemoteLayerNGW)
                 }
             }
             mapLayer?.let { map.addLayer(mapLayer) }
@@ -169,29 +178,50 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         check()
     }
 
-    private fun addNGW(layer: RemoteLayerNGW) {
-        val uri = Uri.parse(layer.url)
-        val fullUrl = uri.scheme + "://" + uri.authority
-        val accountName = "Collector " + System.currentTimeMillis()
-        app.addAccount(accountName, fullUrl, layer.login, layer.password, "ngw")
-        val id = uri.lastPathSegment.toLongOrNull()
-
-        val intent = Intent(this, LayerFillService::class.java)
-        intent.action = LayerFillService.ACTION_ADD_TASK
+    private fun start(intent: Intent, layer: RemoteLayer) {
+        var type = LayerFillService.NGW_LAYER
+        when (layer.type) {
+            "ngrc" -> type = LayerFillService.TMS_LAYER
+            "ngfp" -> type = LayerFillService.VECTOR_LAYER_WITH_FORM
+        }
         intent.putExtra(LayerFillService.KEY_NAME, layer.title)
-        intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
-        intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
+        intent.putExtra(LayerFillService.KEY_LAYER_PATH, map.createLayerStorage(layer.path))
         intent.putExtra(LayerFillService.KEY_LAYER_GROUP_ID, map.id)
-        intent.putExtra(LayerFillService.KEY_INPUT_TYPE, LayerFillService.NGW_LAYER)
-        intent.putExtra(LayerFillService.KEY_SYNC, layer.syncable)
+        intent.putExtra(LayerFillService.KEY_INPUT_TYPE, type)
         intent.putExtra(LayerFillService.KEY_VISIBLE, layer.visible)
         intent.putExtra(LayerFillService.KEY_MIN_ZOOM, layer.minZoom)
         intent.putExtra(LayerFillService.KEY_MAX_ZOOM, layer.maxZoom)
+        intent.putExtra(LayerFillService.KEY_URI, Uri.parse(layer.url))
         startService(intent)
     }
 
+    private fun addRaster(layer: RemoteLayer) {
+        val intent = Intent(this, LayerFillService::class.java)
+        intent.action = LayerFillService.ACTION_ADD_TASK
+        start(intent, layer)
+    }
+
+    private fun addVector(layer: RemoteLayerNGW) {
+        val intent = Intent(this, LayerFillService::class.java)
+        intent.action = LayerFillService.ACTION_ADD_TASK
+
+        if (layer.type == "ngw") {
+            val uri = Uri.parse(layer.url)
+            val fullUrl = uri.scheme + "://" + uri.authority
+            val accountName = "Collector " + System.currentTimeMillis()
+            app.addAccount(accountName, fullUrl, layer.login, layer.password, "ngw")
+            val id = uri.lastPathSegment.toLongOrNull()
+            intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
+            intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
+        }
+
+        // TODO editable
+        intent.putExtra(LayerFillService.KEY_SYNC, layer.syncable)
+        start(intent, layer)
+    }
+
     private fun createTMS(layer: RemoteLayerTMS): ILayer {
-        val tmsLayer = RemoteTMSLayerUI(this, map.createLayerStorage())
+        val tmsLayer = RemoteTMSLayerUI(this, map.createLayerStorage(layer.path))
         tmsLayer.isVisible = layer.visible
         tmsLayer.minZoom = layer.minZoom
         tmsLayer.maxZoom = layer.maxZoom
