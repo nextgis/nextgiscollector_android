@@ -4,4 +4,10 @@
     <string name="join_message">Would you like to join to project \"%1$s\"?</string>
     <string name="change_project">Change project</string>
     <string name="change_message">Are you sure you want to change the project? Current map and data will be deleted.</string>
+    <string name="intro">Intro</string>
+    <string name="intro_title1">Collect data with ease</string>
+    <string name="intro_title2">One last word</string>
+    <string name="intro_description1">Just join preferred project and start collecting the data. NextGIS Collector will define all layers you need.</string>
+    <string name="intro_description2">We need following permissions to create cloud account and sync data with web smoothly.</string>
+    <string name="permission_denied">Permissions denied</string>
 </resources>

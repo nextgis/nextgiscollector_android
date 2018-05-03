@@ -45,9 +45,11 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
     implementation 'com.pawegio.kandroid:kandroid:0.8.7@aar'
-    compile project(':maplibui')
+    implementation project(':maplibui')
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+    implementation 'com.github.apl-devs:appintro:v4.2.3'
 }

@@ -40,9 +40,11 @@ import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.Constants
+import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
+import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
@@ -56,9 +58,24 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (!preferences.getBoolean(IntroActivity.INTRO_SHOWN, false)) {
+            startActivity<IntroActivity>()
+            finish()
+            return
+        }
+
+        if (!isLoggedIn(preferences)) {
+            val intent = Intent(this, NGIDLoginActivity::class.java)
+            intent.putExtra(NGIDLoginActivity.EXTRA_NEXT, this::class.java)
+            startActivity(intent)
+            finish()
+            return
+        }
+
         if (preferences.contains("project")) {
             startActivity<MapActivity>()
             finish()
+            return
         }
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_project_list)
@@ -143,7 +160,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                     val layer = map.getLayer(i)
                     val name = layer.path.name
                     val id = paths.indexOf(name)
-                    if (id != i) {
+                    if (id != i && id.coerceIn(0 until map.layerCount) == id) {
                         map.moveLayer(id, layer)
                         i = 0
                     } else
