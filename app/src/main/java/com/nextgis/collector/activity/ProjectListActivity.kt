@@ -104,17 +104,24 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                                 longToast(intent.getStringExtra(LayerFillService.KEY_MESSAGE))
                         }
 
-                        val isNgwSync = intent.getBooleanExtra(LayerFillService.KEY_SYNC, false)
-                        if (success && !canceled && isNgwSync) {
+                        val isNgw = intent.getBooleanExtra(LayerFillService.KEY_SYNC, false)
+                        if (success && !canceled && isNgw) {
                             val id = intent.getIntExtra(LayerFillService.KEY_REMOTE_ID, -1)
                             val ngwLayer = map.getLayerById(id) as NGWVectorLayer
                             val account = app.getAccount(ngwLayer.accountName)
 
-                            // TODO editable
-                            // TODO check sync
-                            NGWSettingsFragment.setAccountSyncEnabled(account, app.authority, true)
-                            ngwLayer.syncType = Constants.SYNC_ALL
-                            ngwLayer.save()
+                            val project = binding.projectModel?.selectedProject?.get()
+                            val remote = project?.layers?.first{ it.path == ngwLayer.path.name }
+
+                            if (remote is RemoteLayerNGW) {
+                                if (remote.syncable) {
+                                    NGWSettingsFragment.setAccountSyncEnabled(account, app.authority, true)
+                                    ngwLayer.syncType = Constants.SYNC_ALL
+                                }
+
+                                ngwLayer.setIsEditable(remote.editable)
+                                ngwLayer.save()
+                            }
                         }
 
                         total--
@@ -232,7 +239,6 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
             intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
         }
 
-        // TODO editable
         intent.putExtra(LayerFillService.KEY_SYNC, layer.syncable)
         start(intent, layer)
     }
