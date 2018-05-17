@@ -73,7 +73,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         }
 
         if (preferences.contains("project")) {
-            startActivity<MapActivity>()
+            open()
             finish()
             return
         }
@@ -158,6 +158,13 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                 .show()
     }
 
+    private fun open() {
+        if (preferences.getString("screen", "map") == "list")
+            startActivity<AddFeatureActivity>()
+        else
+            startActivity<MapActivity>()
+    }
+
     private fun check() {
         if (total <= 0) {
             binding.projectModel?.selectedProject?.get()?.let {
@@ -173,14 +180,14 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                     } else
                         i++
                 }
-                startActivity<MapActivity>()
+                open()
             }
         }
     }
 
     private fun create(project: Project) {
         binding.projectModel?.isLoading?.set(true)
-        preferences.edit().putString("project", project.title).apply()
+        preferences.edit().putString("project", project.title).putString("screen", project.screen).apply()
         total = project.layers.size
         for (layer in project.layers) {
             var mapLayer: ILayer? = null

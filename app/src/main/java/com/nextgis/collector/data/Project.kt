@@ -29,13 +29,15 @@ import com.handicap.surpriseme.util.parcelableCreator
 import com.nextgis.collector.BR
 
 
-class Project(title: String, description: String, val layers: ArrayList<RemoteLayer>) : BaseObservable(), KParcelable {
+class Project(title: String, description: String, screen: String, version: Int, val layers: ArrayList<RemoteLayer>) : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), readArrayList(parcel))
+    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readInt(), readArrayList(parcel))
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
         dest.writeString(description)
+        dest.writeString(screen)
+        dest.writeInt(version)
         dest.writeArray(layers.toArray())
     }
 
@@ -63,5 +65,19 @@ class Project(title: String, description: String, val layers: ArrayList<RemoteLa
         set(value) {
             field = value
             notifyPropertyChanged(BR.description)
+        }
+
+    @get:Bindable
+    var screen: String = screen
+        set(value) {
+            field = value
+//            notifyPropertyChanged(BR.screen)
+        }
+
+    @get:Bindable
+    var version: Int = version
+        set(value) {
+            field = value
+//            notifyPropertyChanged(BR.version)
         }
 }
