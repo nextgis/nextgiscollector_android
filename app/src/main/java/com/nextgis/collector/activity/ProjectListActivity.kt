@@ -114,12 +114,12 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                             val remote = project?.layers?.first{ it.path == ngwLayer.path.name }
 
                             if (remote is RemoteLayerNGW) {
+                                ngwLayer.setIsEditable(remote.editable && remote.syncable)
                                 if (remote.syncable) {
                                     NGWSettingsFragment.setAccountSyncEnabled(account, app.authority, true)
                                     ngwLayer.syncType = Constants.SYNC_ALL
                                 }
 
-                                ngwLayer.setIsEditable(remote.editable)
                                 ngwLayer.save()
                             }
                         }

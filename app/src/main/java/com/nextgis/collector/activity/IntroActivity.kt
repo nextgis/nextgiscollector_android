@@ -15,10 +15,9 @@ import com.pawegio.kandroid.startActivity
 
 class IntroActivity : AppIntro() {
     companion object {
-        val INTRO_SHOWN = "intro_shown"
+        const val INTRO_SHOWN = "intro_shown"
+        const val PERMISSIONS_CODE = 17
     }
-
-    private val PERMISSIONS_CODE = 17
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

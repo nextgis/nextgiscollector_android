@@ -10,4 +10,7 @@
     <string name="intro_description1">Just join preferred project and start collecting the data. NextGIS Collector will define all layers you need.</string>
     <string name="intro_description2">We need following permissions to create cloud account and sync data with web smoothly.</string>
     <string name="permission_denied">Permissions denied</string>
+    <string name="by_gps">Using GPS</string>
+    <string name="by_hand">Using map</string>
+    <string name="add_feature">New feature for</string>
 </resources>

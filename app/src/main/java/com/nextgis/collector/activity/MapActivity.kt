@@ -55,8 +55,6 @@ class MapActivity : BaseActivity(), View.OnClickListener, LayersAdapter.OnItemCl
             map.setZoomAndCenter(map.minZoom, GeoPoint(0.0, 0.0))
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
             container.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
-            zoomIn.setOnClickListener(this@MapActivity)
-            zoomOut.setOnClickListener(this@MapActivity)
         }
 
         val layers = ArrayList<Layer>()
@@ -68,7 +66,7 @@ class MapActivity : BaseActivity(), View.OnClickListener, LayersAdapter.OnItemCl
         binding.layers.adapter = layersAdapter
         val manager = LinearLayoutManager(this)
         binding.layers.layoutManager = manager
-        val dividerItemDecoration = DividerItemDecoration(binding.layers.context, manager.orientation)
+        val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
@@ -99,6 +97,7 @@ class MapActivity : BaseActivity(), View.OnClickListener, LayersAdapter.OnItemCl
         when (view?.id) {
             R.id.zoom_in -> if (mapView.canZoomIn()) mapView.zoomIn()
             R.id.zoom_out -> if (mapView.canZoomOut()) mapView.zoomOut()
+            R.id.add_feature -> startActivity<AddFeatureActivity>()
         }
     }
 
