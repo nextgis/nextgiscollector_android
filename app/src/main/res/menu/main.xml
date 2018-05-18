@@ -24,6 +24,12 @@
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/menu_sync"
+        android:icon="@drawable/ic_cloud_sync"
+        android:title="@string/sync"
+        app:showAsAction="ifRoom"/>
+
+    <item
         android:id="@+id/menu_change_project"
         android:title="@string/change_project"
         app:showAsAction="never"/>

@@ -22,8 +22,9 @@
 package com.nextgis.collector.data
 
 import android.os.Parcel
-import com.handicap.surpriseme.util.parcelableCreator
-import com.handicap.surpriseme.util.readBoolean
+import com.nextgis.collector.parcelableCreator
+import com.nextgis.collector.readBoolean
+
 
 class RemoteLayerTMS(title: String, type: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val lifetime: Long, val tmsType: Int) : RemoteLayer(title, type, url, visible, minZoom, maxZoom) {
 

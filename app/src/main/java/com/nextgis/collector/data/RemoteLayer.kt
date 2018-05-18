@@ -23,10 +23,10 @@ package com.nextgis.collector.data
 
 import android.databinding.BaseObservable
 import android.os.Parcel
-import com.handicap.surpriseme.util.KParcelable
-import com.handicap.surpriseme.util.parcelableCreator
-import com.handicap.surpriseme.util.readBoolean
-import com.handicap.surpriseme.util.writeBoolean
+import com.nextgis.collector.KParcelable
+import com.nextgis.collector.parcelableCreator
+import com.nextgis.collector.readBoolean
+import com.nextgis.collector.writeBoolean
 import com.nextgis.maplib.util.Constants
 
 

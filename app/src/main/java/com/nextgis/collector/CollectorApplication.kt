@@ -21,7 +21,6 @@
 
 package com.nextgis.collector
 
-import com.nextgis.maplib.util.Constants
 import com.nextgis.maplibui.GISApplication
 
 class CollectorApplication : GISApplication() {

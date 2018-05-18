@@ -22,9 +22,9 @@
 package com.nextgis.collector.data
 
 import android.os.Parcel
-import com.handicap.surpriseme.util.parcelableCreator
-import com.handicap.surpriseme.util.readBoolean
-import com.handicap.surpriseme.util.writeBoolean
+import com.nextgis.collector.parcelableCreator
+import com.nextgis.collector.readBoolean
+import com.nextgis.collector.writeBoolean
 
 
 class RemoteLayerNGW(title: String, type: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val login: String, val password: String?, val editable: Boolean, val syncable: Boolean) : RemoteLayer(title, type, url, visible, minZoom, maxZoom) {

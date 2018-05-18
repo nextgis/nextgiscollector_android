@@ -1,3 +1,24 @@
+/*
+ * Project:  NextGIS Collector
+ * Purpose:  Light mobile GIS for collecting data
+ * Author:   Stanislav Petriakov, becomeglory@gmail.com
+ * ********************************************************************
+ * Copyright (c) 2018 NextGIS, info@nextgis.com
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.nextgis.collector.activity
 
 import android.Manifest
@@ -7,6 +28,7 @@ import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.Toolbar
 import android.view.View
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.EditableLayersAdapter
@@ -17,7 +39,7 @@ import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
 
-class AddFeatureActivity : BaseActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener {
+class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener {
     companion object {
         const val PERMISSIONS_CODE = 625
     }
@@ -28,18 +50,26 @@ class AddFeatureActivity : BaseActivity(), View.OnClickListener, EditableLayersA
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_add_feature)
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+
+        var hasChanges = false
         val layers = ArrayList<NGWVectorLayerUI>()
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
-            if (layer is NGWVectorLayerUI && layer.isEditable)
+            if (layer is NGWVectorLayerUI && layer.isEditable) {
+                hasChanges = hasChanges || layer.isChanges
                 if (layer.geometryType == GeoConstants.GTPoint || layer.geometryType == GeoConstants.GTMultiPoint) // TODO add line and polygon support
                     layers.add(layer)
+            }
         }
         binding.layers.adapter = EditableLayersAdapter(layers, this)
         val manager = LinearLayoutManager(this)
         binding.layers.layoutManager = manager
         val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
+
+        supportActionBar?.setSubtitle(if (hasChanges) R.string.not_synced else R.string.all_synced)
         binding.executePendingBindings()
     }
 

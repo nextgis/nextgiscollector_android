@@ -1,15 +1,25 @@
 /*
- * Project: SurpriseMe
- * Purpose: Quests in reality
- * Author:  Stanislav Petriakov, becomeglory@gmail.com
+ * Project:  NextGIS Collector
+ * Purpose:  Light mobile GIS for collecting data
+ * Author:   Stanislav Petriakov, becomeglory@gmail.com
+ * ********************************************************************
+ * Copyright (c) 2018 NextGIS, info@nextgis.com
  *
- * Copyright © 2017-2018 Stanislav Petriakov - All Rights Reserved
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.handicap.surpriseme.util
+package com.nextgis.collector
 
 import android.os.Parcel
 import android.os.Parcelable

@@ -21,7 +21,6 @@
 
 package com.nextgis.collector.activity
 
-import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -31,8 +30,7 @@ import com.nextgis.collector.R
 import com.nextgis.maplib.map.MapDrawable
 import com.nextgis.maplibui.mapui.MapViewOverlays
 
-@SuppressLint("Registered")
-open class BaseActivity : AppCompatActivity() {
+abstract class BaseActivity : AppCompatActivity() {
     protected lateinit var app: CollectorApplication
     protected lateinit var mapView: MapViewOverlays
     protected lateinit var map: MapDrawable

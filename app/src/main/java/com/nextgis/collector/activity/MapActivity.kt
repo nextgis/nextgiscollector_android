@@ -24,25 +24,22 @@ package com.nextgis.collector.activity
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.AlertDialog
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.widget.FrameLayout
-import com.nextgis.collector.R
-import com.nextgis.collector.databinding.ActivityMainBinding
-import com.pawegio.kandroid.startActivity
-import com.nextgis.maplib.datasource.GeoPoint
-import com.nextgis.maplib.map.NGWVectorLayer
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.Toolbar
+import android.view.View
+import android.widget.FrameLayout
+import com.nextgis.collector.R
 import com.nextgis.collector.adapter.LayersAdapter
+import com.nextgis.collector.databinding.ActivityMainBinding
+import com.nextgis.maplib.datasource.GeoPoint
 import com.nextgis.maplib.map.Layer
+import com.nextgis.maplib.map.NGWVectorLayer
+import com.pawegio.kandroid.startActivity
 
 
-class MapActivity : BaseActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener {
+class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener {
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,16 +48,27 @@ class MapActivity : BaseActivity(), View.OnClickListener, LayersAdapter.OnItemCl
         binding.executePendingBindings()
         title = preferences.getString("project", getString(R.string.app_name))
 
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        val toggle = ActionBarDrawerToggle(this, binding.drawer, toolbar, R.string.layers_drawer_open, R.string.layers_drawer_close)
+
         binding.apply {
             map.setZoomAndCenter(map.minZoom, GeoPoint(0.0, 0.0))
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
             container.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
+            drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+            drawer.addDrawerListener(toggle)
         }
 
         val layers = ArrayList<Layer>()
-        for (i in 0 until map.layerCount)
-            if (map.getLayer(i) is Layer)
-                layers.add(map.getLayer(i) as Layer)
+        var hasChanges = false
+        for (i in 0 until map.layerCount) {
+            val layer = map.getLayer(i)
+            if (layer is Layer)
+                layers.add(layer)
+            if (layer is NGWVectorLayer)
+                hasChanges = hasChanges || layer.isChanges
+        }
 
         val layersAdapter = LayersAdapter(layers.reversed(), this)
         binding.layers.adapter = layersAdapter
@@ -69,28 +77,10 @@ class MapActivity : BaseActivity(), View.OnClickListener, LayersAdapter.OnItemCl
         val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        val toggle = ActionBarDrawerToggle(this, binding.drawer, toolbar, R.string.layers_drawer_open, R.string.layers_drawer_close)
-        binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
-        binding.drawer.addDrawerListener(toggle)
-
+        supportActionBar?.setSubtitle(if (hasChanges) R.string.not_synced else R.string.all_synced)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setHomeButtonEnabled(true)
         toggle.syncState()
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.map, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId) {
-            R.id.menu_change_project -> ask()
-            else -> return super.onOptionsItemSelected(item)
-        }
-        return true
     }
 
     override fun onClick(view: View?) {
@@ -103,27 +93,5 @@ class MapActivity : BaseActivity(), View.OnClickListener, LayersAdapter.OnItemCl
 
     override fun onItemClick(layer: Layer) {
 
-    }
-
-    private fun change() {
-        for (i in 0 until map.layerCount) {
-            val layer = map.getLayer(i)
-            if (layer is NGWVectorLayer) {
-                val account = app.getAccount(layer.accountName)
-                app.removeAccount(account)
-            }
-        }
-
-        map.delete()
-        startActivity<ProjectListActivity>()
-        preferences.edit().remove("project").apply()
-    }
-
-    private fun ask() {
-        AlertDialog.Builder(this).setTitle(R.string.change_project)
-                .setMessage(R.string.change_message)
-                .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes, { _, _ -> change() })
-                .show()
     }
 }

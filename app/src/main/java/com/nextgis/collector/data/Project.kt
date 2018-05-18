@@ -24,9 +24,9 @@ package com.nextgis.collector.data
 import android.databinding.BaseObservable
 import android.databinding.Bindable
 import android.os.Parcel
-import com.handicap.surpriseme.util.KParcelable
-import com.handicap.surpriseme.util.parcelableCreator
 import com.nextgis.collector.BR
+import com.nextgis.collector.KParcelable
+import com.nextgis.collector.parcelableCreator
 
 
 class Project(title: String, description: String, screen: String, version: Int, val layers: ArrayList<RemoteLayer>) : BaseObservable(), KParcelable {

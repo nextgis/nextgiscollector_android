@@ -13,4 +13,6 @@
     <string name="by_gps">Using GPS</string>
     <string name="by_hand">Using map</string>
     <string name="add_feature">New feature for</string>
+    <string name="all_synced">All changes are synced</string>
+    <string name="not_synced">You have unsynced changes</string>
 </resources>
