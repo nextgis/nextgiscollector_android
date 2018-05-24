@@ -103,6 +103,8 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                             else if (intent.hasExtra(LayerFillService.KEY_MESSAGE))
                                 longToast(intent.getStringExtra(LayerFillService.KEY_MESSAGE))
                         }
+                        if (!intent.hasExtra(LayerFillService.KEY_MESSAGE))
+                            return
 
                         val isNgw = intent.getBooleanExtra(LayerFillService.KEY_SYNC, false)
                         if (success && !canceled && isNgw) {

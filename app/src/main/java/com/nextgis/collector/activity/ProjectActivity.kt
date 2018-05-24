@@ -21,17 +21,47 @@
 
 package com.nextgis.collector.activity
 
-import android.content.SyncResult
+import android.content.*
 import android.support.v7.app.AlertDialog
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.FrameLayout
 import com.nextgis.collector.R
 import com.nextgis.maplib.map.NGWVectorLayer
-import com.nextgis.maplib.util.NGWUtil
 import com.pawegio.kandroid.startActivity
-import kotlin.concurrent.thread
+import com.nextgis.maplib.datasource.ngw.SyncAdapter
+import com.pawegio.kandroid.toast
+import android.accounts.Account
+import android.os.Bundle
+import com.nextgis.maplib.map.MapContentProviderHelper
+import com.nextgis.maplib.api.INGWLayer
+import com.nextgis.maplib.util.FeatureChanges
+import com.nextgis.maplibui.fragment.NGWSettingsFragment
+import com.pawegio.kandroid.accountManager
+
 
 abstract class ProjectActivity : BaseActivity() {
+    private var syncReceiver: SyncReceiver = SyncReceiver()
+    private var total: Int = 0
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(SyncAdapter.SYNC_START)
+        intentFilter.addAction(SyncAdapter.SYNC_FINISH)
+        intentFilter.addAction(SyncAdapter.SYNC_CANCELED)
+        registerReceiver(syncReceiver, intentFilter)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(syncReceiver)
+        } catch (e: Exception) {
+        }
+    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main, menu)
@@ -47,16 +77,45 @@ abstract class ProjectActivity : BaseActivity() {
         return true
     }
 
-    protected fun sync() {
-        thread {
-            for (i in 0 until map.layerCount) {
-                val layer = map.getLayer(i)
-                if (layer is NGWVectorLayer) {
-                    val ver = NGWUtil.getNgwVersion(this@ProjectActivity, layer.accountName)
-                    layer.sync(app.authority, ver, SyncResult())
+    protected fun updateSubtitle() {
+        for (i in 0 until map.layerCount) {
+            val layer = map.getLayer(i)
+            if (layer is NGWVectorLayer) {
+                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
+                if (changesCount > 0) {
+                    setSubtitle(true)
+                    break
                 }
             }
-        }.start()
+        }
+    }
+
+    protected fun setSubtitle(hasChanges: Boolean) {
+        supportActionBar?.setSubtitle(if (hasChanges) R.string.not_synced else R.string.all_synced)
+    }
+
+    protected fun sync() {
+        val accounts = ArrayList<Account>()
+        val layers = ArrayList<INGWLayer>()
+
+        accountManager?.let {
+            for (account in it.getAccountsByType(app.accountsType)) {
+                layers.clear()
+                MapContentProviderHelper.getLayersByAccount(map, account.name, layers)
+                val syncEnabled = NGWSettingsFragment.isAccountSyncEnabled(account, app.authority)
+                if (layers.size > 0 && syncEnabled)
+                    accounts.add(account)
+            }
+
+            for (account in accounts) {
+                val settings = Bundle()
+                settings.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
+                settings.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
+                ContentResolver.requestSync(account, app.authority, settings)
+            }
+        }
+
+        total = accounts.size
     }
 
     private fun change() {
@@ -79,5 +138,22 @@ abstract class ProjectActivity : BaseActivity() {
                 .setNegativeButton(R.string.no, null)
                 .setPositiveButton(R.string.yes, { _, _ -> change() })
                 .show()
+    }
+
+    protected inner class SyncReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == SyncAdapter.SYNC_START) {
+                findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
+            } else if (intent.action == SyncAdapter.SYNC_FINISH || intent.action == SyncAdapter.SYNC_CANCELED) {
+                if (intent.hasExtra(SyncAdapter.EXCEPTION))
+                    toast(intent.getStringExtra(SyncAdapter.EXCEPTION))
+
+                total--
+                if (total <= 0) {
+                    updateSubtitle()
+                    findViewById<FrameLayout>(R.id.overlay).visibility = View.GONE
+                }
+            }
+        }
     }
 }

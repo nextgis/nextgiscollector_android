@@ -35,15 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-                app:layout_constraintTop_toTopOf="parent"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                app:subtitleTextAppearance="@style/TextAppearance.AppCompat.Caption"/>
+            <include layout="@layout/toolbar"/>
 
             <FrameLayout
                 android:id="@+id/container"
@@ -117,5 +109,7 @@
                 app:layout_constraintTop_toBottomOf="@id/title"
                 tools:listitem="@layout/item_layer"/>
         </android.support.constraint.ConstraintLayout>
+
+        <include layout="@layout/sync_overlay"/>
     </android.support.v4.widget.DrawerLayout>
 </layout>

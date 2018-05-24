@@ -36,6 +36,7 @@ import com.nextgis.collector.databinding.ActivityMainBinding
 import com.nextgis.maplib.datasource.GeoPoint
 import com.nextgis.maplib.map.Layer
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.util.FeatureChanges
 import com.pawegio.kandroid.startActivity
 
 
@@ -66,8 +67,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             val layer = map.getLayer(i)
             if (layer is Layer)
                 layers.add(layer)
-            if (layer is NGWVectorLayer)
-                hasChanges = hasChanges || layer.isChanges
+            if (layer is NGWVectorLayer && !hasChanges) {
+                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
+                hasChanges = changesCount > 0
+            }
         }
 
         val layersAdapter = LayersAdapter(layers.reversed(), this)
@@ -77,7 +80,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
 
-        supportActionBar?.setSubtitle(if (hasChanges) R.string.not_synced else R.string.all_synced)
+        setSubtitle(hasChanges)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setHomeButtonEnabled(true)
         toggle.syncState()

@@ -33,6 +33,8 @@ import android.view.View
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.EditableLayersAdapter
 import com.nextgis.collector.databinding.ActivityAddFeatureBinding
+import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.pawegio.kandroid.longToast
@@ -57,11 +59,14 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         val layers = ArrayList<NGWVectorLayerUI>()
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
-            if (layer is NGWVectorLayerUI && layer.isEditable) {
-                hasChanges = hasChanges || layer.isChanges
+            if (layer is NGWVectorLayer && !hasChanges) {
+                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
+                hasChanges = changesCount > 0
+            }
+
+            if (layer is NGWVectorLayerUI && layer.isEditable)
                 if (layer.geometryType == GeoConstants.GTPoint || layer.geometryType == GeoConstants.GTMultiPoint) // TODO add line and polygon support
                     layers.add(layer)
-            }
         }
         binding.layers.adapter = EditableLayersAdapter(layers, this)
         val manager = LinearLayoutManager(this)
@@ -69,7 +74,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
 
-        supportActionBar?.setSubtitle(if (hasChanges) R.string.not_synced else R.string.all_synced)
+        setSubtitle(hasChanges)
         binding.executePendingBindings()
     }
 
