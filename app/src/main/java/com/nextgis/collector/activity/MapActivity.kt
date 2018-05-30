@@ -21,6 +21,7 @@
 
 package com.nextgis.collector.activity
 
+import android.content.Context
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v4.widget.DrawerLayout
@@ -28,6 +29,7 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.Toolbar
+import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
 import com.nextgis.collector.R
@@ -38,6 +40,7 @@ import com.nextgis.maplib.map.Layer
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
 import com.pawegio.kandroid.startActivity
+import com.nextgis.maplibui.util.SettingsConstantsUI
 
 
 class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener {
@@ -96,5 +99,32 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     override fun onItemClick(layer: Layer) {
 
+    }
+
+    override fun onCreateView(name: String?, context: Context?, attrs: AttributeSet?): View {
+        val mapZoom = preferences.getFloat(SettingsConstantsUI.KEY_PREF_ZOOM_LEVEL, map.minZoom)
+        var mapScrollX: Double
+        var mapScrollY: Double
+        try {
+            val x = preferences.getLong(SettingsConstantsUI.KEY_PREF_SCROLL_X, 0)
+            val y = preferences.getLong(SettingsConstantsUI.KEY_PREF_SCROLL_Y, 0)
+            mapScrollX = java.lang.Double.longBitsToDouble(x)
+            mapScrollY = java.lang.Double.longBitsToDouble(y)
+        } catch (e: ClassCastException) {
+            mapScrollX = 0.0
+            mapScrollY = 0.0
+        }
+
+        map.setZoomAndCenter(mapZoom, GeoPoint(mapScrollX, mapScrollY))
+        return super.onCreateView(name, context, attrs)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val point = map.mapCenter
+        preferences.edit().putFloat(SettingsConstantsUI.KEY_PREF_ZOOM_LEVEL, map.zoomLevel)
+                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_X, java.lang.Double.doubleToRawLongBits(point.x))
+                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_Y, java.lang.Double.doubleToRawLongBits(point.y))
+                .apply()
     }
 }
