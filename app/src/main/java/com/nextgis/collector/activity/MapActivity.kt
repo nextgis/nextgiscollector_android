@@ -21,13 +21,17 @@
 
 package com.nextgis.collector.activity
 
+import android.content.ContentUris
+import android.content.ContentValues
 import android.databinding.DataBindingUtil
+import android.net.Uri
 import android.os.Bundle
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.Toolbar
+import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
@@ -37,32 +41,40 @@ import com.nextgis.collector.databinding.ActivityMainBinding
 import com.nextgis.maplib.api.ILayerView
 import com.nextgis.maplib.datasource.Feature
 import com.nextgis.maplib.datasource.GeoEnvelope
+import com.nextgis.maplib.datasource.GeoGeometry
 import com.nextgis.maplib.datasource.GeoPoint
 import com.nextgis.maplib.map.Layer
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.GeoConstants
+import com.nextgis.maplib.util.MapUtil
 import com.nextgis.maplibui.api.MapViewEventListener
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
+import com.nextgis.maplibui.overlay.EditLayerOverlay
+import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.toolbar.*
+import java.io.IOException
 
 
 class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener, MapViewEventListener {
     private lateinit var binding: ActivityMainBinding
-    //    private lateinit var overlay: EditLayerOverlay
+    private lateinit var overlay: EditLayerOverlay
+    private lateinit var historyOverlay: UndoRedoOverlay
     private var selectedLayer: NGWVectorLayerUI? = null
     private var selectedFeature: Feature? = null
+    private var mNeedSave = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.executePendingBindings()
-
         binding.apply {
-            map.setZoomAndCenter(map.minZoom, GeoPoint(0.0, 0.0))
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
             container.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
         }
@@ -79,7 +91,17 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             }
         }
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setCenter()
+        overlay = EditLayerOverlay(this, mapView)
+        overlay.setTopToolbar(toolbar)
+        overlay.setBottomToolbar(binding.bottomToolbar)
+        historyOverlay = UndoRedoOverlay(this, mapView)
+        historyOverlay.setTopToolbar(toolbar)
+
+        mapView.addOverlay(overlay)
+        mapView.addOverlay(historyOverlay)
+        mapView.addListener(this)
+
         setSupportActionBar(toolbar)
         setUpToolbar(hasChanges)
 
@@ -89,7 +111,96 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         binding.layers.layoutManager = manager
         val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
+    }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        historyOverlay.defineUndoRedo()
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        when (item?.itemId) {
+            0 -> {
+//                mMap.setLockMap(false);
+//                setMode(MODE_EDIT);
+                return true
+            }
+
+            R.id.menu_edit_save -> return saveEdits()
+            R.id.menu_edit_undo, R.id.menu_edit_redo -> {
+                val result = historyOverlay.onOptionsItemSelected(item.itemId)
+                if (result) {
+                    val undoRedoFeature = historyOverlay.feature
+                    val feature = overlay.selectedFeature
+                    feature.geometry = undoRedoFeature.geometry
+                    overlay.fillDrawItems(undoRedoFeature.geometry)
+
+                    val original = selectedLayer?.getGeometryForId(feature.id)
+                    val hasEdits = original != null && undoRedoFeature.geometry == original
+                    overlay.setHasEdits(!hasEdits)
+
+                    mapView.buffer()
+                    mapView.postInvalidate()
+                }
+
+                return result
+            }
+        }
+        return true
+    }
+
+    private fun cancelEdits() {
+//        if (mEditLayerOverlay.hasEdits()) TODO prompt dialog
+//            return;
+
+        overlay.setHasEdits(false)
+        val featureId = overlay.selectedFeatureId
+        overlay.setSelectedFeature(featureId)
+        setHighlight()
+    }
+
+    private fun saveEdits(): Boolean {
+        val feature = overlay.selectedFeature
+        var featureId = -1L
+        var geometry: GeoGeometry? = null
+
+        if (feature != null) {
+            geometry = feature.geometry
+            featureId = feature.id
+        }
+
+        if (geometry == null || !geometry.isValid) {
+            toast(R.string.not_enough_points)
+            return false
+        }
+
+        if (MapUtil.isGeometryIntersects(this, geometry))
+            return false
+
+        overlay.setHasEdits(false)
+        selectedLayer?.let {
+            if (featureId == -1L) {
+                it.showEditForm(this, featureId, geometry)
+            } else {
+                var uri = Uri.parse("content://" + app.authority + "/" + it.path.name)
+                uri = ContentUris.withAppendedId(uri, featureId)
+                val values = ContentValues()
+
+                try {
+                    values.put(Constants.FIELD_GEOM, geometry.toBlob())
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+
+                contentResolver.update(uri, values, null, null)
+                setHighlight()
+            }
+        }
+
+        return true
+    }
+
+    private fun setCenter() {
         val mapZoom = preferences.getFloat(SettingsConstantsUI.KEY_PREF_ZOOM_LEVEL, map.minZoom)
         var mapScrollX: Double
         var mapScrollY: Double
@@ -104,8 +215,6 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         }
 
         map.setZoomAndCenter(mapZoom, GeoPoint(mapScrollX, mapScrollY))
-//        overlay = EditLayerOverlay(this, mapView)
-        mapView.addListener(this)
     }
 
     override fun onClick(view: View?) {
@@ -113,7 +222,25 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             R.id.zoom_in -> if (mapView.canZoomIn()) mapView.zoomIn()
             R.id.zoom_out -> if (mapView.canZoomOut()) mapView.zoomOut()
             R.id.add_feature -> startActivity<AddFeatureActivity>()
-            R.id.edit_geometry -> toast("Edit geometry")
+            R.id.edit_geometry -> {
+                binding.editAttributes.visibility = View.GONE
+                binding.editGeometry.visibility = View.GONE
+                binding.bottomToolbar.visibility = View.VISIBLE
+                toolbar.menu.clear()
+                toolbar.inflateMenu(R.menu.edit_geometry)
+
+                overlay.mode = EditLayerOverlay.MODE_EDIT
+                bottom_toolbar.setOnMenuItemClickListener {
+                    val result = overlay.onOptionsItemSelected(it.itemId)
+                    if (result)
+                        historyOverlay.saveToHistory(overlay.selectedFeature)
+                    result
+                }
+
+                historyOverlay.clearHistory()
+                historyOverlay.saveToHistory(selectedFeature)
+                overlay.setHasEdits(false)
+            }
             R.id.edit_attributes -> selectedFeature?.let { selectedLayer?.showEditForm(this, it.id, it.geometry) }
         }
     }
@@ -133,7 +260,6 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     private fun setUpToolbar(hasChanges: Boolean? = null) {
         title = preferences.getString("project", getString(R.string.app_name))
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
         val toggle = ActionBarDrawerToggle(this, binding.drawer, toolbar, R.string.layers_drawer_open, R.string.layers_drawer_close)
         binding.apply {
             drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
@@ -161,8 +287,28 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         supportActionBar?.setHomeButtonEnabled(true)
         toggle.syncState()
 
+        clearData()
+    }
+
+    private fun clearData() {
+        bottom_toolbar.visibility = View.GONE
+        overlay.mode = EditLayerOverlay.MODE_NONE
+        setMenu()
         selectedLayer = null
         selectedFeature = null
+    }
+
+    private fun setHighlight() {
+        binding.editAttributes.visibility = View.VISIBLE
+        binding.editGeometry.visibility = View.VISIBLE
+        overlay.mode = EditLayerOverlay.MODE_HIGHLIGHT
+        bottom_toolbar.visibility = View.GONE
+        setMenu()
+    }
+
+    private fun setMenu() {
+        toolbar.menu.clear()
+        toolbar.inflateMenu(R.menu.main)
     }
 
     override fun onLongPress(event: MotionEvent) {
@@ -186,6 +332,9 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     override fun onSingleTapUp(event: MotionEvent) {
+        if (overlay.mode == EditLayerOverlay.MODE_EDIT)
+            return
+
         val tolerance = resources.displayMetrics.density * ConstantsUI.TOLERANCE_DP.toDouble()
         val dMinX = event.x - tolerance
         val dMaxX = event.x + tolerance
@@ -220,24 +369,26 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             supportActionBar?.subtitle = selectedLayer?.name
             binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
 
-            val toolbar = findViewById<Toolbar>(R.id.toolbar)
             toolbar.setNavigationIcon(R.drawable.ic_action_cancel_dark)
-            toolbar.setNavigationOnClickListener { setUpToolbar() }
+            toolbar.setNavigationOnClickListener {
+                if (overlay.mode == EditLayerOverlay.MODE_EDIT)
+                    cancelEdits()
+                else
+                    setUpToolbar()
+            }
 
-//            mEditLayerOverlay.setSelectedLayer(selectedLayer)
-//            for (i in items!!.indices) {    // FIXME hack for bad RTree cache
-//                val featureId = items[i]
-//                val geometry = mSelectedLayer.getGeometryForId(featureId)
-//                if (geometry != null)
-//                    mEditLayerOverlay.setSelectedFeature(featureId)
-//            }
-//            setMode(MODE_SELECT_ACTION)
-        } else {
-            selectedLayer = null
-        }
+            overlay.setSelectedLayer(selectedLayer)
+            for (i in items!!.indices) {    // FIXME hack for bad RTree cache
+                val featureId = items[i]
+                val geometry = selectedLayer?.getGeometryForId(featureId)
+                if (geometry != null)
+                    overlay.setSelectedFeature(featureId)
+            }
+            overlay.mode = EditLayerOverlay.MODE_HIGHLIGHT
+        } else
+            setUpToolbar()
 
-        //set select action mode
-//        mMap.postInvalidate()
+        mapView.postInvalidate()
     }
 
     override fun onLayerChanged(id: Int) {
@@ -253,7 +404,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     override fun panStart(e: MotionEvent?) {
-
+        if (overlay.mode == EditLayerOverlay.MODE_CHANGE)
+            mNeedSave = true
     }
 
     override fun panMoveTo(e: MotionEvent?) {
@@ -261,7 +413,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     override fun panStop() {
-
+        if (mNeedSave) {
+            mNeedSave = false
+            historyOverlay.saveToHistory(overlay.selectedFeature)
+        }
     }
 
 }

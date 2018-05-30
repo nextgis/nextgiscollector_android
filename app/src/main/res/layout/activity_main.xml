@@ -102,8 +102,18 @@
                 android:layout_margin="16dp"
                 android:onClick="onClick"
                 android:src="@drawable/ic_add_white_48dp"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/bottom_toolbar"
                 app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.nextgis.maplibui.fragment.BottomToolbar
+                android:id="@+id/bottom_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="?attr/colorPrimary"
+                android:theme="?ThemeOverlay.NextGIS.Toolbar"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:popupTheme="?ThemeOverlay.NextGIS.ToolbarPopup"/>
         </android.support.constraint.ConstraintLayout>
 
         <android.support.constraint.ConstraintLayout
