@@ -70,6 +70,32 @@
                 app:layout_constraintTop_toBottomOf="@id/zoom_in"/>
 
             <android.support.design.widget.FloatingActionButton
+                android:id="@+id/edit_geometry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:onClick="onClick"
+                android:src="@drawable/ic_track_dark"
+                android:visibility="gone"
+                app:fabSize="mini"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.45"/>
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/edit_attributes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:onClick="onClick"
+                android:src="@drawable/ic_action_attributes"
+                android:visibility="gone"
+                app:fabSize="mini"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/edit_geometry"/>
+
+            <android.support.design.widget.FloatingActionButton
                 android:id="@+id/add_feature"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
