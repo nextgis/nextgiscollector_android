@@ -25,14 +25,37 @@ import com.nextgis.collector.data.Project
 import com.nextgis.collector.data.RemoteLayer
 import com.nextgis.collector.data.RemoteLayerNGW
 import com.nextgis.collector.data.RemoteLayerTMS
+import com.nextgis.maplib.util.HttpResponse
+import com.nextgis.maplib.util.NetworkUtil
+import com.pawegio.kandroid.runAsync
 import org.json.JSONArray
 
 
 class ProjectModel {
     fun getProjects(onDataReadyCallback: OnDataReadyCallback) {
-        val data = "[{\"title\":\"Project 1\",\"version\":1,\"screen\":\"list\",\"description\":\"Explore the history of the classic Lorem Ipsum passage and generate your own text using any number of characters, words, sentences or paragraphs. Commonly used as placeholder text in the graphic and print industries, Lorem Ipsum's origins extend far back to a scrambled Latin passage from Cicero in the middle ages.\",\"layers\":[{\"title\":\"Layer default OSM\",\"type\":\"tms\",\"visible\":true,\"min_zoom\":0,\"max_zoom\":25,\"tms_type\":2,\"url\":\"http://{a,b,c}.tile.openstreetmap.org/{z}/{x}/{y}.png\",\"lifetime\":4233600000},{\"title\":\"Layer TMS cached\",\"type\":\"ngrc\",\"min_zoom\":0,\"max_zoom\":25,\"visible\":true,\"url\":\"http://4ert.com/data/march.ngrc\"},{\"title\":\"Layer vector\",\"type\":\"ngw\",\"min_zoom\":0,\"max_zoom\":25,\"url\":\"http://source.nextgis.com/resource/148\",\"editable\":true,\"syncable\":true,\"visible\":true,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector NS NE\",\"type\":\"ngw\",\"min_zoom\":5,\"max_zoom\":10,\"url\":\"http://source.nextgis.com/resource/207\",\"editable\":false,\"visible\":true,\"syncable\":false,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector not editable\",\"type\":\"ngw\",\"min_zoom\":10,\"max_zoom\":15,\"visible\":true,\"url\":\"http://source.nextgis.com/resource/207\",\"editable\":false,\"syncable\":true,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer vector not syncable\",\"type\":\"ngw\",\"min_zoom\":15,\"max_zoom\":25,\"url\":\"http://source.nextgis.com/resource/207\",\"editable\":true,\"visible\":false,\"syncable\":false,\"login\":\"administrator\",\"password\":\"admin\"},{\"title\":\"Layer NGFP Local\",\"editable\":true,\"syncable\":false,\"type\":\"ngfp\",\"min_zoom\":0,\"max_zoom\":25,\"visible\":true,\"url\":\"http://4ert.com/data/165.ngfp\"},{\"title\":\"Layer NGFP NGW\",\"editable\":true,\"syncable\":true,\"type\":\"ngfp\",\"min_zoom\":0,\"max_zoom\":25,\"visible\":true,\"url\":\"http://4ert.com/data/old_trees.ngfp\"}]}]"
-        val json = JSONArray(data)
+        runAsync {
+            val response = loadList()
+            var list = ArrayList<Project>()
+            response?.let {
+                if (it.isOk)
+                    list = parseProjects(it.responseBody)
+            }
+            onDataReadyCallback.onDataReady(list)
+        }
+    }
+
+    private fun loadList(): HttpResponse? {
+        try {
+            val target = "http://4ert.com/data/bars.json"
+            return NetworkUtil.get(target, null, null, false)
+        } catch (e: Exception) {
+        }
+        return null
+    }
+
+    private fun parseProjects(data: String): ArrayList<Project> {
         val list = ArrayList<Project>()
+        val json = JSONArray(data)
         for (i in 0 until json.length()) {
             val jsonProject = json.getJSONObject(i)
             val title = jsonProject.optString("title")
@@ -68,7 +91,7 @@ class ProjectModel {
             }
             list.add(Project(title, description, screen, version, layers))
         }
-        onDataReadyCallback.onDataReady(list)
+        return list
     }
 
     interface OnDataReadyCallback {

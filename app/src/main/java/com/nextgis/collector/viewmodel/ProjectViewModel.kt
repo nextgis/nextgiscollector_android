@@ -37,7 +37,7 @@ class ProjectViewModel : ViewModel() {
     val onDataReadyCallback = object : ProjectModel.OnDataReadyCallback {
         override fun onDataReady(data: ArrayList<Project>) {
             isLoading.set(false)
-            projects.value = data
+            projects.postValue(data)
         }
     }
 
