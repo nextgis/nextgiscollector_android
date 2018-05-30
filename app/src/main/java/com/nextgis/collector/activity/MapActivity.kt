@@ -166,6 +166,26 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     override fun onLongPress(event: MotionEvent) {
+
+    }
+
+    override fun onLayerAdded(id: Int) {
+
+    }
+
+    override fun onLayerDeleted(id: Int) {
+
+    }
+
+    override fun onLayersReordered() {
+
+    }
+
+    override fun onLayerDrawFinished(id: Int, percent: Float) {
+
+    }
+
+    override fun onSingleTapUp(event: MotionEvent) {
         val tolerance = resources.displayMetrics.density * ConstantsUI.TOLERANCE_DP.toDouble()
         val dMinX = event.x - tolerance
         val dMaxX = event.x + tolerance
@@ -218,26 +238,6 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
         //set select action mode
 //        mMap.postInvalidate()
-    }
-
-    override fun onLayerAdded(id: Int) {
-
-    }
-
-    override fun onLayerDeleted(id: Int) {
-
-    }
-
-    override fun onLayersReordered() {
-
-    }
-
-    override fun onLayerDrawFinished(id: Int, percent: Float) {
-
-    }
-
-    override fun onSingleTapUp(event: MotionEvent?) {
-
     }
 
     override fun onLayerChanged(id: Int) {
