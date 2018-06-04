@@ -23,6 +23,7 @@ package com.nextgis.collector.activity
 
 import android.content.ContentUris
 import android.content.ContentValues
+import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.net.Uri
 import android.os.Bundle
@@ -49,6 +50,7 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplib.util.MapUtil
+import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.api.MapViewEventListener
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.nextgis.maplibui.overlay.EditLayerOverlay
@@ -63,6 +65,9 @@ import java.io.IOException
 
 
 class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener, MapViewEventListener {
+    companion object {
+        const val NEW_FEATURE = "new_feature"
+    }
     private lateinit var binding: ActivityMainBinding
     private lateinit var overlay: EditLayerOverlay
     private lateinit var historyOverlay: UndoRedoOverlay
@@ -115,17 +120,26 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         historyOverlay.defineUndoRedo()
+        if (intent.hasExtra(NEW_FEATURE)) {
+            val id = intent.getIntExtra(NEW_FEATURE, -1)
+            val layer = map.getLayerById(id) as NGWVectorLayerUI?
+            selectedLayer = layer
+            setTitle(getString(R.string.new_feature), layer?.name)
+            setToolbar()
+            overlay.setSelectedLayer(layer)
+            overlay.selectedFeature = Feature()
+            startEdit()
+            overlay.createNewGeometry()
+            overlay.setHasEdits(true)
+            historyOverlay.saveToHistory(overlay.selectedFeature)
+            intent.removeExtra(NEW_FEATURE)
+        }
+
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId) {
-            0 -> {
-//                mMap.setLockMap(false);
-//                setMode(MODE_EDIT);
-                return true
-            }
-
             R.id.menu_edit_save -> return saveEdits()
             R.id.menu_edit_undo, R.id.menu_edit_redo -> {
                 val result = historyOverlay.onOptionsItemSelected(item.itemId)
@@ -145,58 +159,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
                 return result
             }
+            else -> super.onOptionsItemSelected(item)
         }
-        return true
-    }
-
-    private fun cancelEdits() {
-//        if (mEditLayerOverlay.hasEdits()) TODO prompt dialog
-//            return;
-
-        overlay.setHasEdits(false)
-        val featureId = overlay.selectedFeatureId
-        overlay.setSelectedFeature(featureId)
-        setHighlight()
-    }
-
-    private fun saveEdits(): Boolean {
-        val feature = overlay.selectedFeature
-        var featureId = -1L
-        var geometry: GeoGeometry? = null
-
-        if (feature != null) {
-            geometry = feature.geometry
-            featureId = feature.id
-        }
-
-        if (geometry == null || !geometry.isValid) {
-            toast(R.string.not_enough_points)
-            return false
-        }
-
-        if (MapUtil.isGeometryIntersects(this, geometry))
-            return false
-
-        overlay.setHasEdits(false)
-        selectedLayer?.let {
-            if (featureId == -1L) {
-                it.showEditForm(this, featureId, geometry)
-            } else {
-                var uri = Uri.parse("content://" + app.authority + "/" + it.path.name)
-                uri = ContentUris.withAppendedId(uri, featureId)
-                val values = ContentValues()
-
-                try {
-                    values.put(Constants.FIELD_GEOM, geometry.toBlob())
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-
-                contentResolver.update(uri, values, null, null)
-                setHighlight()
-            }
-        }
-
         return true
     }
 
@@ -215,47 +179,6 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         }
 
         map.setZoomAndCenter(mapZoom, GeoPoint(mapScrollX, mapScrollY))
-    }
-
-    override fun onClick(view: View?) {
-        when (view?.id) {
-            R.id.zoom_in -> if (mapView.canZoomIn()) mapView.zoomIn()
-            R.id.zoom_out -> if (mapView.canZoomOut()) mapView.zoomOut()
-            R.id.add_feature -> startActivity<AddFeatureActivity>()
-            R.id.edit_geometry -> {
-                binding.editAttributes.visibility = View.GONE
-                binding.editGeometry.visibility = View.GONE
-                binding.bottomToolbar.visibility = View.VISIBLE
-                toolbar.menu.clear()
-                toolbar.inflateMenu(R.menu.edit_geometry)
-
-                overlay.mode = EditLayerOverlay.MODE_EDIT
-                bottom_toolbar.setOnMenuItemClickListener {
-                    val result = overlay.onOptionsItemSelected(it.itemId)
-                    if (result)
-                        historyOverlay.saveToHistory(overlay.selectedFeature)
-                    result
-                }
-
-                historyOverlay.clearHistory()
-                historyOverlay.saveToHistory(selectedFeature)
-                overlay.setHasEdits(false)
-            }
-            R.id.edit_attributes -> selectedFeature?.let { selectedLayer?.showEditForm(this, it.id, it.geometry) }
-        }
-    }
-
-    override fun onItemClick(layer: Layer) {
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-        val point = map.mapCenter
-        preferences.edit().putFloat(SettingsConstantsUI.KEY_PREF_ZOOM_LEVEL, map.zoomLevel)
-                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_X, java.lang.Double.doubleToRawLongBits(point.x))
-                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_Y, java.lang.Double.doubleToRawLongBits(point.y))
-                .apply()
     }
 
     private fun setUpToolbar(hasChanges: Boolean? = null) {
@@ -311,6 +234,116 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         toolbar.inflateMenu(R.menu.main)
     }
 
+    private fun cancelEdits() {
+//        if (mEditLayerOverlay.hasEdits()) TODO prompt dialog
+//            return;
+
+        overlay.setHasEdits(false)
+        val featureId = overlay.selectedFeatureId
+        overlay.setSelectedFeature(featureId)
+        if (featureId > -1)
+            setHighlight()
+        else
+            setUpToolbar()
+    }
+
+    private fun saveEdits(): Boolean {
+        val feature = overlay.selectedFeature
+        var featureId = -1L
+        var geometry: GeoGeometry? = null
+
+        if (feature != null) {
+            geometry = feature.geometry
+            featureId = feature.id
+        }
+
+        if (geometry == null || !geometry.isValid) {
+            toast(R.string.not_enough_points)
+            return false
+        }
+
+        if (MapUtil.isGeometryIntersects(this, geometry))
+            return false
+
+        overlay.setHasEdits(false)
+        selectedLayer?.let {
+            if (featureId == -1L) {
+                it.showEditForm(this, featureId, geometry)
+            } else {
+                var uri = Uri.parse("content://" + app.authority + "/" + it.path.name)
+                uri = ContentUris.withAppendedId(uri, featureId)
+                val values = ContentValues()
+
+                try {
+                    values.put(Constants.FIELD_GEOM, geometry.toBlob())
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+
+                contentResolver.update(uri, values, null, null)
+                setHighlight()
+            }
+        }
+
+        return true
+    }
+
+    private fun startEdit() {
+        binding.editAttributes.visibility = View.GONE
+        binding.editGeometry.visibility = View.GONE
+        binding.bottomToolbar.visibility = View.VISIBLE
+        toolbar.menu.clear()
+        toolbar.inflateMenu(R.menu.edit_geometry)
+
+        overlay.mode = EditLayerOverlay.MODE_EDIT
+        bottom_toolbar.setOnMenuItemClickListener {
+            val result = overlay.onOptionsItemSelected(it.itemId)
+            if (result)
+                historyOverlay.saveToHistory(overlay.selectedFeature)
+            result
+        }
+
+        historyOverlay.clearHistory()
+        historyOverlay.saveToHistory(selectedFeature)
+        overlay.setHasEdits(false)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == IVectorLayerUI.MODIFY_REQUEST && data != null) {
+            val id = data.getLongExtra(ConstantsUI.KEY_FEATURE_ID, -1)
+            if (id != -1L) {
+                overlay.setSelectedFeature(id)
+                selectedLayer?.showFeature(id)
+                setHighlight()
+            }
+        }
+    }
+
+    override fun onClick(view: View?) {
+        when (view?.id) {
+            R.id.zoom_in -> if (mapView.canZoomIn()) mapView.zoomIn()
+            R.id.zoom_out -> if (mapView.canZoomOut()) mapView.zoomOut()
+            R.id.add_feature -> startActivity<AddFeatureActivity>()
+            R.id.edit_geometry -> startEdit()
+            R.id.edit_attributes -> selectedFeature?.let { selectedLayer?.showEditForm(this, it.id, it.geometry) }
+        }
+    }
+
+    override fun onItemClick(layer: Layer) {
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val point = map.mapCenter
+        preferences.edit().putFloat(SettingsConstantsUI.KEY_PREF_ZOOM_LEVEL, map.zoomLevel)
+                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_X, java.lang.Double.doubleToRawLongBits(point.x))
+                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_Y, java.lang.Double.doubleToRawLongBits(point.y))
+                .apply()
+    }
+
     override fun onLongPress(event: MotionEvent) {
 
     }
@@ -329,6 +362,22 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     override fun onLayerDrawFinished(id: Int, percent: Float) {
 
+    }
+
+    private fun setToolbar() {
+        binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+        toolbar.setNavigationIcon(R.drawable.ic_action_cancel_dark)
+        toolbar.setNavigationOnClickListener {
+            if (overlay.mode == EditLayerOverlay.MODE_EDIT)
+                cancelEdits()
+            else
+                setUpToolbar()
+        }
+    }
+
+    private fun setTitle(title: String, subtitle: String?) {
+        this.title = title
+        supportActionBar?.subtitle = subtitle
     }
 
     override fun onSingleTapUp(event: MotionEvent) {
@@ -361,30 +410,23 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         }
 
         if (intersects) {
-            selectedFeature = selectedLayer?.getFeature(items!!.first())
-            binding.editAttributes.visibility = View.VISIBLE
-            binding.editGeometry.visibility = View.VISIBLE
-
-            title = getString(R.string.feature_n, selectedFeature?.id)
-            supportActionBar?.subtitle = selectedLayer?.name
-            binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-
-            toolbar.setNavigationIcon(R.drawable.ic_action_cancel_dark)
-            toolbar.setNavigationOnClickListener {
-                if (overlay.mode == EditLayerOverlay.MODE_EDIT)
-                    cancelEdits()
-                else
-                    setUpToolbar()
-            }
-
             overlay.setSelectedLayer(selectedLayer)
             for (i in items!!.indices) {    // FIXME hack for bad RTree cache
-                val featureId = items[i]
-                val geometry = selectedLayer?.getGeometryForId(featureId)
-                if (geometry != null)
-                    overlay.setSelectedFeature(featureId)
+                val feature = selectedLayer?.getFeature(items[i])
+                if (feature != null && feature.geometry != null)
+                    overlay.setSelectedFeature(feature.id)
             }
-            overlay.mode = EditLayerOverlay.MODE_HIGHLIGHT
+
+            overlay.selectedFeature?.let {
+                binding.editAttributes.visibility = View.VISIBLE
+                binding.editGeometry.visibility = View.VISIBLE
+
+                setTitle(getString(R.string.feature_n, it.id), selectedLayer?.name)
+                setToolbar()
+
+                selectedFeature = it
+                overlay.mode = EditLayerOverlay.MODE_HIGHLIGHT
+            }
         } else
             setUpToolbar()
 

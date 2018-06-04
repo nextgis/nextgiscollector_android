@@ -21,11 +21,8 @@
 
 package com.nextgis.collector.activity
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.Toolbar
@@ -37,11 +34,10 @@ import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
-import com.pawegio.kandroid.longToast
+import com.pawegio.kandroid.IntentFor
 import com.pawegio.kandroid.startActivity
-import com.pawegio.kandroid.toast
 
-class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener {
+class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener, ProjectActivity.OnPermissionCallback {
     companion object {
         const val PERMISSIONS_CODE = 625
     }
@@ -85,32 +81,18 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     }
 
     override fun onMapClick(layer: NGWVectorLayerUI) {
-        toast("Map clicked")
+        val intent = IntentFor<MapActivity>(this)
+        intent.putExtra(MapActivity.NEW_FEATURE, layer.id)
+        startActivity(intent)
     }
 
     override fun onGpsClick(layer: NGWVectorLayerUI) {
-        val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
-        val fine = Manifest.permission.ACCESS_FINE_LOCATION
-        val status = ActivityCompat.checkSelfPermission(this, fine)
-        if (status != PackageManager.PERMISSION_GRANTED) {
-            val permissions = arrayOf(coarse, fine)
-            ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_CODE)
-            this.layer = layer
-        } else
-            layer.showEditForm(this, -1, null)
+        this.layer = layer
+        requestForGPS(this)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        var granted = requestCode == PERMISSIONS_CODE
-        for (result in grantResults)
-            if (result != PackageManager.PERMISSION_GRANTED)
-                granted = false
-
-        if (granted) {
-            layer?.showEditForm(this, -1, null)
-        } else
-            longToast(R.string.permission_denied)
+    override fun onPermissionGranted() {
+        layer?.showEditForm(this, -1, null)
     }
+
 }
