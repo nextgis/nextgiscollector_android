@@ -67,10 +67,11 @@ import kotlinx.android.synthetic.main.toolbar.*
 import java.io.IOException
 
 
-class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener, MapViewEventListener, GpsEventListener {
+class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener, MapViewEventListener, GpsEventListener, ProjectActivity.OnPermissionCallback {
     companion object {
         const val NEW_FEATURE = "new_feature"
     }
+
     private lateinit var binding: ActivityMainBinding
     private lateinit var overlay: EditLayerOverlay
     private lateinit var historyOverlay: UndoRedoOverlay
@@ -115,6 +116,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
         mapView.addOverlay(overlay)
         mapView.addOverlay(historyOverlay)
+        mapView.addOverlay(locationOverlay)
 
         setSupportActionBar(toolbar)
         setUpToolbar(hasChanges)
@@ -330,6 +332,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             val result = overlay.onOptionsItemSelected(it.itemId)
             if (result)
                 historyOverlay.saveToHistory(overlay.selectedFeature)
+            else
+                requestForGPS(this)
             result
         }
 
@@ -352,6 +356,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     private fun locateCurrentPosition() {
+        requestForGPS(this)
+    }
+
+    override fun onPermissionGranted() {
         if (currentCenter.crs != 0)
             mapView.panTo(currentCenter)
         else
@@ -380,7 +388,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         when (view?.id) {
             R.id.zoom_in -> if (mapView.canZoomIn()) mapView.zoomIn()
             R.id.zoom_out -> if (mapView.canZoomOut()) mapView.zoomOut()
-            R.id.locate-> locateCurrentPosition()
+            R.id.locate -> locateCurrentPosition()
             R.id.add_feature -> startActivity<AddFeatureActivity>()
             R.id.edit_geometry -> startEdit()
             R.id.edit_attributes -> selectedFeature?.let { selectedLayer?.showEditForm(this, it.id, it.geometry) }
