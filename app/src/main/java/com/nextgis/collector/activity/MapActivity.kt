@@ -25,6 +25,7 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Intent
 import android.databinding.DataBindingUtil
+import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.widget.DrawerLayout
@@ -39,6 +40,7 @@ import android.widget.FrameLayout
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.LayersAdapter
 import com.nextgis.collector.databinding.ActivityMainBinding
+import com.nextgis.maplib.api.GpsEventListener
 import com.nextgis.maplib.api.ILayerView
 import com.nextgis.maplib.datasource.Feature
 import com.nextgis.maplib.datasource.GeoEnvelope
@@ -53,6 +55,7 @@ import com.nextgis.maplib.util.MapUtil
 import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.api.MapViewEventListener
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
+import com.nextgis.maplibui.overlay.CurrentLocationOverlay
 import com.nextgis.maplibui.overlay.EditLayerOverlay
 import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.util.ConstantsUI
@@ -64,16 +67,18 @@ import kotlinx.android.synthetic.main.toolbar.*
 import java.io.IOException
 
 
-class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener, MapViewEventListener {
+class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener, MapViewEventListener, GpsEventListener {
     companion object {
         const val NEW_FEATURE = "new_feature"
     }
     private lateinit var binding: ActivityMainBinding
     private lateinit var overlay: EditLayerOverlay
     private lateinit var historyOverlay: UndoRedoOverlay
+    private lateinit var locationOverlay: CurrentLocationOverlay
     private var selectedLayer: NGWVectorLayerUI? = null
     private var selectedFeature: Feature? = null
     private var mNeedSave = false
+    private var currentCenter = GeoPoint()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,9 +108,13 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         historyOverlay = UndoRedoOverlay(this, mapView)
         historyOverlay.setTopToolbar(toolbar)
 
+        locationOverlay = CurrentLocationOverlay(this, mapView)
+        locationOverlay.setStandingMarker(R.mipmap.ic_location_standing)
+        locationOverlay.setMovingMarker(R.mipmap.ic_location_moving)
+        locationOverlay.setAutopanningEnabled(true)
+
         mapView.addOverlay(overlay)
         mapView.addOverlay(historyOverlay)
-        mapView.addListener(this)
 
         setSupportActionBar(toolbar)
         setUpToolbar(hasChanges)
@@ -116,6 +125,27 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         binding.layers.layoutManager = manager
         val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        mapView.addListener(this)
+        locationOverlay.startShowingCurrentLocation()
+        app.gpsEventSource.addListener(this)
+        currentCenter.crs = 0
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val point = map.mapCenter
+        preferences.edit().putFloat(SettingsConstantsUI.KEY_PREF_ZOOM_LEVEL, map.zoomLevel)
+                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_X, java.lang.Double.doubleToRawLongBits(point.x))
+                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_Y, java.lang.Double.doubleToRawLongBits(point.y))
+                .apply()
+
+        app.gpsEventSource.removeListener(this)
+        locationOverlay.stopShowingCurrentLocation()
+        mapView.removeListener(this)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
@@ -321,10 +351,36 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         }
     }
 
+    private fun locateCurrentPosition() {
+        if (currentCenter.crs != 0)
+            mapView.panTo(currentCenter)
+        else
+            toast(R.string.error_no_location)
+    }
+
+    override fun onLocationChanged(location: Location?) {
+        location?.let {
+            currentCenter.setCoordinates(it.longitude, it.latitude)
+            currentCenter.crs = GeoConstants.CRS_WGS84
+
+            if (!currentCenter.project(GeoConstants.CRS_WEB_MERCATOR))
+                currentCenter.crs = 0
+        }
+    }
+
+    override fun onBestLocationChanged(location: Location) {
+
+    }
+
+    override fun onGpsStatusChanged(event: Int) {
+
+    }
+
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.zoom_in -> if (mapView.canZoomIn()) mapView.zoomIn()
             R.id.zoom_out -> if (mapView.canZoomOut()) mapView.zoomOut()
+            R.id.locate-> locateCurrentPosition()
             R.id.add_feature -> startActivity<AddFeatureActivity>()
             R.id.edit_geometry -> startEdit()
             R.id.edit_attributes -> selectedFeature?.let { selectedLayer?.showEditForm(this, it.id, it.geometry) }
@@ -333,15 +389,6 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     override fun onItemClick(layer: Layer) {
 
-    }
-
-    override fun onStop() {
-        super.onStop()
-        val point = map.mapCenter
-        preferences.edit().putFloat(SettingsConstantsUI.KEY_PREF_ZOOM_LEVEL, map.zoomLevel)
-                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_X, java.lang.Double.doubleToRawLongBits(point.x))
-                .putLong(SettingsConstantsUI.KEY_PREF_SCROLL_Y, java.lang.Double.doubleToRawLongBits(point.y))
-                .apply()
     }
 
     override fun onLongPress(event: MotionEvent) {

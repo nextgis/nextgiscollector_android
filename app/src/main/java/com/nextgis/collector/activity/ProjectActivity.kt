@@ -21,29 +21,38 @@
 
 package com.nextgis.collector.activity
 
+import android.Manifest
+import android.accounts.Account
 import android.content.*
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AlertDialog
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
 import com.nextgis.collector.R
-import com.nextgis.maplib.map.NGWVectorLayer
-import com.pawegio.kandroid.startActivity
-import com.nextgis.maplib.datasource.ngw.SyncAdapter
-import com.pawegio.kandroid.toast
-import android.accounts.Account
-import android.os.Bundle
-import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.api.INGWLayer
+import com.nextgis.maplib.datasource.ngw.SyncAdapter
+import com.nextgis.maplib.map.MapContentProviderHelper
+import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.pawegio.kandroid.accountManager
+import com.pawegio.kandroid.longToast
+import com.pawegio.kandroid.startActivity
+import com.pawegio.kandroid.toast
 
 
 abstract class ProjectActivity : BaseActivity() {
     private var syncReceiver: SyncReceiver = SyncReceiver()
-    private var total: Int = 0
+    @Volatile private var total: Int = 0
+    private var onPermissionCallback: OnPermissionCallback? = null
+
+    interface OnPermissionCallback {
+        fun onPermissionGranted()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,6 +84,32 @@ abstract class ProjectActivity : BaseActivity() {
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    protected fun requestForGPS(onPermissionCallback: OnPermissionCallback? = null) {
+        this.onPermissionCallback = onPermissionCallback
+        val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
+        val fine = Manifest.permission.ACCESS_FINE_LOCATION
+        val status = ActivityCompat.checkSelfPermission(this, fine)
+        if (status != PackageManager.PERMISSION_GRANTED) {
+            val permissions = arrayOf(coarse, fine)
+            ActivityCompat.requestPermissions(this, permissions, AddFeatureActivity.PERMISSIONS_CODE)
+        } else
+            onPermissionCallback?.onPermissionGranted()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        var granted = requestCode == AddFeatureActivity.PERMISSIONS_CODE
+        for (result in grantResults)
+            if (result != PackageManager.PERMISSION_GRANTED)
+                granted = false
+
+        if (granted) {
+            onPermissionCallback?.onPermissionGranted()
+        } else
+            longToast(R.string.permission_denied)
     }
 
     protected fun updateSubtitle() {
