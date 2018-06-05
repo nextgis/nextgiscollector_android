@@ -221,6 +221,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             drawer.addDrawerListener(toggle)
             editAttributes.visibility = View.GONE
             editGeometry.visibility = View.GONE
+            addFeature.visibility = View.VISIBLE
         }
 
         var changes = hasChanges ?: false
@@ -254,8 +255,9 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     private fun setHighlight() {
-        binding.editAttributes.visibility = View.VISIBLE
-        binding.editGeometry.visibility = View.VISIBLE
+        add_feature.visibility = View.VISIBLE
+        edit_attributes.visibility = View.VISIBLE
+        edit_geometry.visibility = View.VISIBLE
         overlay.mode = EditLayerOverlay.MODE_HIGHLIGHT
         bottom_toolbar.visibility = View.GONE
         setMenu()
@@ -321,9 +323,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     private fun startEdit() {
-        binding.editAttributes.visibility = View.GONE
-        binding.editGeometry.visibility = View.GONE
-        binding.bottomToolbar.visibility = View.VISIBLE
+        add_feature.visibility = View.GONE
+        edit_attributes.visibility = View.GONE
+        edit_geometry.visibility = View.GONE
+        bottom_toolbar.visibility = View.VISIBLE
         toolbar.menu.clear()
         toolbar.inflateMenu(R.menu.edit_geometry)
 
@@ -473,8 +476,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             }
 
             overlay.selectedFeature?.let {
-                binding.editAttributes.visibility = View.VISIBLE
-                binding.editGeometry.visibility = View.VISIBLE
+                edit_attributes.visibility = View.VISIBLE
+                edit_geometry.visibility = View.VISIBLE
 
                 setTitle(getString(R.string.feature_n, it.id), selectedLayer?.name)
                 setToolbar()

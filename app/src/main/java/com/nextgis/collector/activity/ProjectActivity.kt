@@ -26,6 +26,7 @@ import android.accounts.Account
 import android.content.*
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AlertDialog
 import android.view.Menu
@@ -142,12 +143,12 @@ abstract class ProjectActivity : BaseActivity() {
                     accounts.add(account)
             }
 
-            for (account in accounts) {
-                val settings = Bundle()
-                settings.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
-                settings.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
-                ContentResolver.requestSync(account, app.authority, settings)
-            }
+//            for (account in accounts) {
+            val settings = Bundle()
+            settings.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
+            settings.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
+            ContentResolver.requestSync(accounts.first(), app.authority, settings)
+//            }
         }
 
         total = accounts.size
@@ -175,10 +176,18 @@ abstract class ProjectActivity : BaseActivity() {
                 .show()
     }
 
+    private fun showSnackbar(info: Int) {
+        val snackbar = Snackbar.make(findViewById(R.id.constraint), info, Snackbar.LENGTH_SHORT)
+        snackbar.show()
+    }
+
     protected inner class SyncReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == SyncAdapter.SYNC_START) {
-                findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
+                if (total > 0)
+                    findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
+                else
+                    showSnackbar(info = R.string.sync_changes)
             } else if (intent.action == SyncAdapter.SYNC_FINISH || intent.action == SyncAdapter.SYNC_CANCELED) {
                 if (intent.hasExtra(SyncAdapter.EXCEPTION))
                     toast(intent.getStringExtra(SyncAdapter.EXCEPTION))

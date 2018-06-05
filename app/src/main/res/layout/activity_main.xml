@@ -32,6 +32,7 @@
         tools:context=".activity.MapActivity">
 
         <android.support.constraint.ConstraintLayout
+            android:id="@+id/constraint"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 

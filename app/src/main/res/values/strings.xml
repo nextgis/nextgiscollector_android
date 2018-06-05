@@ -15,4 +15,5 @@
     <string name="add_feature">New feature for</string>
     <string name="all_synced">All changes are synced</string>
     <string name="not_synced">You have unsynced changes</string>
+    <string name="sync_changes">Changes are syncing</string>
 </resources>
