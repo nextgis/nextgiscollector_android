@@ -50,6 +50,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         binding = DataBindingUtil.setContentView(this, R.layout.activity_add_feature)
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
+        checkUpdates()
 
         var hasChanges = false
         val layers = ArrayList<NGWVectorLayerUI>()

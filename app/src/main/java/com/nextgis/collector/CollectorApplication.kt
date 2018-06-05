@@ -24,6 +24,10 @@ package com.nextgis.collector
 import com.nextgis.maplibui.GISApplication
 
 class CollectorApplication : GISApplication() {
+    companion object {
+        const val BASE_URL = "http://4ert.com/data"
+    }
+
     override fun getAuthority(): String {
         return BuildConfig.APPLICATION_ID
     }

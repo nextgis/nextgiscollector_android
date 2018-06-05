@@ -27,14 +27,17 @@ import android.preference.PreferenceManager
 import android.support.v7.app.AppCompatActivity
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
+import com.nextgis.collector.data.Project
 import com.nextgis.maplib.map.MapDrawable
 import com.nextgis.maplibui.mapui.MapViewOverlays
+import org.json.JSONObject
 
 abstract class BaseActivity : AppCompatActivity() {
     protected lateinit var app: CollectorApplication
     protected lateinit var mapView: MapViewOverlays
     protected lateinit var map: MapDrawable
     protected lateinit var preferences: SharedPreferences
+    protected lateinit var project: Project
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,5 +46,7 @@ abstract class BaseActivity : AppCompatActivity() {
         mapView = MapViewOverlays(this, app.map as MapDrawable)
         mapView.id = R.id.container
         map = mapView.map
+        val json = preferences.getString("project", "{}")
+        project = Project(JSONObject(json))
     }
 }

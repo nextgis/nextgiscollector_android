@@ -21,6 +21,7 @@
 
 package com.nextgis.collector.model
 
+import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.data.Project
 import com.nextgis.collector.data.RemoteLayer
 import com.nextgis.collector.data.RemoteLayerNGW
@@ -46,7 +47,7 @@ class ProjectModel {
 
     private fun loadList(): HttpResponse? {
         try {
-            val target = "http://4ert.com/data/bars.json"
+            val target = "${CollectorApplication.BASE_URL}/public"
             return NetworkUtil.get(target, null, null, false)
         } catch (e: Exception) {
         }
@@ -60,6 +61,7 @@ class ProjectModel {
             val jsonProject = json.getJSONObject(i)
             val title = jsonProject.optString("title")
             val screen = jsonProject.optString("screen")
+            val slug = jsonProject.optString("slug")
             val version = jsonProject.optInt("version")
             val description = jsonProject.optString("description")
             val jsonLayers = jsonProject.getJSONArray("layers")
@@ -89,7 +91,7 @@ class ProjectModel {
                 }
                 layer?.let { layers.add(it) }
             }
-            list.add(Project(title, description, screen, version, layers))
+            list.add(Project(title, description, slug, screen, version, layers))
         }
         return list
     }

@@ -31,107 +31,111 @@
         android:fitsSystemWindows="true"
         tools:context=".activity.MapActivity">
 
-        <android.support.constraint.ConstraintLayout
-            android:id="@+id/constraint"
+        <android.support.design.widget.CoordinatorLayout
+            android:id="@+id/coordinator"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <include layout="@layout/toolbar"/>
-
-            <FrameLayout
-                android:id="@+id/container"
+            <android.support.constraint.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/toolbar"
-                tools:background="@drawable/bk_tile"/>
+                android:layout_height="match_parent">
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/zoom_in"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                android:onClick="onClick"
-                android:src="@drawable/plus"
-                android:tint="@color/color_white"
-                app:fabSize="mini"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.45"/>
+                <include layout="@layout/toolbar"/>
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/zoom_out"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                android:onClick="onClick"
-                android:src="@drawable/minus"
-                android:tint="@color/color_white"
-                app:fabSize="mini"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/zoom_in"/>
+                <FrameLayout
+                    android:id="@+id/container"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/toolbar"
+                    tools:background="@drawable/bk_tile"/>
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/locate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                android:onClick="onClick"
-                android:src="@drawable/crosshairs_gps"
-                android:tint="@color/color_white"
-                app:fabSize="mini"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/zoom_out"/>
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/zoom_in"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:onClick="onClick"
+                    android:src="@drawable/plus"
+                    android:tint="@color/color_white"
+                    app:fabSize="mini"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.45"/>
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/edit_geometry"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                android:onClick="onClick"
-                android:src="@drawable/vector_polyline"
-                android:tint="@color/color_white"
-                android:visibility="gone"
-                app:fabSize="mini"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.45"/>
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/zoom_out"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:onClick="onClick"
+                    android:src="@drawable/minus"
+                    android:tint="@color/color_white"
+                    app:fabSize="mini"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/zoom_in"/>
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/edit_attributes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                android:onClick="onClick"
-                android:src="@drawable/playlist_edit"
-                android:tint="@color/color_white"
-                android:visibility="gone"
-                app:fabSize="mini"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/edit_geometry"/>
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/locate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:onClick="onClick"
+                    android:src="@drawable/crosshairs_gps"
+                    android:tint="@color/color_white"
+                    app:fabSize="mini"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/zoom_out"/>
+
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/edit_geometry"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:onClick="onClick"
+                    android:src="@drawable/vector_polyline"
+                    android:tint="@color/color_white"
+                    android:visibility="gone"
+                    app:fabSize="mini"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.45"/>
+
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/edit_attributes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:onClick="onClick"
+                    android:src="@drawable/playlist_edit"
+                    android:tint="@color/color_white"
+                    android:visibility="gone"
+                    app:fabSize="mini"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/edit_geometry"/>
+
+                <com.nextgis.maplibui.fragment.BottomToolbar
+                    android:id="@+id/bottom_toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:background="?attr/colorPrimary"
+                    android:theme="?ThemeOverlay.NextGIS.Toolbar"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:popupTheme="?ThemeOverlay.NextGIS.ToolbarPopup"/>
+            </android.support.constraint.ConstraintLayout>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/add_feature"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
                 android:layout_margin="16dp"
                 android:onClick="onClick"
-                android:src="@drawable/ic_add_white_48dp"
-                app:layout_constraintBottom_toTopOf="@id/bottom_toolbar"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <com.nextgis.maplibui.fragment.BottomToolbar
-                android:id="@+id/bottom_toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                android:theme="?ThemeOverlay.NextGIS.Toolbar"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:popupTheme="?ThemeOverlay.NextGIS.ToolbarPopup"/>
-        </android.support.constraint.ConstraintLayout>
+                android:src="@drawable/ic_add_white_48dp"/>
+        </android.support.design.widget.CoordinatorLayout>
 
         <android.support.constraint.ConstraintLayout
             android:id="@+id/navigation"

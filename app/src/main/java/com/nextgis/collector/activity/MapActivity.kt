@@ -89,6 +89,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
             container.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
         }
+        checkUpdates()
 
         val layers = ArrayList<Layer>()
         var hasChanges = false
@@ -214,7 +215,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     private fun setUpToolbar(hasChanges: Boolean? = null) {
-        title = preferences.getString("project", getString(R.string.app_name))
+        title = project.title
         val toggle = ActionBarDrawerToggle(this, binding.drawer, toolbar, R.string.layers_drawer_open, R.string.layers_drawer_close)
         binding.apply {
             drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)

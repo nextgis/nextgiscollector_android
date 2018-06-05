@@ -33,22 +33,24 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
+import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.maplib.api.INGWLayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
+import com.nextgis.maplib.util.NetworkUtil
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
-import com.pawegio.kandroid.accountManager
-import com.pawegio.kandroid.longToast
-import com.pawegio.kandroid.startActivity
-import com.pawegio.kandroid.toast
+import com.pawegio.kandroid.*
+import org.json.JSONException
+import org.json.JSONObject
 
 
 abstract class ProjectActivity : BaseActivity() {
     private var syncReceiver: SyncReceiver = SyncReceiver()
-    @Volatile private var total: Int = 0
+    @Volatile
+    private var total: Int = 0
     private var onPermissionCallback: OnPermissionCallback? = null
 
     interface OnPermissionCallback {
@@ -63,6 +65,14 @@ abstract class ProjectActivity : BaseActivity() {
         intentFilter.addAction(SyncAdapter.SYNC_FINISH)
         intentFilter.addAction(SyncAdapter.SYNC_CANCELED)
         registerReceiver(syncReceiver, intentFilter)
+    }
+
+    private fun showUpdateDialog(version: Int) {
+        AlertDialog.Builder(this).setTitle(R.string.update_available)
+                .setMessage(getString(R.string.update_for, project.title, project.version, version))
+                .setNegativeButton(R.string.no, null)
+                .setPositiveButton(R.string.yes, { _, _ -> toast("Update clicked") })
+                .show()
     }
 
     override fun onDestroy() {
@@ -177,8 +187,27 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     private fun showSnackbar(info: Int) {
-        val snackbar = Snackbar.make(findViewById(R.id.constraint), info, Snackbar.LENGTH_SHORT)
+        val snackbar = Snackbar.make(findViewById(R.id.coordinator), info, Snackbar.LENGTH_SHORT)
         snackbar.show()
+    }
+
+    protected fun checkUpdates() {
+        showSnackbar(R.string.check_update)
+        runAsync {
+            val slug = project.slug
+            val url = "${CollectorApplication.BASE_URL}/$slug"
+            val response = NetworkUtil.get(url, null, null, true)
+            val json = try {
+                JSONObject(response.responseBody)
+            } catch (e: Exception) {
+                JSONObject()
+            }
+            val version = json.optInt("version")
+            if (version > project.version)
+                runOnUiThread { showUpdateDialog(version) }
+            else
+                showSnackbar(R.string.no_updates)
+        }
     }
 
     protected inner class SyncReceiver : BroadcastReceiver() {

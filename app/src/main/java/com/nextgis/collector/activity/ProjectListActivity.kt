@@ -161,7 +161,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     }
 
     private fun open() {
-        if (preferences.getString("screen", "map") == "list")
+        if (project.screen == "list")
             startActivity<AddFeatureActivity>()
         else
             startActivity<MapActivity>()
@@ -189,7 +189,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
 
     private fun create(project: Project) {
         binding.projectModel?.isLoading?.set(true)
-        preferences.edit().putString("project", project.title).putString("screen", project.screen).apply()
+        preferences.edit().putString("project", project.json).apply()
         total = project.layers.size
         for (layer in project.layers) {
             var mapLayer: ILayer? = null

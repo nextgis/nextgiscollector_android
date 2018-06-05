@@ -27,15 +27,19 @@ import android.os.Parcel
 import com.nextgis.collector.BR
 import com.nextgis.collector.KParcelable
 import com.nextgis.collector.parcelableCreator
+import org.json.JSONObject
 
 
-class Project(title: String, description: String, screen: String, version: Int, val layers: ArrayList<RemoteLayer>) : BaseObservable(), KParcelable {
+class Project(val title: String, val description: String, val slug: String, val screen: String, version: Int, val layers: ArrayList<RemoteLayer>) : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readInt(), readArrayList(parcel))
+    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readString(), parcel.readInt(), readArrayList(parcel))
+
+    constructor(json: JSONObject) : this(json.optString("title"), "", json.optString("slug"), json.optString("screen"), json.optInt("version"), ArrayList())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
         dest.writeString(description)
+        dest.writeString(slug)
         dest.writeString(screen)
         dest.writeInt(version)
         dest.writeArray(layers.toArray())
@@ -54,30 +58,19 @@ class Project(title: String, description: String, screen: String, version: Int, 
     }
 
     @get:Bindable
-    var title: String = title
-        set(value) {
-            field = value
-            notifyPropertyChanged(BR.title)
-        }
-
-    @get:Bindable
-    var description: String = description
-        set(value) {
-            field = value
-            notifyPropertyChanged(BR.description)
-        }
-
-    @get:Bindable
-    var screen: String = screen
-        set(value) {
-            field = value
-//            notifyPropertyChanged(BR.screen)
-        }
-
-    @get:Bindable
     var version: Int = version
         set(value) {
             field = value
-//            notifyPropertyChanged(BR.version)
+            notifyPropertyChanged(BR.version)
+        }
+
+    val json: String?
+        get() {
+            val json = JSONObject()
+            json.put("title", title)
+            json.put("slug", slug)
+            json.put("screen", screen)
+            json.put("version", version)
+            return json.toString()
         }
 }
