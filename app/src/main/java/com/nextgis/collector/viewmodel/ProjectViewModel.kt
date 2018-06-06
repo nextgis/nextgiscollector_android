@@ -29,12 +29,17 @@ import com.nextgis.collector.model.ProjectModel
 
 
 class ProjectViewModel : ViewModel() {
-    var projectModel: ProjectModel = ProjectModel()
+    private var projectModel: ProjectModel = ProjectModel()
     var projects = MutableLiveData<ArrayList<Project>>()
     val selectedProject: ObservableField<Project> = ObservableField()
     val isLoading = ObservableField(true)
 
-    val onDataReadyCallback = object : ProjectModel.OnDataReadyCallback {
+    private val onDataReadyCallback = object : ProjectModel.OnDataReadyCallback {
+        override fun onProjectReady(project: Project?) {
+            isLoading.set(false)
+            selectedProject.set(project)
+        }
+
         override fun onDataReady(data: ArrayList<Project>) {
             isLoading.set(false)
             projects.postValue(data)
@@ -44,5 +49,10 @@ class ProjectViewModel : ViewModel() {
     fun load() {
         isLoading.set(true)
         projectModel.getProjects(onDataReadyCallback)
+    }
+
+    fun load(id: Int) {
+        isLoading.set(true)
+        projectModel.getProject(id, onDataReadyCallback)
     }
 }

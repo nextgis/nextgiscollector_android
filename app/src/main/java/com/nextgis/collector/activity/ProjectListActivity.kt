@@ -28,13 +28,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.databinding.DataBindingUtil
+import android.databinding.Observable
 import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.ProjectAdapter
-import com.nextgis.collector.data.*
+import com.nextgis.collector.data.Project
+import com.nextgis.collector.data.RemoteLayer
+import com.nextgis.collector.data.RemoteLayerNGW
+import com.nextgis.collector.data.RemoteLayerTMS
 import com.nextgis.collector.databinding.ActivityProjectListBinding
 import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
@@ -53,7 +57,8 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     private lateinit var binding: ActivityProjectListBinding
     private var projectAdapter = ProjectAdapter(arrayListOf(), this)
     private lateinit var receiver: BroadcastReceiver
-    @Volatile private var total = 0
+    @Volatile
+    private var total = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,6 +95,17 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         })
         projectModel.load()
 
+        projectModel.selectedProject.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
+            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+                projectModel.selectedProject.get()?.let {
+                    if (it.layers.size > 0)
+                        create(it)
+                    else
+                        runOnUiThread { toast(R.string.error_download_data) }
+                }
+            }
+        })
+
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val serviceStatus = intent.getShortExtra(LayerFillService.KEY_STATUS, 0)
@@ -113,7 +129,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                             val account = app.getAccount(ngwLayer.accountName)
 
                             val project = binding.projectModel?.selectedProject?.get()
-                            val remote = project?.layers?.first{ it.path == ngwLayer.path.name }
+                            val remote = project?.layers?.first { it.path == ngwLayer.path.name }
 
                             if (remote is RemoteLayerNGW) {
                                 ngwLayer.setIsEditable(remote.editable && remote.syncable)
@@ -152,11 +168,10 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     }
 
     override fun onItemClick(project: Project) {
-        binding.projectModel?.selectedProject?.set(project)
         AlertDialog.Builder(this).setTitle(R.string.join_project)
                 .setMessage(getString(R.string.join_message, project.title))
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes, { _, _ -> create(project) })
+                .setPositiveButton(R.string.yes, { _, _ -> binding.projectModel?.load(project.id) })
                 .show()
     }
 
@@ -182,6 +197,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                     } else
                         i++
                 }
+                project = it
                 open()
             }
         }

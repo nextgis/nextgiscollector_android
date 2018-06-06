@@ -194,8 +194,8 @@ abstract class ProjectActivity : BaseActivity() {
     protected fun checkUpdates() {
         showSnackbar(R.string.check_update)
         runAsync {
-            val slug = project.slug
-            val url = "${CollectorApplication.BASE_URL}/$slug"
+            val id = project.id
+            val url = "${CollectorApplication.BASE_URL}/$id"
             val response = NetworkUtil.get(url, null, null, true)
             val json = try {
                 JSONObject(response.responseBody)

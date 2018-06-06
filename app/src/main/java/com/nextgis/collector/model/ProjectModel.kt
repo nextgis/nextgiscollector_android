@@ -30,6 +30,7 @@ import com.nextgis.maplib.util.HttpResponse
 import com.nextgis.maplib.util.NetworkUtil
 import com.pawegio.kandroid.runAsync
 import org.json.JSONArray
+import org.json.JSONObject
 
 
 class ProjectModel {
@@ -42,6 +43,23 @@ class ProjectModel {
                     list = parseProjects(it.responseBody)
             }
             onDataReadyCallback.onDataReady(list)
+        }
+    }
+
+    fun getProject(id: Int, onDataReadyCallback: OnDataReadyCallback) {
+        runAsync {
+            var project: Project? = null
+            val target = "${CollectorApplication.BASE_URL}/$id"
+            val response = NetworkUtil.get(target, null, null, false)
+            response?.let {
+                val json = try {
+                    JSONObject(response.responseBody)
+                } catch (e: Exception) {
+                    JSONObject()
+                }
+                project = parseProject(json)
+            }
+            onDataReadyCallback.onProjectReady(project)
         }
     }
 
@@ -59,13 +77,22 @@ class ProjectModel {
         val json = JSONArray(data)
         for (i in 0 until json.length()) {
             val jsonProject = json.getJSONObject(i)
-            val title = jsonProject.optString("title")
-            val screen = jsonProject.optString("screen")
-            val slug = jsonProject.optString("slug")
-            val version = jsonProject.optInt("version")
-            val description = jsonProject.optString("description")
-            val jsonLayers = jsonProject.getJSONArray("layers")
-            val layers = ArrayList<RemoteLayer>()
+            val project = parseProject(jsonProject)
+            list.add(project)
+        }
+        return list
+    }
+
+    private fun parseProject(jsonProject: JSONObject): Project {
+        val title = jsonProject.optString("title")
+        val screen = jsonProject.optString("screen")
+        val id = jsonProject.optInt("id")
+        val version = jsonProject.optInt("version")
+        val description = jsonProject.optString("description")
+
+        val jsonLayers = jsonProject.optJSONArray("layers")
+        val layers = ArrayList<RemoteLayer>()
+        jsonLayers?.let {
             for (j in 0 until jsonLayers.length()) {
                 val jsonLayer = jsonLayers.getJSONObject(j)
                 var layer: RemoteLayer? = null
@@ -91,12 +118,13 @@ class ProjectModel {
                 }
                 layer?.let { layers.add(it) }
             }
-            list.add(Project(title, description, slug, screen, version, layers))
         }
-        return list
+
+        return Project(id, title, description, screen, version, layers)
     }
 
     interface OnDataReadyCallback {
         fun onDataReady(data: ArrayList<Project>)
+        fun onProjectReady(project: Project?)
     }
 }
