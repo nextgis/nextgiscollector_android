@@ -34,9 +34,21 @@ import org.json.JSONObject
 
 
 class ProjectModel {
+    companion object {
+        fun getResponse(path: String): HttpResponse? {
+            try {
+                val target = "${CollectorApplication.BASE_URL}/$path"
+                return NetworkUtil.get(target, null, null, false)
+            } catch (e: Exception) {
+            }
+            return null
+        }
+
+    }
+
     fun getProjects(onDataReadyCallback: OnDataReadyCallback) {
         runAsync {
-            val response = loadList()
+            val response = getResponse("public")
             var list = ArrayList<Project>()
             response?.let {
                 if (it.isOk)
@@ -49,8 +61,7 @@ class ProjectModel {
     fun getProject(id: Int, onDataReadyCallback: OnDataReadyCallback) {
         runAsync {
             var project: Project? = null
-            val target = "${CollectorApplication.BASE_URL}/$id"
-            val response = NetworkUtil.get(target, null, null, false)
+            val response = getResponse("$id")
             response?.let {
                 val json = try {
                     JSONObject(response.responseBody)
@@ -61,15 +72,6 @@ class ProjectModel {
             }
             onDataReadyCallback.onProjectReady(project)
         }
-    }
-
-    private fun loadList(): HttpResponse? {
-        try {
-            val target = "${CollectorApplication.BASE_URL}/public"
-            return NetworkUtil.get(target, null, null, false)
-        } catch (e: Exception) {
-        }
-        return null
     }
 
     private fun parseProjects(data: String): ArrayList<Project> {

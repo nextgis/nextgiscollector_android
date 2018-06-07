@@ -35,6 +35,7 @@ import android.view.View
 import android.widget.FrameLayout
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
+import com.nextgis.collector.model.ProjectModel
 import com.nextgis.maplib.api.INGWLayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapContentProviderHelper
@@ -43,7 +44,6 @@ import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.NetworkUtil
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.pawegio.kandroid.*
-import org.json.JSONException
 import org.json.JSONObject
 
 
@@ -195,18 +195,23 @@ abstract class ProjectActivity : BaseActivity() {
         showSnackbar(R.string.check_update)
         runAsync {
             val id = project.id
-            val url = "${CollectorApplication.BASE_URL}/$id"
-            val response = NetworkUtil.get(url, null, null, true)
-            val json = try {
-                JSONObject(response.responseBody)
-            } catch (e: Exception) {
-                JSONObject()
+            val response = ProjectModel.getResponse("$id")
+            var json = JSONObject()
+            response?.let {
+                try {
+                    json = JSONObject(response.responseBody)
+                } catch (e: Exception) {
+                }
             }
-            val version = json.optInt("version")
-            if (version > project.version)
-                runOnUiThread { showUpdateDialog(version) }
-            else
-                showSnackbar(R.string.no_updates)
+
+            runOnUiThread {
+                val version = json.optInt("version")
+                when {
+                    version > project.version -> showUpdateDialog(version)
+                    version == 0 -> toast(R.string.error_network_unavailable)
+                    else -> toast(R.string.no_updates)
+                }
+            }
         }
     }
 
