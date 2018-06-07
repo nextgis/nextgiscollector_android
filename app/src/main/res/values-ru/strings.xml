@@ -1,0 +1,44 @@
+<!--
+  ~ Project:  NextGIS Collector
+  ~ Purpose:  Light mobile GIS for collecting data
+  ~ Author:   Stanislav Petriakov, becomeglory@gmail.com
+  ~ **********************************************************************
+  ~ Copyright (c) 2018 NextGIS, info@nextgis.com
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <string name="app_name">NextGIS Collector</string>
+    <string name="join_project">Начать проект</string>
+    <string name="join_message">Вы хотите присоединиться к проекту \"%1$s\"?</string>
+    <string name="change_project">Сменить проект</string>
+    <string name="change_message">Вы уверены что хотите сменить проект? Все текущие данные и карта будут удалены.</string>
+    <string name="intro">Введение</string>
+    <string name="intro_title1">Собирайте данные с легкостью</string>
+    <string name="intro_title2">Последнее напутствие</string>
+    <string name="intro_description1">Просто присоединитесь к желаемому проекту и начните собирать данные. NextGIS Collector создаст и загрузит все необходимые слои.</string>
+    <string name="intro_description2">Программе требуется следующее разрешение чтобы создать аккаунт в облаке и сохранять данные своевременно.</string>
+    <string name="permission_denied">Разрешение не предоставлено</string>
+    <string name="by_gps">По GPS</string>
+    <string name="by_hand">На карте</string>
+    <string name="add_feature">Добавить объект</string>
+    <string name="all_synced">Все изменения сохранены</string>
+    <string name="not_synced">Есть несохраненные изменения</string>
+    <string name="sync_changes">Изменения сохраняются</string>
+    <string name="check_update">Проверка обновлений</string>
+    <string name="no_updates">Обновлений не найдено</string>
+    <string name="update_available">Доступно обновление</string>
+    <string name="update_for">Для проекта \"%1$s\" найдено обновление с версии %2$d до %3$d. Хотите обновить его сейчас?</string>
+</resources>
