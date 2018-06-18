@@ -43,6 +43,7 @@ import com.nextgis.collector.databinding.ActivityProjectListBinding
 import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
@@ -196,6 +197,14 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                         i = 0
                     } else
                         i++
+
+                    if (layer is VectorLayer) {
+                        val vector = it.layers[id] as RemoteLayerNGW
+                        if (vector.styleable) {
+                            layer.setRenderer(vector.renderer)
+                            vector.style = ""
+                        }
+                    }
                 }
                 project = it
                 open()

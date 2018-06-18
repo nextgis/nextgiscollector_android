@@ -115,7 +115,9 @@ class ProjectModel {
                         val password = if (jsonLayer.isNull("password")) null else jsonLayer.optString("password")
                         val editable = jsonLayer.optBoolean("editable")
                         val syncable = jsonLayer.optBoolean("syncable")
-                        layer = RemoteLayerNGW(layerTitle, type, url, visible, minZoom, maxZoom, login, password, editable, syncable)
+                        val style = jsonLayer.optJSONObject("style")
+                        val json = style?.toString() ?: ""
+                        layer = RemoteLayerNGW(layerTitle, type, url, visible, minZoom, maxZoom, login, password, editable, syncable, json)
                     }
                 }
                 layer?.let { layers.add(it) }

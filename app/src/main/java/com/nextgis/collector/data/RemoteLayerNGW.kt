@@ -25,11 +25,13 @@ import android.os.Parcel
 import com.nextgis.collector.parcelableCreator
 import com.nextgis.collector.readBoolean
 import com.nextgis.collector.writeBoolean
+import org.json.JSONObject
 
 
-class RemoteLayerNGW(title: String, type: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val login: String, val password: String?, val editable: Boolean, val syncable: Boolean) : RemoteLayer(title, type, url, visible, minZoom, maxZoom) {
+class RemoteLayerNGW(title: String, type: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val login: String, val password: String?, val editable: Boolean, val syncable: Boolean, var style: String = "")
+    : RemoteLayer(title, type, url, visible, minZoom, maxZoom) {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readBoolean())
+    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readBoolean(), parcel.readString())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         super.writeToParcel(dest, flags)
@@ -37,10 +39,24 @@ class RemoteLayerNGW(title: String, type: String, url: String, visible: Boolean,
         dest.writeString(password)
         dest.writeBoolean(editable)
         dest.writeBoolean(syncable)
+        dest.writeString(style)
     }
 
     companion object {
         @JvmField
         val CREATOR = parcelableCreator(::RemoteLayerNGW)
     }
+
+    val styleable: Boolean
+        get() {
+            return style.isNotBlank()
+        }
+
+    val renderer: JSONObject
+        get() {
+            val json = JSONObject("{\"name\":\"SimpleFeatureRenderer\"}")
+            val style = JSONObject(style)
+            json.put("style", style)
+            return json
+        }
 }
