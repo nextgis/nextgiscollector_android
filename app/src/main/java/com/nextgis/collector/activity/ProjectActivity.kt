@@ -33,7 +33,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
-import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
 import com.nextgis.maplib.api.INGWLayer
@@ -41,7 +40,6 @@ import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
-import com.nextgis.maplib.util.NetworkUtil
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.pawegio.kandroid.*
 import org.json.JSONObject
@@ -97,16 +95,21 @@ abstract class ProjectActivity : BaseActivity() {
         return true
     }
 
-    protected fun requestForGPS(onPermissionCallback: OnPermissionCallback? = null) {
+    protected fun requestForPermissions(onPermissionCallback: OnPermissionCallback, memory: Boolean) {
         this.onPermissionCallback = onPermissionCallback
         val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
         val fine = Manifest.permission.ACCESS_FINE_LOCATION
-        val status = ActivityCompat.checkSelfPermission(this, fine)
-        if (status != PackageManager.PERMISSION_GRANTED) {
-            val permissions = arrayOf(coarse, fine)
+        val photo = Manifest.permission.READ_EXTERNAL_STORAGE
+        val geoStatus = ActivityCompat.checkSelfPermission(this, fine)
+        val memStatus = ActivityCompat.checkSelfPermission(this, photo)
+        if (geoStatus != PackageManager.PERMISSION_GRANTED || memStatus != PackageManager.PERMISSION_GRANTED && memory) {
+            val permissions: Array<String> = if (memory)
+                arrayOf(coarse, fine, photo)
+            else
+                arrayOf(coarse, fine)
             ActivityCompat.requestPermissions(this, permissions, AddFeatureActivity.PERMISSIONS_CODE)
         } else
-            onPermissionCallback?.onPermissionGranted()
+            onPermissionCallback.onPermissionGranted()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

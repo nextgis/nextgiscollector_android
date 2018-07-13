@@ -89,7 +89,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 
     override fun onGpsClick(layer: NGWVectorLayerUI) {
         this.layer = layer
-        requestForGPS(this)
+        requestForPermissions(this, true)
     }
 
     override fun onPermissionGranted() {

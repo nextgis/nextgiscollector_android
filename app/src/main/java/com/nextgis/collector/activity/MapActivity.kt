@@ -337,7 +337,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             if (result)
                 historyOverlay.saveToHistory(overlay.selectedFeature)
             else
-                requestForGPS(this)
+                requestForPermissions(this, true)
             result
         }
 
@@ -360,7 +360,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     private fun locateCurrentPosition() {
-        requestForGPS(this)
+        requestForPermissions(this, false)
     }
 
     override fun onPermissionGranted() {
