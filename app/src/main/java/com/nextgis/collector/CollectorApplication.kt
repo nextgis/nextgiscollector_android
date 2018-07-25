@@ -26,6 +26,7 @@ import com.nextgis.maplibui.GISApplication
 class CollectorApplication : GISApplication() {
     companion object {
         const val BASE_URL = "http://4ert.com/data"
+        const val TREE = "resource.tree"
     }
 
     override fun getAuthority(): String {

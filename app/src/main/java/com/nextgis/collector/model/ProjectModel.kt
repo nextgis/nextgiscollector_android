@@ -22,10 +22,7 @@
 package com.nextgis.collector.model
 
 import com.nextgis.collector.CollectorApplication
-import com.nextgis.collector.data.Project
-import com.nextgis.collector.data.RemoteLayer
-import com.nextgis.collector.data.RemoteLayerNGW
-import com.nextgis.collector.data.RemoteLayerTMS
+import com.nextgis.collector.data.*
 import com.nextgis.maplib.util.HttpResponse
 import com.nextgis.maplib.util.NetworkUtil
 import com.pawegio.kandroid.runAsync
@@ -91,12 +88,45 @@ class ProjectModel {
         val id = jsonProject.optInt("id")
         val version = jsonProject.optInt("version")
         val description = jsonProject.optString("description")
-
         val jsonLayers = jsonProject.optJSONArray("layers")
-        val layers = ArrayList<RemoteLayer>()
-        jsonLayers?.let {
-            for (j in 0 until jsonLayers.length()) {
-                val jsonLayer = jsonLayers.getJSONObject(j)
+        val layers = parseLayers(jsonLayers)
+        val tree = parseTree(jsonLayers)
+        return Project(id, title, description, screen, version, layers, tree.json)
+    }
+
+    private fun parseResources(json: JSONArray?): ArrayList<Resource> {
+        val resources = ArrayList<Resource>()
+        json?.let {
+            for (j in 0 until json.length()) {
+                val jsonResource = json.getJSONObject(j)
+                val type = jsonResource.optString("type")
+                val title = jsonResource.optString("title")
+                val url = jsonResource.optString("url")
+                val layer = RemoteLayer(title, type, url, true, 0f, 0f)
+                val resource = Resource(title, type, layer.path, arrayListOf())
+                when (type) {
+                    "dir" -> {
+                        val childLayers = jsonResource.optJSONArray("layers")
+                        resource.resources.addAll(parseResources(childLayers))
+                    }
+                }
+                resources.add(resource)
+            }
+        }
+        return resources
+    }
+
+    private fun parseTree(json: JSONArray?): ResourceTree {
+        val tree = ResourceTree(arrayListOf())
+        tree.resources.addAll(parseResources(json))
+        return tree
+    }
+
+    private fun parseLayers(json: JSONArray?): ArrayList<RemoteLayer> {
+        val jsonLayers = ArrayList<RemoteLayer>()
+        json?.let {
+            for (j in 0 until json.length()) {
+                val jsonLayer = json.getJSONObject(j)
                 var layer: RemoteLayer? = null
                 val type = jsonLayer.optString("type")
                 val layerTitle = jsonLayer.optString("title")
@@ -116,15 +146,21 @@ class ProjectModel {
                         val editable = jsonLayer.optBoolean("editable")
                         val syncable = jsonLayer.optBoolean("syncable")
                         val style = jsonLayer.optJSONObject("style")
-                        val json = style?.toString() ?: ""
-                        layer = RemoteLayerNGW(layerTitle, type, url, visible, minZoom, maxZoom, login, password, editable, syncable, json)
+                        val jsonStyle = style?.toString() ?: ""
+                        layer = RemoteLayerNGW(layerTitle, type, url, visible, minZoom, maxZoom, login, password, editable, syncable, jsonStyle)
+                    }
+                    "dir" -> {
+                        val childLayers = jsonLayer.optJSONArray("layers")
+                        val parsed = parseLayers(childLayers)
+                        jsonLayers.addAll(parsed)
                     }
                 }
-                layer?.let { layers.add(it) }
+                layer?.let {
+                    jsonLayers.add(it)
+                }
             }
         }
-
-        return Project(id, title, description, screen, version, layers)
+        return jsonLayers
     }
 
     interface OnDataReadyCallback {

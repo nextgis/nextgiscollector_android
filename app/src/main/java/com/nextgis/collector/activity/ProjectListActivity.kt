@@ -33,6 +33,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
+import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.ProjectAdapter
 import com.nextgis.collector.data.Project
@@ -45,6 +46,7 @@ import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
+import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
@@ -53,6 +55,7 @@ import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
+import java.io.File
 
 class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     private lateinit var binding: ActivityProjectListBinding
@@ -172,7 +175,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         AlertDialog.Builder(this).setTitle(R.string.join_project)
                 .setMessage(getString(R.string.join_message, project.title))
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes, { _, _ -> binding.projectModel?.load(project.id) })
+                .setPositiveButton(R.string.yes) { _, _ -> binding.projectModel?.load(project.id) }
                 .show()
     }
 
@@ -215,6 +218,9 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
     private fun create(project: Project) {
         binding.projectModel?.isLoading?.set(true)
         preferences.edit().putString("project", project.json).apply()
+        val base = getExternalFilesDir(null) ?: filesDir
+        val file = File(base, CollectorApplication.TREE)
+        FileUtil.writeToFile(file, project.tree)
         total = project.layers.size
         for (layer in project.layers) {
             var mapLayer: ILayer? = null

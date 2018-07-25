@@ -30,11 +30,13 @@ import com.nextgis.collector.parcelableCreator
 import org.json.JSONObject
 
 
-class Project(val id: Int, val title: String, val description: String, val screen: String, version: Int, val layers: ArrayList<RemoteLayer>) : BaseObservable(), KParcelable {
+class Project(val id: Int, val title: String, val description: String, val screen: String, version: Int, val layers: ArrayList<RemoteLayer>, val tree: String) :
+        BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readString(), parcel.readString(), parcel.readString(), parcel.readInt(), readArrayList(parcel))
+    private constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readString(), parcel.readString(), parcel.readString(), parcel.readInt(),
+            readArrayList(parcel), parcel.readString())
 
-    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), "", json.optString("screen"), json.optInt("version"), ArrayList())
+    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), "", json.optString("screen"), json.optInt("version"), ArrayList(), "")
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
@@ -43,6 +45,7 @@ class Project(val id: Int, val title: String, val description: String, val scree
         dest.writeString(screen)
         dest.writeInt(version)
         dest.writeArray(layers.toArray())
+        dest.writeString(tree)
     }
 
     companion object {
