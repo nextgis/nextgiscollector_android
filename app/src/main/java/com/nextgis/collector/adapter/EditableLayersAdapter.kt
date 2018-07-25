@@ -21,9 +21,11 @@
 
 package com.nextgis.collector.adapter
 
+import android.databinding.ViewDataBinding
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import com.nextgis.collector.databinding.ItemDirectoryBinding
 import com.nextgis.collector.databinding.ItemEditableLayerBinding
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 
@@ -32,8 +34,17 @@ class EditableLayersAdapter(private var items: List<NGWVectorLayerUI>,
                             private var listener: OnItemClickListener) : RecyclerView.Adapter<EditableLayersAdapter.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
-        val binding = ItemEditableLayerBinding.inflate(layoutInflater, parent, false)
-        return ViewHolder(binding)
+        return if (viewType == 0) {
+            val binding = ItemEditableLayerBinding.inflate(layoutInflater, parent, false)
+            LayerViewHolder(binding)
+        } else {
+            val binding = ItemDirectoryBinding.inflate(layoutInflater, parent, false)
+            DirViewHolder(binding)
+        }
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (items[position].isValid) 0 else 1
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.bind(items[position], listener)
@@ -43,13 +54,28 @@ class EditableLayersAdapter(private var items: List<NGWVectorLayerUI>,
     interface OnItemClickListener {
         fun onGpsClick(layer: NGWVectorLayerUI)
         fun onMapClick(layer: NGWVectorLayerUI)
+        fun onDirClick(id: String)
     }
 
-    class ViewHolder(private var binding: ItemEditableLayerBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(repo: NGWVectorLayerUI, listener: OnItemClickListener?) {
+    open class ViewHolder(binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
+        open fun bind(repo: NGWVectorLayerUI, listener: OnItemClickListener?) {
+
+        }
+    }
+
+    class LayerViewHolder(private var binding: ItemEditableLayerBinding) : ViewHolder(binding) {
+        override fun bind(repo: NGWVectorLayerUI, listener: OnItemClickListener?) {
             binding.layer = repo
             binding.byGps.setOnClickListener { listener?.onGpsClick(repo) }
             binding.byHand.setOnClickListener { listener?.onMapClick(repo) }
+            binding.executePendingBindings()
+        }
+    }
+
+    class DirViewHolder(private var binding: ItemDirectoryBinding) : ViewHolder(binding) {
+        override fun bind(repo: NGWVectorLayerUI, listener: OnItemClickListener?) {
+            binding.layer = repo
+            binding.root.setOnClickListener { listener?.onDirClick(repo.path.name) }
             binding.executePendingBindings()
         }
     }

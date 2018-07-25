@@ -101,7 +101,7 @@ class ProjectModel {
                 val jsonResource = json.getJSONObject(j)
                 val type = jsonResource.optString("type")
                 val title = jsonResource.optString("title")
-                val url = jsonResource.optString("url")
+                val url = jsonResource.optString("url", System.currentTimeMillis().toString())
                 val layer = RemoteLayer(title, type, url, true, 0f, 0f)
                 val resource = Resource(title, type, layer.path, arrayListOf())
                 when (type) {

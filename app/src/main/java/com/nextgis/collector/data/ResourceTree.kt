@@ -27,7 +27,34 @@ import org.json.JSONObject
 
 open class ResourceTree(val resources: ArrayList<Resource>) {
 
-    private fun parseJson(json: JSONArray) {
+    fun getLevel(id: String): ArrayList<Resource> {
+        if (id.isBlank())
+            return resources
+
+        return findById(id, resources)
+    }
+
+    private fun findById(id: String, array: ArrayList<Resource>): ArrayList<Resource> {
+        for (resource in array) {
+            if (resource.id == id)
+                return resource.resources
+            if (resource.type == "dir") {
+                val children = findById(id, resource.resources)
+                if (children.isNotEmpty())
+                    return children
+            }
+        }
+        return arrayListOf()
+    }
+
+    private fun iterateOver(id: String, array: ArrayList<Resource>) {
+        for (resource in array)
+            if (resource.type == "dir")
+                findById(id, resource.resources)
+    }
+
+    fun parseJson(string: String) {
+        val json = JSONArray(string)
         resources.addAll(parseResources(json))
     }
 
@@ -55,10 +82,8 @@ open class ResourceTree(val resources: ArrayList<Resource>) {
     private fun getChild(resource: Resource): JSONObject {
         val json = JSONObject()
         json.put("type", resource.type)
+        json.put("id", resource.id)
         when (resource.type) {
-            "tms", "ngrc", "ngw", "ngfp" -> {
-                json.put("id", resource.id)
-            }
             "dir" -> {
                 json.put("title", resource.title)
                 val children = JSONArray()
