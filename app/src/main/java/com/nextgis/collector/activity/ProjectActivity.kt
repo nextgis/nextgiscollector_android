@@ -29,6 +29,7 @@ import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AlertDialog
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -39,6 +40,7 @@ import com.nextgis.maplib.api.INGWLayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.pawegio.kandroid.*
@@ -46,9 +48,10 @@ import org.json.JSONObject
 
 
 abstract class ProjectActivity : BaseActivity() {
-    private var syncReceiver: SyncReceiver = SyncReceiver()
     @Volatile
     private var total: Int = 0
+    private var update = false
+    private var syncReceiver: SyncReceiver = SyncReceiver()
     private var onPermissionCallback: OnPermissionCallback? = null
 
     interface OnPermissionCallback {
@@ -69,8 +72,18 @@ abstract class ProjectActivity : BaseActivity() {
         AlertDialog.Builder(this).setTitle(R.string.update_available)
                 .setMessage(getString(R.string.update_for, project.title, project.version, version))
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes, { _, _ -> toast("Update clicked") })
+                .setPositiveButton(R.string.yes) { _, _ -> update() }
                 .show()
+    }
+
+    private fun update() {
+        if (updateSubtitle()) {
+            update = true
+            sync()
+        } else {
+            update = false
+            change(project.id)
+        }
     }
 
     override fun onDestroy() {
@@ -126,17 +139,18 @@ abstract class ProjectActivity : BaseActivity() {
             longToast(R.string.permission_denied)
     }
 
-    protected fun updateSubtitle() {
+    private fun updateSubtitle(): Boolean {
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
             if (layer is NGWVectorLayer) {
                 val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
                 if (changesCount > 0) {
                     setSubtitle(true)
-                    break
+                    return true
                 }
             }
         }
+        return false
     }
 
     protected fun setSubtitle(hasChanges: Boolean) {
@@ -167,7 +181,7 @@ abstract class ProjectActivity : BaseActivity() {
         total = accounts.size
     }
 
-    private fun change() {
+    private fun change(id: Int = -1) {
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
             if (layer is NGWVectorLayer) {
@@ -177,15 +191,17 @@ abstract class ProjectActivity : BaseActivity() {
         }
 
         map.delete()
-        startActivity<ProjectListActivity>()
         preferences.edit().remove("project").apply()
+        val intent = IntentFor<ProjectListActivity>(this)
+        intent.putExtra("project", id)
+        startActivity(intent)
     }
 
     private fun ask() {
         AlertDialog.Builder(this).setTitle(R.string.change_project)
                 .setMessage(R.string.change_message)
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes, { _, _ -> change() })
+                .setPositiveButton(R.string.yes) { _, _ -> change() }
                 .show()
     }
 
@@ -220,6 +236,7 @@ abstract class ProjectActivity : BaseActivity() {
 
     protected inner class SyncReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            Log.d(Constants.TAG, "Got: ${intent.action}")
             if (intent.action == SyncAdapter.SYNC_START) {
                 if (total > 0)
                     findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
@@ -229,11 +246,14 @@ abstract class ProjectActivity : BaseActivity() {
                 if (intent.hasExtra(SyncAdapter.EXCEPTION))
                     toast(intent.getStringExtra(SyncAdapter.EXCEPTION))
 
-                total--
-                if (total <= 0) {
+                total = 0//--
+//                if (total <= 0) {
+                findViewById<FrameLayout>(R.id.overlay).visibility = View.GONE
+                if (update)
+                    update()
+                else
                     updateSubtitle()
-                    findViewById<FrameLayout>(R.id.overlay).visibility = View.GONE
-                }
+//                }
             }
         }
     }

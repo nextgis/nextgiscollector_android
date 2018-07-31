@@ -97,7 +97,6 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         projectModel.projects.observe(this, Observer {
             it?.let { projectAdapter.replaceData(it) }
         })
-        projectModel.load()
 
         projectModel.selectedProject.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
             override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
@@ -153,6 +152,12 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
             }
         }
 
+        val id = intent.extras.getInt("project", -1)
+        if (id >= 0)
+            load(id)
+        else
+            projectModel.load()
+
 //         Example of a call to a native method
 //        sample_text.text = stringFromJNI()
     }
@@ -175,8 +180,12 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         AlertDialog.Builder(this).setTitle(R.string.join_project)
                 .setMessage(getString(R.string.join_message, project.title))
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes) { _, _ -> binding.projectModel?.load(project.id) }
+                .setPositiveButton(R.string.yes) { _, _ -> load(project.id) }
                 .show()
+    }
+
+    private fun load(id: Int) {
+        binding.projectModel?.load(id)
     }
 
     private fun open() {
