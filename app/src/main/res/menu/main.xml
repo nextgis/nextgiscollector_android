@@ -27,7 +27,25 @@
         android:id="@+id/menu_sync"
         android:icon="@drawable/ic_cloud_sync"
         android:title="@string/sync"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="always"/>
+
+    <item
+        android:icon="@drawable/ic_walk"
+        android:title="@string/tracks"
+        app:showAsAction="always">
+
+        <menu>
+            <item
+                android:id="@+id/menu_track"
+                android:title="@string/start"
+                app:showAsAction="ifRoom"/>
+
+            <item
+                android:id="@+id/menu_track_list"
+                android:title="@string/track_list"
+                app:showAsAction="ifRoom"/>
+        </menu>
+    </item>
 
     <item
         android:id="@+id/menu_change_project"

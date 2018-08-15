@@ -42,7 +42,12 @@ import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
+import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
+import com.nextgis.maplibui.service.TrackerService
+import com.nextgis.maplibui.service.TrackerService.hasUnfinishedTracks
+import com.nextgis.maplibui.service.TrackerService.isTrackerServiceRunning
+import com.nextgis.maplibui.util.ConstantsUI
 import com.pawegio.kandroid.*
 import org.json.JSONObject
 
@@ -66,6 +71,11 @@ abstract class ProjectActivity : BaseActivity() {
         intentFilter.addAction(SyncAdapter.SYNC_FINISH)
         intentFilter.addAction(SyncAdapter.SYNC_CANCELED)
         registerReceiver(syncReceiver, intentFilter)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        invalidateOptionsMenu()
     }
 
     private fun showUpdateDialog(version: Int) {
@@ -99,13 +109,43 @@ abstract class ProjectActivity : BaseActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        setTracksTitle(menu?.findItem(R.id.menu_track))
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId) {
             R.id.menu_sync -> sync()
             R.id.menu_change_project -> ask()
+            R.id.menu_track -> controlTrack(item)
+            R.id.menu_track_list -> startActivity<TracksActivity>()
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    private fun controlTrack(item: MenuItem) {
+        val trackerService = IntentFor<TrackerService>(this)
+        trackerService.putExtra(ConstantsUI.TARGET_CLASS, this.javaClass.name)
+        val unfinished = setTracksTitle(item)
+
+        if (isTrackerServiceRunning(this)) {
+            trackerService.action = TrackerService.ACTION_STOP
+        } else if (unfinished) {
+            trackerService.action = TrackerService.ACTION_STOP
+            startService(trackerService)
+            trackerService.action = null
+        }
+
+        startService(trackerService)
+        setTracksTitle(item)
+    }
+
+    private fun setTracksTitle(item: MenuItem?): Boolean {
+        val unfinished = hasUnfinishedTracks(this)
+        item?.setTitle(if (unfinished) R.string.tracks_stop else R.string.start)
+        return unfinished
     }
 
     protected fun requestForPermissions(onPermissionCallback: OnPermissionCallback, memory: Boolean) {

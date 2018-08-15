@@ -34,7 +34,7 @@
     <string name="by_gps">По GPS</string>
     <string name="by_hand">На карте</string>
     <string name="add_feature">Добавить объект</string>
-    <string name="all_synced">Все изменения сохранены</string>
+    <string name="all_synced">Изменения сохранены</string>
     <string name="not_synced">Есть несохраненные изменения</string>
     <string name="sync_changes">Изменения сохраняются</string>
     <string name="check_update">Проверка обновлений</string>

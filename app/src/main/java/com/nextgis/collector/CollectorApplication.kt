@@ -21,7 +21,12 @@
 
 package com.nextgis.collector
 
+import com.nextgis.maplib.map.MapBase
 import com.nextgis.maplibui.GISApplication
+import com.nextgis.maplibui.mapui.TrackLayerUI
+import com.nextgis.maplib.map.LayerGroup
+import com.nextgis.maplib.api.ILayer
+import com.nextgis.maplib.util.Constants
 
 class CollectorApplication : GISApplication() {
     companion object {
@@ -47,6 +52,25 @@ class CollectorApplication : GISApplication() {
 
     override fun getAccountsType(): String {
         return "com.nextgiscollector.account"//Constants.NGW_ACCOUNT_TYPE
+    }
+
+    override fun getMap(): MapBase {
+        val map = super.getMap()
+        checkTracksLayerExistance()
+        return map
+    }
+
+    protected fun checkTracksLayerExistance() {
+        val tracks = ArrayList<ILayer>()
+        LayerGroup.getLayersByType(mMap, Constants.LAYERTYPE_TRACKS, tracks)
+        if (tracks.isEmpty()) {
+            val trackLayerName = getString(R.string.tracks)
+            val trackLayer = TrackLayerUI(applicationContext, mMap.createLayerStorage("tracks"))
+            trackLayer.name = trackLayerName
+            trackLayer.isVisible = true
+            mMap.addLayer(trackLayer)
+            mMap.save()
+        }
     }
 
 }

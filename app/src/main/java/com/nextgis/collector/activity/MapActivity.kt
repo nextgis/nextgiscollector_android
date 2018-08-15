@@ -56,6 +56,7 @@ import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.api.MapViewEventListener
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.nextgis.maplibui.overlay.CurrentLocationOverlay
+import com.nextgis.maplibui.overlay.CurrentTrackOverlay
 import com.nextgis.maplibui.overlay.EditLayerOverlay
 import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.util.ConstantsUI
@@ -76,6 +77,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     private lateinit var overlay: EditLayerOverlay
     private lateinit var historyOverlay: UndoRedoOverlay
     private lateinit var locationOverlay: CurrentLocationOverlay
+    private lateinit var trackOverlay: CurrentTrackOverlay
     private var selectedLayer: NGWVectorLayerUI? = null
     private var selectedFeature: Feature? = null
     private var mNeedSave = false
@@ -114,10 +116,12 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         locationOverlay.setStandingMarker(R.mipmap.ic_location_standing)
         locationOverlay.setMovingMarker(R.mipmap.ic_location_moving)
         locationOverlay.setAutopanningEnabled(true)
+        trackOverlay = CurrentTrackOverlay(this, mapView)
 
         mapView.addOverlay(overlay)
         mapView.addOverlay(historyOverlay)
         mapView.addOverlay(locationOverlay)
+        mapView.addOverlay(trackOverlay)
 
         setSupportActionBar(toolbar)
         setUpToolbar(hasChanges)
