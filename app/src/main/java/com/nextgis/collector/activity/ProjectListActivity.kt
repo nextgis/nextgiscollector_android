@@ -94,8 +94,8 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
 
         binding.projects.adapter = projectAdapter
         binding.projects.layoutManager = LinearLayoutManager(this)
-        projectModel.projects.observe(this, Observer {
-            it?.let { projectAdapter.replaceData(it) }
+        projectModel.projects.observe(this, Observer { projects ->
+            projects?.let { projectAdapter.replaceData(it) }
         })
 
         projectModel.selectedProject.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
@@ -152,7 +152,8 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
             }
         }
 
-        val id = intent.extras.getInt("project", -1)
+        val extras = intent.extras
+        val id = extras?.getInt("project", -1) ?: -1
         if (id >= 0)
             load(id)
         else
@@ -197,8 +198,8 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
 
     private fun check() {
         if (total <= 0) {
-            binding.projectModel?.selectedProject?.get()?.let {
-                val paths = it.layers.map { it.path }
+            binding.projectModel?.selectedProject?.get()?.let { project ->
+                val paths = project.layers.map { it.path }
                 var i = 0
                 while (i < map.layerCount) {
                     val layer = map.getLayer(i)
@@ -211,14 +212,14 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
                         i++
 
                     if (layer is VectorLayer) {
-                        val vector = it.layers[id] as RemoteLayerNGW
+                        val vector = project.layers[id] as RemoteLayerNGW
                         if (vector.styleable) {
                             layer.setRenderer(vector.renderer)
                             vector.style = ""
                         }
                     }
                 }
-                project = it
+                this.project = project
                 open()
             }
         }
