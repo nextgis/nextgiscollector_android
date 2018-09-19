@@ -46,9 +46,9 @@ class ProjectViewModel : ViewModel() {
         }
     }
 
-    fun load() {
+    fun load(private: Boolean) {
         isLoading.set(true)
-        projectModel.getProjects(onDataReadyCallback)
+        projectModel.getProjects(private, onDataReadyCallback)
     }
 
     fun load(id: Int) {

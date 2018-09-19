@@ -30,7 +30,7 @@ import com.nextgis.maplib.util.Constants
 
 class CollectorApplication : GISApplication() {
     companion object {
-        const val BASE_URL = "http://4ert.com/data"
+        const val BASE_URL = "http://collector.nextgis.com/api/project/"
         const val TREE = "resource.tree"
     }
 
@@ -56,11 +56,11 @@ class CollectorApplication : GISApplication() {
 
     override fun getMap(): MapBase {
         val map = super.getMap()
-        checkTracksLayerExistance()
+        checkTracksLayerExistence()
         return map
     }
 
-    protected fun checkTracksLayerExistance() {
+    private fun checkTracksLayerExistence() {
         val tracks = ArrayList<ILayer>()
         LayerGroup.getLayersByType(mMap, Constants.LAYERTYPE_TRACKS, tracks)
         if (tracks.isEmpty()) {

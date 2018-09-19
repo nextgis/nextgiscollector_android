@@ -43,9 +43,9 @@ class ProjectModel {
 
     }
 
-    fun getProjects(onDataReadyCallback: OnDataReadyCallback) {
+    fun getProjects(private: Boolean, onDataReadyCallback: OnDataReadyCallback) {
         runAsync {
-            val response = getResponse("public")
+            val response = getResponse("?namespace=" + if (private) "private" else "public")
             var list = ArrayList<Project>()
             response?.let {
                 if (it.isOk)
@@ -124,9 +124,9 @@ class ProjectModel {
 
     private fun parseLayers(json: JSONArray?): ArrayList<RemoteLayer> {
         val jsonLayers = ArrayList<RemoteLayer>()
-        json?.let {
-            for (j in 0 until json.length()) {
-                val jsonLayer = json.getJSONObject(j)
+        json?.let { data ->
+            for (j in 0 until data.length()) {
+                val jsonLayer = data.getJSONObject(j)
                 var layer: RemoteLayer? = null
                 val type = jsonLayer.optString("type")
                 val layerTitle = jsonLayer.optString("title")

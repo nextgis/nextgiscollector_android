@@ -157,7 +157,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         if (id >= 0)
             load(id)
         else
-            projectModel.load()
+            projectModel.load(private = false)
 
 //         Example of a call to a native method
 //        sample_text.text = stringFromJNI()
