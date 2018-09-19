@@ -53,7 +53,7 @@ open class ResourceTree(val resources: ArrayList<Resource>) {
                 findById(id, resource.resources)
     }
 
-    fun parseJson(string: String) {
+    fun parse(string: String) {
         val json = JSONArray(string)
         resources.addAll(parseResources(json))
     }

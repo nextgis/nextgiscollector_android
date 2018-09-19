@@ -25,7 +25,6 @@ import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.Toolbar
 import android.view.MenuItem
 import android.view.View
 import com.nextgis.collector.CollectorApplication
@@ -40,6 +39,7 @@ import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.pawegio.kandroid.IntentFor
 import com.pawegio.kandroid.startActivity
+import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 
 class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener, ProjectActivity.OnPermissionCallback {
@@ -56,14 +56,24 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_add_feature)
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        checkUpdates()
+        setup(with = toolbar)
+
+        val manager = LinearLayoutManager(this)
+        binding.layers.layoutManager = manager
+        val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
+        binding.layers.addItemDecoration(dividerItemDecoration)
+        binding.executePendingBindings()
+    }
+
+    override fun init() {
+        layers.clear()
+        history.clear()
+        tree.resources.clear()
 
         val base = getExternalFilesDir(null) ?: filesDir
         val file = File(base, CollectorApplication.TREE)
         val json = FileUtil.readFromFile(file)
-        tree.parseJson(json)
+        tree.parse(json)
 
         var hasChanges = false
         for (i in 0 until map.layerCount) {
@@ -78,13 +88,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
                     layers.add(layer)
         }
         changeAdapter()
-        val manager = LinearLayoutManager(this)
-        binding.layers.layoutManager = manager
-        val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
-        binding.layers.addItemDecoration(dividerItemDecoration)
-
         setSubtitle(hasChanges)
-        binding.executePendingBindings()
     }
 
     private fun changeAdapter(dirId: String = "") {

@@ -86,27 +86,15 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        binding.executePendingBindings()
+        overlay = EditLayerOverlay(this, mapView)
+        setup(with = toolbar)
+
         binding.apply {
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
             container.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
         }
-        checkUpdates()
-
-        val layers = ArrayList<Layer>()
-        var hasChanges = false
-        for (i in 0 until map.layerCount) {
-            val layer = map.getLayer(i)
-            if (layer is Layer)
-                layers.add(layer)
-            if (layer is NGWVectorLayer && !hasChanges) {
-                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
-                hasChanges = changesCount > 0
-            }
-        }
-
         setCenter()
-        overlay = EditLayerOverlay(this, mapView)
+
         overlay.setTopToolbar(toolbar)
         overlay.setBottomToolbar(binding.bottomToolbar)
         historyOverlay = UndoRedoOverlay(this, mapView)
@@ -123,15 +111,29 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         mapView.addOverlay(locationOverlay)
         mapView.addOverlay(trackOverlay)
 
-        setSupportActionBar(toolbar)
-        setUpToolbar(hasChanges)
-
-        val layersAdapter = LayersAdapter(layers.reversed(), this)
-        binding.layers.adapter = layersAdapter
         val manager = LinearLayoutManager(this)
         binding.layers.layoutManager = manager
         val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
+        binding.executePendingBindings()
+    }
+
+    override fun init() {
+        val layers = ArrayList<Layer>()
+        var hasChanges = false
+        for (i in 0 until map.layerCount) {
+            val layer = map.getLayer(i)
+            if (layer is Layer)
+                layers.add(layer)
+            if (layer is NGWVectorLayer && !hasChanges) {
+                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
+                hasChanges = changesCount > 0
+            }
+        }
+
+        val layersAdapter = LayersAdapter(layers.reversed(), this)
+        binding.layers.adapter = layersAdapter
+        setUpToolbar(hasChanges)
     }
 
     override fun onStart() {
