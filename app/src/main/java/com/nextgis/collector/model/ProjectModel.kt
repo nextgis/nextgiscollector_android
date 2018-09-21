@@ -23,8 +23,8 @@ package com.nextgis.collector.model
 
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.data.*
+import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.maplib.util.HttpResponse
-import com.nextgis.maplib.util.NetworkUtil
 import com.pawegio.kandroid.runAsync
 import org.json.JSONArray
 import org.json.JSONObject
@@ -32,10 +32,13 @@ import org.json.JSONObject
 
 class ProjectModel {
     companion object {
-        fun getResponse(path: String): HttpResponse? {
+        fun getResponse(path: String, email: String): HttpResponse? {
             try {
+                val hash = NetworkUtil.hash(email)
                 val target = "${CollectorApplication.BASE_URL}/$path"
-                return NetworkUtil.get(target, null, null, false)
+                val connection = NetworkUtil.getHttpConnection("GET", target, hash)
+                return NetworkUtil.getHttpResponse(connection, false)
+//                return NetworkUtil.get(target, null, null, false)
             } catch (e: Exception) {
             }
             return null
@@ -43,9 +46,9 @@ class ProjectModel {
 
     }
 
-    fun getProjects(private: Boolean, onDataReadyCallback: OnDataReadyCallback) {
+    fun getProjects(private: Boolean, onDataReadyCallback: OnDataReadyCallback, email: String) {
         runAsync {
-            val response = getResponse("?namespace=" + if (private) "private" else "public")
+            val response = getResponse("?namespace=" + if (private) "private" else "public", email)
             var list = ArrayList<Project>()
             response?.let {
                 if (it.isOk)
@@ -55,10 +58,10 @@ class ProjectModel {
         }
     }
 
-    fun getProject(id: Int, onDataReadyCallback: OnDataReadyCallback) {
+    fun getProject(id: Int, onDataReadyCallback: OnDataReadyCallback, email: String) {
         runAsync {
             var project: Project? = null
-            val response = getResponse("$id")
+            val response = getResponse("$id", email)
             response?.let {
                 val json = try {
                     JSONObject(response.responseBody)

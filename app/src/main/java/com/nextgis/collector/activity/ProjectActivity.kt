@@ -49,6 +49,7 @@ import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.service.TrackerService.hasUnfinishedTracks
 import com.nextgis.maplibui.service.TrackerService.isTrackerServiceRunning
 import com.nextgis.maplibui.util.ConstantsUI
+import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
 import com.pawegio.kandroid.*
 import org.json.JSONObject
 
@@ -264,11 +265,12 @@ abstract class ProjectActivity : BaseActivity() {
         snackbar.show()
     }
 
-    protected fun checkUpdates() {
+    private fun checkUpdates() {
         showSnackbar(R.string.check_update)
         runAsync {
             val id = project.id
-            val response = ProjectModel.getResponse("$id")
+            val email = preferences.getString(PREF_EMAIL, "")
+            val response = ProjectModel.getResponse("$id", email)
             var json = JSONObject()
             response?.let {
                 try {

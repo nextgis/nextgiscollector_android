@@ -33,6 +33,7 @@ class ProjectViewModel : ViewModel() {
     var projects = MutableLiveData<ArrayList<Project>>()
     val selectedProject: ObservableField<Project> = ObservableField()
     val isLoading = ObservableField(true)
+    var email = ""
 
     private val onDataReadyCallback = object : ProjectModel.OnDataReadyCallback {
         override fun onProjectReady(project: Project?) {
@@ -48,11 +49,11 @@ class ProjectViewModel : ViewModel() {
 
     fun load(private: Boolean) {
         isLoading.set(true)
-        projectModel.getProjects(private, onDataReadyCallback)
+        projectModel.getProjects(private, onDataReadyCallback, email)
     }
 
     fun load(id: Int) {
         isLoading.set(true)
-        projectModel.getProject(id, onDataReadyCallback)
+        projectModel.getProject(id, onDataReadyCallback, email)
     }
 }

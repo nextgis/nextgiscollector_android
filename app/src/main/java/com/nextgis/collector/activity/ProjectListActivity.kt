@@ -51,6 +51,7 @@ import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
+import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
@@ -89,6 +90,7 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_project_list)
         val projectModel = ViewModelProviders.of(this).get(ProjectViewModel::class.java)
+        projectModel.email = preferences.getString(PREF_EMAIL, "")
         binding.projectModel = projectModel
         binding.executePendingBindings()
 
