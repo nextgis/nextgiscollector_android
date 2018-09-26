@@ -44,7 +44,7 @@ class EditableLayersAdapter(private var items: List<NGWVectorLayerUI>,
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (items[position].isValid) 0 else 1
+        return if (items[position].id > 0) 0 else 1
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.bind(items[position], listener)
