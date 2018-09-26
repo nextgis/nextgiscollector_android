@@ -41,4 +41,6 @@
     <string name="no_updates">Обновлений не найдено</string>
     <string name="update_available">Доступно обновление</string>
     <string name="update_for">Для проекта \"%1$s\" найдено обновление с версии %2$d до %3$d. Хотите обновить его сейчас?</string>
+    <string name="app_name_public">Общедоступные проекты</string>
+    <string name="app_name_private">Личные проекты</string>
 </resources>

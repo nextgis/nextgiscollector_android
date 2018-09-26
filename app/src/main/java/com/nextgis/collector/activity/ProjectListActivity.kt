@@ -31,8 +31,10 @@ import android.databinding.DataBindingUtil
 import android.databinding.Observable
 import android.net.Uri
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
+import android.view.View
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.ProjectAdapter
@@ -56,9 +58,10 @@ import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
+import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 
-class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
+class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
     private lateinit var binding: ActivityProjectListBinding
     private var projectAdapter = ProjectAdapter(arrayListOf(), this)
     private lateinit var receiver: BroadcastReceiver
@@ -176,6 +179,23 @@ class ProjectListActivity : BaseActivity(), ProjectAdapter.OnItemClickListener {
         try {
             unregisterReceiver(receiver)
         } catch (e: Exception) {
+        }
+    }
+
+    override fun onClick(view: View?) {
+        when (view?.id) {
+            R.id.mode -> {
+                binding.apply {
+                    val private = if (mode.tag != null) mode.tag as Boolean else true
+                    val icon = if (private) R.drawable.earth else R.drawable.lock
+                    val drawable = ContextCompat.getDrawable(this@ProjectListActivity, icon)
+                    mode.setImageDrawable(drawable)
+                    val title = if (private) R.string.app_name_private else R.string.app_name_public
+                    supportActionBar?.title = getString(title)
+                    projectModel?.load(private = private)
+                    mode.tag = !private
+                }
+            }
         }
     }
 
