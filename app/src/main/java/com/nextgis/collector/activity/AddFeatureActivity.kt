@@ -35,10 +35,10 @@ import com.nextgis.collector.databinding.ActivityAddFeatureBinding
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.FileUtil
-import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.pawegio.kandroid.IntentFor
 import com.pawegio.kandroid.startActivity
+import com.pawegio.kandroid.toast
 import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 
@@ -84,7 +84,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
             }
 
             if (layer is NGWVectorLayerUI && layer.isEditable)
-                if (layer.geometryType == GeoConstants.GTPoint || layer.geometryType == GeoConstants.GTMultiPoint) // TODO add line and polygon support
+                if (layer.geometryType in 1..6)
                     layers.add(layer)
         }
         changeAdapter()
@@ -145,7 +145,10 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     }
 
     override fun onPermissionGranted() {
-        layer?.showEditForm(this, -1, null)
+        if (layer?.geometryType == 1 || layer?.geometryType == 4)
+            layer?.showEditForm(this, -1, null)
+        else
+            toast(R.string.not_implemented)
     }
 
 }

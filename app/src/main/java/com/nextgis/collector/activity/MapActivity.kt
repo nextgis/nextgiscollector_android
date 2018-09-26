@@ -82,6 +82,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     private var selectedFeature: Feature? = null
     private var mNeedSave = false
     private var currentCenter = GeoPoint()
+    private var newIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +90,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         overlay = EditLayerOverlay(this, mapView)
         setup(with = toolbar)
 
+        newIntent = intent
         binding.apply {
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
             container.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
@@ -159,22 +161,29 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         historyOverlay.defineUndoRedo()
-        if (intent.hasExtra(NEW_FEATURE)) {
-            val id = intent.getIntExtra(NEW_FEATURE, -1)
-            val layer = map.getLayerById(id) as NGWVectorLayerUI?
-            selectedLayer = layer
-            setTitle(getString(R.string.new_feature), layer?.name)
-            setToolbar()
-            overlay.setSelectedLayer(layer)
-            overlay.selectedFeature = Feature()
-            startEdit()
-            overlay.createNewGeometry()
-            overlay.setHasEdits(true)
-            historyOverlay.saveToHistory(overlay.selectedFeature)
-            intent.removeExtra(NEW_FEATURE)
+        newIntent?.let {
+            if (it.hasExtra(NEW_FEATURE)) {
+                val id = it.getIntExtra(NEW_FEATURE, -1)
+                val layer = map.getLayerById(id) as NGWVectorLayerUI?
+                selectedLayer = layer
+                setTitle(getString(R.string.new_feature), layer?.name)
+                setToolbar()
+                overlay.setSelectedLayer(layer)
+                overlay.selectedFeature = Feature()
+                startEdit()
+                overlay.createNewGeometry()
+                overlay.setHasEdits(true)
+                historyOverlay.saveToHistory(overlay.selectedFeature)
+                it.removeExtra(NEW_FEATURE)
+            }
         }
 
         return super.onPrepareOptionsMenu(menu)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        newIntent = intent
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
@@ -446,8 +455,11 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     override fun onSingleTapUp(event: MotionEvent) {
-        if (overlay.mode == EditLayerOverlay.MODE_EDIT)
+        if (overlay.mode == EditLayerOverlay.MODE_EDIT) {
+            if (overlay.selectGeometryInScreenCoordinates(event.x, event.y))
+                historyOverlay.saveToHistory(overlay.selectedFeature)
             return
+        }
 
         val tolerance = resources.displayMetrics.density * ConstantsUI.TOLERANCE_DP.toDouble()
         val dMinX = event.x - tolerance
@@ -456,10 +468,12 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         val dMaxY = event.y + tolerance
         val mapEnv = map.screenToMap(GeoEnvelope(dMinX, dMaxX, dMinY, dMaxY)) ?: return
 
-        val types = GeoConstants.GTPointCheck or GeoConstants.GTMultiPointCheck
+        val types = GeoConstants.GTPointCheck or GeoConstants.GTMultiPointCheck or
+                GeoConstants.GTLineString or GeoConstants.GTMultiLineString or
+                GeoConstants.GTPolygon or GeoConstants.GTMultiPolygon
         val layers = mapView.getVectorLayersByType(types).filter {
             it is NGWVectorLayerUI && it.isEditable
-        } // TODO all geometries
+        }
         var items: List<Long>? = null
         var intersects = false
         for (layer in layers) {
