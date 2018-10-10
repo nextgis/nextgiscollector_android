@@ -40,6 +40,7 @@ class ProjectModel {
                 return NetworkUtil.getHttpResponse(connection, false)
 //                return NetworkUtil.get(target, null, null, false)
             } catch (e: Exception) {
+                e.printStackTrace()
             }
             return null
         }

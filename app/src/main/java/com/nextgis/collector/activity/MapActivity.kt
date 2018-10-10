@@ -138,6 +138,16 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         setUpToolbar(hasChanges)
     }
 
+    override fun onResume() {
+        super.onResume()
+        overlay.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        overlay.onPause()
+    }
+
     override fun onStart() {
         super.onStart()
         mapView.addListener(this)
