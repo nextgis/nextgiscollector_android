@@ -121,10 +121,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
                     android:background="?attr/colorPrimary"
-                    android:theme="?ThemeOverlay.NextGIS.Toolbar"
+                    android:theme="@style/Theme.NextGIS.AppCompat.ActionBar"
                     android:visibility="gone"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:popupTheme="?ThemeOverlay.NextGIS.ToolbarPopup"/>
+                    app:popupTheme="@style/ThemeOverlay.NextGIS.AppCompat.Light"/>
             </android.support.constraint.ConstraintLayout>
 
             <android.support.design.widget.FloatingActionButton

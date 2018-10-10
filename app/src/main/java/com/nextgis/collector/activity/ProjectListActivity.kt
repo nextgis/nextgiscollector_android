@@ -58,7 +58,6 @@ import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
-import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 
 class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
@@ -164,6 +163,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         else
             projectModel.load(private = false)
 
+        chooseTitle(private = false)
 //         Example of a call to a native method
 //        sample_text.text = stringFromJNI()
     }
@@ -190,8 +190,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     val icon = if (private) R.drawable.earth else R.drawable.lock
                     val drawable = ContextCompat.getDrawable(this@ProjectListActivity, icon)
                     mode.setImageDrawable(drawable)
-                    val title = if (private) R.string.app_name_private else R.string.app_name_public
-                    supportActionBar?.title = getString(title)
+                    chooseTitle(private)
                     projectModel?.load(private = private)
                     mode.tag = !private
                 }
@@ -205,6 +204,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 .setNegativeButton(R.string.no, null)
                 .setPositiveButton(R.string.yes) { _, _ -> load(project.id) }
                 .show()
+    }
+
+    private fun chooseTitle(private: Boolean) {
+        val title = if (private) R.string.app_name_private else R.string.app_name_public
+        supportActionBar?.title = getString(title)
     }
 
     private fun load(id: Int) {
