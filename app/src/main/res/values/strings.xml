@@ -22,4 +22,6 @@
     <string name="update_for">An update is available for \"%1$s\" from version %2$d to %3$d. Would you like to update now?</string>
     <string name="app_name_public">Public projects</string>
     <string name="app_name_private">Personal projects</string>
+    <string name="create_new">Start your own project</string>
+    <string name="no_projects">No projects found</string>
 </resources>

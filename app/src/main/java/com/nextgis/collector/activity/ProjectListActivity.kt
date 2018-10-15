@@ -53,6 +53,7 @@ import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
+import com.nextgis.maplibui.util.NGIDUtils
 import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.longToast
@@ -92,7 +93,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_project_list)
         val projectModel = ViewModelProviders.of(this).get(ProjectViewModel::class.java)
-        projectModel.email = preferences.getString(PREF_EMAIL, "")
+        projectModel.email = preferences.getString(PREF_EMAIL, "") ?: ""
         binding.projectModel = projectModel
         binding.executePendingBindings()
 
@@ -194,6 +195,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     projectModel?.load(private = private)
                     mode.tag = !private
                 }
+            }
+            R.id.create -> {
+                val browser = Intent(Intent.ACTION_VIEW, Uri.parse(NGIDUtils.NGID_MY))
+                startActivity(browser)
             }
         }
     }
@@ -307,10 +312,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         if (layer.type == "ngw") {
             val uri = Uri.parse(layer.url)
-            val fullUrl = uri.scheme + "://" + uri.authority
+            val fullUrl = uri.scheme ?: "http" + "://" + uri.authority
             val accountName = "Collector " + System.currentTimeMillis()
             app.addAccount(accountName, fullUrl, layer.login, layer.password, "ngw")
-            val id = uri.lastPathSegment.toLongOrNull()
+            val id = uri.lastPathSegment?.toLongOrNull()
             intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
             intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
         }

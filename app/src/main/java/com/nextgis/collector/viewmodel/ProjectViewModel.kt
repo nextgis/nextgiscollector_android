@@ -33,26 +33,31 @@ class ProjectViewModel : ViewModel() {
     var projects = MutableLiveData<ArrayList<Project>>()
     val selectedProject: ObservableField<Project> = ObservableField()
     val isLoading = ObservableField(true)
+    val isEmpty = ObservableField(false)
     var email = ""
 
     private val onDataReadyCallback = object : ProjectModel.OnDataReadyCallback {
         override fun onProjectReady(project: Project?) {
+            isEmpty.set(false)
             isLoading.set(false)
             selectedProject.set(project)
         }
 
         override fun onDataReady(data: ArrayList<Project>) {
+            isEmpty.set(data.size == 0)
             isLoading.set(false)
             projects.postValue(data)
         }
     }
 
     fun load(private: Boolean) {
+        isEmpty.set(false)
         isLoading.set(true)
         projectModel.getProjects(private, onDataReadyCallback, email)
     }
 
     fun load(id: Int) {
+        isEmpty.set(false)
         isLoading.set(true)
         projectModel.getProject(id, onDataReadyCallback, email)
     }
