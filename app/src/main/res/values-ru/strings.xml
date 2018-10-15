@@ -45,4 +45,5 @@
     <string name="app_name_private">Личные проекты</string>
     <string name="create_new">Создать свой проект</string>
     <string name="no_projects">Нет проектов</string>
+    <string name="write_us">Хотите организовать свой сбор данных с помощью NextGIS Collector? Напишите нам на <a href='mailto:info@nextgis.com'>info@nextgis.com</a></string>
 </resources>

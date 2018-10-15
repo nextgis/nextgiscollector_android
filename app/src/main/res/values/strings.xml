@@ -24,4 +24,5 @@
     <string name="app_name_private">Personal projects</string>
     <string name="create_new">Start your own project</string>
     <string name="no_projects">No projects found</string>
+    <string name="write_us">Want to start your own data collection project with NextGIS Collector? Ping us at <a href='mailto:info@nextgis.com'>info@nextgis.com</a></string>
 </resources>

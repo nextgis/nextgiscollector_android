@@ -21,11 +21,13 @@
 
 package com.nextgis.collector.activity
 
+import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.widget.DrawerLayout
@@ -61,6 +63,7 @@ import com.nextgis.maplibui.overlay.EditLayerOverlay
 import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI
+import com.pawegio.kandroid.locationManager
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
 import kotlinx.android.synthetic.main.activity_main.*
@@ -169,10 +172,25 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         mapView.removeListener(this)
     }
 
+    @SuppressLint("MissingPermission")
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         historyOverlay.defineUndoRedo()
         newIntent?.let {
             if (it.hasExtra(NEW_FEATURE)) {
+                var centerPoint: GeoPoint? = null
+                if (currentCenter.crs == 0) {
+                    locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { location ->
+                        val point = GeoPoint(location.longitude, location.latitude)
+                        point.crs = GeoConstants.CRS_WGS84
+                        point.project(GeoConstants.CRS_WEB_MERCATOR)
+                        centerPoint = point
+                    }
+                } else
+                    centerPoint = currentCenter
+                centerPoint?.let { center ->
+                    val zoom = map.zoomLevel
+                    map.setZoomAndCenter(zoom, center)
+                }
                 val id = it.getIntExtra(NEW_FEATURE, -1)
                 val layer = map.getLayerById(id) as NGWVectorLayerUI?
                 selectedLayer = layer
@@ -380,6 +398,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
                 overlay.setSelectedFeature(id)
                 selectedLayer?.showFeature(id)
                 setHighlight()
+                if (!project.isMapMain)
+                    finish()
             }
         }
     }

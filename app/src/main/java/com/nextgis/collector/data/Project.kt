@@ -76,4 +76,9 @@ class Project(val id: Int, val title: String, val description: String, val scree
             json.put("version", version)
             return json.toString()
         }
+
+    val isMapMain: Boolean
+        get() {
+            return screen != "list"
+        }
 }

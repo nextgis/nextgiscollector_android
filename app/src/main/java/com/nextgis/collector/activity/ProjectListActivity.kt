@@ -34,7 +34,10 @@ import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
+import android.text.method.LinkMovementMethod
+import android.text.util.Linkify
 import android.view.View
+import android.widget.TextView
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.ProjectAdapter
@@ -53,7 +56,6 @@ import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
-import com.nextgis.maplibui.util.NGIDUtils
 import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.longToast
@@ -196,11 +198,34 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     mode.tag = !private
                 }
             }
-            R.id.create -> {
-                val browser = Intent(Intent.ACTION_VIEW, Uri.parse(NGIDUtils.NGID_MY))
-                startActivity(browser)
-            }
+            R.id.create -> write()
         }
+    }
+
+    private fun write() {
+        val builder = AlertDialog.Builder(this).setTitle(R.string.create_new)
+                .setMessage(getString(R.string.write_us))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ok) { _, _ -> email() }
+                .show()
+
+        val message = builder.findViewById<TextView>(android.R.id.message)
+        if (message != null) {
+            message.movementMethod = LinkMovementMethod.getInstance()
+            message.linksClickable = true
+            message.autoLinkMask = Linkify.ALL
+            Linkify.addLinks(message, Linkify.ALL)
+        }
+//                val browser = Intent(Intent.ACTION_VIEW, Uri.parse(NGIDUtils.NGID_MY))
+//                startActivity(browser)
+    }
+
+    private fun email() {
+        val email = Intent(Intent.ACTION_VIEW)
+        email.putExtra(Intent.EXTRA_EMAIL, arrayOf("info@nextgis.com"))
+        email.putExtra(Intent.EXTRA_SUBJECT, "NextGIS Collector Project Request")
+        email.type = "message/rfc822"
+        startActivity(Intent.createChooser(email, getString(R.string.ngid_email)))
     }
 
     override fun onItemClick(project: Project) {
@@ -221,7 +246,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun open() {
-        if (project.screen == "list")
+        if (!project.isMapMain)
             startActivity<AddFeatureActivity>()
         else
             startActivity<MapActivity>()
