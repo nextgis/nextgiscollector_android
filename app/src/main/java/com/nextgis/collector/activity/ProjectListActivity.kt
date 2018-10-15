@@ -221,10 +221,9 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun email() {
-        val email = Intent(Intent.ACTION_VIEW)
-        email.putExtra(Intent.EXTRA_EMAIL, arrayOf("info@nextgis.com"))
+        val email = Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "info@nextgis.com", null))
+        email.putExtra(Intent.EXTRA_EMAIL, "mailto:info@nextgis.com")
         email.putExtra(Intent.EXTRA_SUBJECT, "NextGIS Collector Project Request")
-        email.type = "message/rfc822"
         startActivity(Intent.createChooser(email, getString(R.string.ngid_email)))
     }
 
