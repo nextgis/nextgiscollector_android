@@ -21,6 +21,7 @@
 
 package com.nextgis.collector.activity
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.ContentValues
@@ -50,10 +51,7 @@ import com.nextgis.maplib.datasource.GeoGeometry
 import com.nextgis.maplib.datasource.GeoPoint
 import com.nextgis.maplib.map.Layer
 import com.nextgis.maplib.map.NGWVectorLayer
-import com.nextgis.maplib.util.Constants
-import com.nextgis.maplib.util.FeatureChanges
-import com.nextgis.maplib.util.GeoConstants
-import com.nextgis.maplib.util.MapUtil
+import com.nextgis.maplib.util.*
 import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.api.MapViewEventListener
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
@@ -172,19 +170,21 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         mapView.removeListener(this)
     }
 
-    @SuppressLint("MissingPermission")
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         historyOverlay.defineUndoRedo()
         newIntent?.let {
             if (it.hasExtra(NEW_FEATURE)) {
                 var centerPoint: GeoPoint? = null
                 if (currentCenter.crs == 0) {
-                    locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { location ->
-                        val point = GeoPoint(location.longitude, location.latitude)
-                        point.crs = GeoConstants.CRS_WGS84
-                        point.project(GeoConstants.CRS_WEB_MERCATOR)
-                        centerPoint = point
-                    }
+                    val gps = Manifest.permission.ACCESS_FINE_LOCATION
+                    if (!PermissionUtil.hasPermission(this, gps)) {
+                        requestForPermissions(object : OnPermissionCallback {
+                            override fun onPermissionGranted() {
+                                mapView.panTo(lastKnown())
+                            }
+                        }, false)
+                    } else
+                        centerPoint = lastKnown()
                 } else
                     centerPoint = currentCenter
                 centerPoint?.let { center ->
@@ -207,6 +207,18 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         }
 
         return super.onPrepareOptionsMenu(menu)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun lastKnown(): GeoPoint? {
+        var point: GeoPoint? = null
+        locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { location ->
+            point = GeoPoint(location.longitude, location.latitude)
+            point!!.crs = GeoConstants.CRS_WGS84
+            point!!.project(GeoConstants.CRS_WEB_MERCATOR)
+        }
+
+        return point
     }
 
     override fun onNewIntent(intent: Intent?) {
