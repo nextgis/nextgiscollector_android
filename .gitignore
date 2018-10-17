@@ -53,6 +53,7 @@ crashlytics-build.properties
 # Built application files
 *.apk
 *.ap_
+*.aab
 
 # Files for the Dalvik VM
 *.dex
@@ -66,6 +67,7 @@ gen/
 
 # Gradle files
 .gradle/
+release/
 build/
 /*/build/
 
