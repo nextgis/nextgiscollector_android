@@ -27,11 +27,18 @@ import com.nextgis.maplibui.mapui.TrackLayerUI
 import com.nextgis.maplib.map.LayerGroup
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.util.Constants
+import io.sentry.Sentry
+import io.sentry.android.AndroidSentryClientFactory
 
 class CollectorApplication : GISApplication() {
     companion object {
         const val BASE_URL = "http://collector.nextgis.com/api/project"
         const val TREE = "resource.tree"
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        Sentry.init(AndroidSentryClientFactory(applicationContext))
     }
 
     override fun getAuthority(): String {
