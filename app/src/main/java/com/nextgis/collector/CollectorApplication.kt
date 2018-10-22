@@ -38,7 +38,8 @@ class CollectorApplication : GISApplication() {
 
     override fun onCreate() {
         super.onCreate()
-        Sentry.init(AndroidSentryClientFactory(applicationContext))
+        if (!BuildConfig.DEBUG)
+            Sentry.init(AndroidSentryClientFactory(applicationContext))
     }
 
     override fun getAuthority(): String {
