@@ -171,6 +171,15 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 //        sample_text.text = stringFromJNI()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (preferences.contains("project")) {
+            open()
+            finish()
+            return
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         val intentFilter = IntentFilter(LayerFillService.ACTION_UPDATE)
@@ -335,8 +344,9 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.action = LayerFillService.ACTION_ADD_TASK
 
         if (layer.type == "ngw") {
-            val uri = Uri.parse(layer.url)
-            val fullUrl = uri.scheme ?: "http" + "://" + uri.authority
+            val uri = Uri.parse(Uri.decode(layer.url))
+            val scheme = uri.scheme ?: "http"
+            val fullUrl = scheme + "://" + uri.authority
             val accountName = "Collector " + System.currentTimeMillis()
             app.addAccount(accountName, fullUrl, layer.login, layer.password, "ngw")
             val id = uri.lastPathSegment?.toLongOrNull()
