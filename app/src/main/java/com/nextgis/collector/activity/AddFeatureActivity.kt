@@ -93,16 +93,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 
     private fun changeAdapter(dirId: String = "") {
         val level = tree.getLevel(dirId)
-        val items = ArrayList<NGWVectorLayerUI>()
-        for (resource in level) {
-            var layer = layers.firstOrNull { it.path.name == resource.id }
-            if (layer == null && resource.type == "dir") {
-                layer = NGWVectorLayerUI(app, File(resource.id))
-                layer.name = resource.title
-            }
-            layer?.let { items.add(it) }
-        }
-
+        val items = level.filter { it.type != "tms" && it.type != "ngrc" }
         binding.layers.adapter = EditableLayersAdapter(items, this)
         supportActionBar?.setDisplayHomeAsUpEnabled(history.size != 0)
         supportActionBar?.setHomeButtonEnabled(history.size != 0)
@@ -114,14 +105,20 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         }
     }
 
-    override fun onMapClick(layer: NGWVectorLayerUI) {
-        val intent = IntentFor<MapActivity>(this)
-        intent.putExtra(MapActivity.NEW_FEATURE, layer.id)
-        startActivity(intent)
+    private fun layerByPath(id: String): NGWVectorLayerUI? {
+        return layers.firstOrNull { it.path.name == id }
     }
 
-    override fun onGpsClick(layer: NGWVectorLayerUI) {
-        this.layer = layer
+    override fun onMapClick(id: String) {
+        val intent = IntentFor<MapActivity>(this)
+        layerByPath(id)?.let {
+            intent.putExtra(MapActivity.NEW_FEATURE, it.id)
+            startActivity(intent)
+        }
+    }
+
+    override fun onGpsClick(id: String) {
+        this.layer = layerByPath(id)
         requestForPermissions(this, true)
     }
 

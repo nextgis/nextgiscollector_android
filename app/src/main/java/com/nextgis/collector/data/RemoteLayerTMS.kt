@@ -22,13 +22,15 @@
 package com.nextgis.collector.data
 
 import android.os.Parcel
+import com.nextgis.collector.KParcelable.Companion.readStringFrom
 import com.nextgis.collector.parcelableCreator
 import com.nextgis.collector.readBoolean
 
 
-class RemoteLayerTMS(title: String, type: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val lifetime: Long, val tmsType: Int) : RemoteLayer(title, type, url, visible, minZoom, maxZoom) {
+class RemoteLayerTMS(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val lifetime: Long, val 
+tmsType: Int) : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom) {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong(), parcel.readInt())
+    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong(), parcel.readInt())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         super.writeToParcel(dest, flags)

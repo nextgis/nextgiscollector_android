@@ -23,6 +23,7 @@ package com.nextgis.collector.model
 
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.data.*
+import com.nextgis.collector.data.ResourceTree.Companion.parseResources
 import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.maplib.util.HttpResponse
 import com.pawegio.kandroid.runAsync
@@ -98,31 +99,9 @@ class ProjectModel {
         return Project(id, title, description, screen, version, layers, tree.json)
     }
 
-    private fun parseResources(json: JSONArray?): ArrayList<Resource> {
-        val resources = ArrayList<Resource>()
-        json?.let {
-            for (j in 0 until json.length()) {
-                val jsonResource = json.getJSONObject(j)
-                val type = jsonResource.optString("type")
-                val title = jsonResource.optString("title")
-                val url = jsonResource.optString("url", System.currentTimeMillis().toString())
-                val layer = RemoteLayer(title, type, url, true, 0f, 0f)
-                val resource = Resource(title, type, layer.path, arrayListOf())
-                when (type) {
-                    "dir" -> {
-                        val childLayers = jsonResource.optJSONArray("layers")
-                        resource.resources.addAll(parseResources(childLayers))
-                    }
-                }
-                resources.add(resource)
-            }
-        }
-        return resources
-    }
-
     private fun parseTree(json: JSONArray?): ResourceTree {
         val tree = ResourceTree(arrayListOf())
-        tree.resources.addAll(parseResources(json))
+        tree.resources.addAll(parseResources(json, true))
         return tree
     }
 
@@ -134,6 +113,7 @@ class ProjectModel {
                 var layer: RemoteLayer? = null
                 val type = jsonLayer.optString("type")
                 val layerTitle = jsonLayer.optString("title")
+                val description = jsonLayer.optString("description")
                 val url = jsonLayer.optString("url")
                 val visible = jsonLayer.optBoolean("visible")
                 val minZoom = jsonLayer.optDouble("min_zoom").toFloat()
@@ -142,7 +122,7 @@ class ProjectModel {
                     "tms", "ngrc" -> {
                         val lifetime = jsonLayer.optLong("lifetime")
                         val tmsType = jsonLayer.optInt("tms_type")
-                        layer = RemoteLayerTMS(layerTitle, type, url, visible, minZoom, maxZoom, lifetime, tmsType)
+                        layer = RemoteLayerTMS(layerTitle, type, description, url, visible, minZoom, maxZoom, lifetime, tmsType)
                     }
                     "ngw", "ngfp" -> {
                         val login = jsonLayer.optString("login")
@@ -151,7 +131,7 @@ class ProjectModel {
                         val syncable = jsonLayer.optBoolean("syncable")
                         val style = jsonLayer.optJSONObject("style")
                         val jsonStyle = style?.toString() ?: ""
-                        layer = RemoteLayerNGW(layerTitle, type, url, visible, minZoom, maxZoom, login, password, editable, syncable, jsonStyle)
+                        layer = RemoteLayerNGW(layerTitle, type, description, url, visible, minZoom, maxZoom, login, password, editable, syncable, jsonStyle)
                     }
                     "dir" -> {
                         val childLayers = jsonLayer.optJSONArray("layers")

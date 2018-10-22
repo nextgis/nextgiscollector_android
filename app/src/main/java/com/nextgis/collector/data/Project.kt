@@ -26,15 +26,17 @@ import android.databinding.Bindable
 import android.os.Parcel
 import com.nextgis.collector.BR
 import com.nextgis.collector.KParcelable
+import com.nextgis.collector.KParcelable.Companion.readArrayList
+import com.nextgis.collector.KParcelable.Companion.readStringFrom
 import com.nextgis.collector.parcelableCreator
 import org.json.JSONObject
 
 
-class Project(val id: Int, val title: String, val description: String, val screen: String, version: Int, val layers: ArrayList<RemoteLayer>, val tree: String) :
-        BaseObservable(), KParcelable {
+class Project(val id: Int, val title: String, val description: String, val screen: String, version: Int,
+              val layers: ArrayList<RemoteLayer>, val tree: String) : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readString(), parcel.readString(), parcel.readString(), parcel.readInt(),
-            readArrayList(parcel), parcel.readString())
+    private constructor(parcel: Parcel) : this(parcel.readInt(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
+            parcel.readInt(), readArrayList(parcel), readStringFrom(parcel))
 
     constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), "", json.optString("screen"), json.optInt("version"), ArrayList(), "")
 
@@ -51,13 +53,6 @@ class Project(val id: Int, val title: String, val description: String, val scree
     companion object {
         @JvmField
         val CREATOR = parcelableCreator(::Project)
-
-        fun readArrayList(parcel: Parcel): ArrayList<RemoteLayer> {
-            val array = parcel.readArray(RemoteLayer::class.java.classLoader)
-            val list = ArrayList<RemoteLayer>(array.size)
-            array.map { list.add(it as RemoteLayer) }
-            return list
-        }
     }
 
     @get:Bindable

@@ -24,16 +24,21 @@ package com.nextgis.collector.data
 import android.databinding.BaseObservable
 import android.os.Parcel
 import com.nextgis.collector.KParcelable
+import com.nextgis.collector.KParcelable.Companion.readArrayList
+import com.nextgis.collector.KParcelable.Companion.readStringFrom
 import com.nextgis.collector.parcelableCreator
 
 
-open class Resource(val title: String, val type: String, val id: String, val resources: ArrayList<Resource>) : BaseObservable(), KParcelable {
+open class Resource(val title: String, val type: String, val description: String, val id: String,
+                    val resources: ArrayList<Resource>) : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), readArrayList(parcel))
+    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
+            readStringFrom(parcel), readArrayList(parcel))
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
         dest.writeString(type)
+        dest.writeString(description)
         dest.writeString(id)
         dest.writeArray(resources.toArray())
     }
@@ -41,12 +46,5 @@ open class Resource(val title: String, val type: String, val id: String, val res
     companion object {
         @JvmField
         val CREATOR = parcelableCreator(::Resource)
-
-        fun readArrayList(parcel: Parcel): ArrayList<Resource> {
-            val array = parcel.readArray(Resource::class.java.classLoader)
-            val list = ArrayList<Resource>(array.size)
-            array.map { list.add(it as Resource) }
-            return list
-        }
     }
 }

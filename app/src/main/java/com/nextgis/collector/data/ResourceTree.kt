@@ -26,6 +26,31 @@ import org.json.JSONObject
 
 
 open class ResourceTree(val resources: ArrayList<Resource>) {
+    companion object {
+        fun parseResources(json: JSONArray?, skipId: Boolean = false): ArrayList<Resource> {
+            val resources = ArrayList<Resource>()
+            json?.let {
+                for (j in 0 until json.length()) {
+                    val jsonResource = json.getJSONObject(j)
+                    val type = jsonResource.optString("type")
+                    val title = jsonResource.optString("title")
+                    val description = jsonResource.optString("description")
+                    val url = jsonResource.optString("url", System.currentTimeMillis().toString())
+                    val layer = RemoteLayer(title, type, description, url, true, 0f, 0f)
+                    val id = if (skipId) layer.path else jsonResource.optString("id")
+                    val resource = Resource(title, type, description, id, arrayListOf())
+                    when (type) {
+                        "dir" -> {
+                            val childLayers = jsonResource.optJSONArray("layers")
+                            resource.resources.addAll(parseResources(childLayers))
+                        }
+                    }
+                    resources.add(resource)
+                }
+            }
+            return resources
+        }
+    }
 
     fun getLevel(id: String): ArrayList<Resource> {
         if (id.isBlank())
@@ -58,34 +83,14 @@ open class ResourceTree(val resources: ArrayList<Resource>) {
         resources.addAll(parseResources(json))
     }
 
-    private fun parseResources(json: JSONArray?): ArrayList<Resource> {
-        val resources = ArrayList<Resource>()
-        json?.let {
-            for (j in 0 until json.length()) {
-                val jsonResource = json.getJSONObject(j)
-                val type = jsonResource.optString("type")
-                val title = jsonResource.optString("title")
-                val id = jsonResource.optString("id")
-                val resource = Resource(title, type, id, arrayListOf())
-                when (type) {
-                    "dir" -> {
-                        val childLayers = jsonResource.optJSONArray("layers")
-                        resource.resources.addAll(parseResources(childLayers))
-                    }
-                }
-                resources.add(resource)
-            }
-        }
-        return resources
-    }
-
     private fun getChild(resource: Resource): JSONObject {
         val json = JSONObject()
-        json.put("type", resource.type)
         json.put("id", resource.id)
+        json.put("type", resource.type)
+        json.put("title", resource.title)
+        json.put("description", resource.description)
         when (resource.type) {
             "dir" -> {
-                json.put("title", resource.title)
                 val children = JSONArray()
                 for (child in resource.resources)
                     children.put(getChild(child))

@@ -24,19 +24,23 @@ package com.nextgis.collector.data
 import android.databinding.BaseObservable
 import android.os.Parcel
 import com.nextgis.collector.KParcelable
+import com.nextgis.collector.KParcelable.Companion.readStringFrom
 import com.nextgis.collector.parcelableCreator
 import com.nextgis.collector.readBoolean
 import com.nextgis.collector.writeBoolean
 import com.nextgis.maplib.util.Constants
 
 
-open class RemoteLayer(val title: String, val type: String, val url: String, val visible: Boolean, val minZoom: Float, val maxZoom: Float) : BaseObservable(), KParcelable {
+open class RemoteLayer(val title: String, val type: String, val description: String, val url: String, val visible: Boolean, val minZoom: Float, val maxZoom:
+Float) : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readString(), parcel.readString(), parcel.readString(), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat())
+    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readBoolean(),
+            parcel.readFloat(), parcel.readFloat())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
         dest.writeString(type)
+        dest.writeString(description)
         dest.writeString(url)
         dest.writeBoolean(visible)
         dest.writeFloat(minZoom)

@@ -31,6 +31,23 @@ import java.util.*
 interface KParcelable : Parcelable {
     override fun describeContents() = 0
     override fun writeToParcel(dest: Parcel, flags: Int)
+
+    companion object {
+        fun readStringFrom(parcel: Parcel): String {
+            parcel.readString()?.let { return it }
+            return ""
+        }
+
+        inline fun <reified T> readArrayList(parcel: Parcel): ArrayList<T> {
+            val data = parcel.readArray(T::class.java.classLoader)
+            data?.let { array ->
+                val list = ArrayList<T>(array.size)
+                array.map { list.add(it as T) }
+                return list
+            }
+            return arrayListOf()
+        }
+    }
 }
 
 // Creator factory functions
