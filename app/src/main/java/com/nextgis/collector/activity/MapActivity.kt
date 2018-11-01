@@ -81,7 +81,13 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     private lateinit var trackOverlay: CurrentTrackOverlay
     private var selectedLayer: NGWVectorLayerUI? = null
     private var selectedFeature: Feature? = null
-    private var mNeedSave = false
+    private var needSave = false
+    private var returnToList = false
+    get() {
+        val prev = field
+        returnToList = false
+        return prev
+    }
     private var currentCenter = GeoPoint()
     private var newIntent: Intent? = null
 
@@ -171,7 +177,12 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        if (overlay.mode == EditLayerOverlay.MODE_EDIT) {
+            menu?.clear()
+            toolbar.inflateMenu(R.menu.edit_geometry)
+        }
         historyOverlay.defineUndoRedo()
+
         newIntent?.let {
             if (it.hasExtra(NEW_FEATURE)) {
                 var centerPoint: GeoPoint? = null
@@ -203,6 +214,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
                 overlay.setHasEdits(true)
                 historyOverlay.saveToHistory(overlay.selectedFeature)
                 it.removeExtra(NEW_FEATURE)
+                returnToList = true
             }
         }
 
@@ -300,6 +312,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         toggle.syncState()
 
         clearData()
+        if (returnToList)
+            finish()
     }
 
     private fun clearData() {
@@ -317,6 +331,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         overlay.mode = EditLayerOverlay.MODE_HIGHLIGHT
         bottom_toolbar.visibility = View.GONE
         setMenu()
+        if (returnToList)
+            finish()
     }
 
     private fun setMenu() {
@@ -355,7 +371,6 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         if (MapUtil.isGeometryIntersects(this, geometry))
             return false
 
-        overlay.setHasEdits(false)
         selectedLayer?.let {
             if (featureId == -1L) {
                 it.showEditForm(this, featureId, geometry)
@@ -372,6 +387,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
                 contentResolver.update(uri, values, null, null)
                 setHighlight()
+                overlay.setHasEdits(false)
             }
         }
 
@@ -410,8 +426,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
                 overlay.setSelectedFeature(id)
                 selectedLayer?.showFeature(id)
                 setHighlight()
-                if (!project.isMapMain)
-                    finish()
+                overlay.setHasEdits(false)
             }
         }
     }
@@ -568,7 +583,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     override fun panStart(e: MotionEvent?) {
         if (overlay.mode == EditLayerOverlay.MODE_CHANGE)
-            mNeedSave = true
+            needSave = true
     }
 
     override fun panMoveTo(e: MotionEvent?) {
@@ -576,8 +591,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     override fun panStop() {
-        if (mNeedSave) {
-            mNeedSave = false
+        if (needSave) {
+            needSave = false
             historyOverlay.saveToHistory(overlay.selectedFeature)
         }
     }
