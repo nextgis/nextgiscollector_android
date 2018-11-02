@@ -42,7 +42,7 @@ open class ResourceTree(val resources: ArrayList<Resource>) {
                     when (type) {
                         "dir" -> {
                             val childLayers = jsonResource.optJSONArray("layers")
-                            resource.resources.addAll(parseResources(childLayers))
+                            resource.resources.addAll(parseResources(childLayers, skipId))
                         }
                     }
                     resources.add(resource)
