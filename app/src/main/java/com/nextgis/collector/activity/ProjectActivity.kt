@@ -96,6 +96,9 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     private fun showUpdateDialog(version: Int) {
+        if (!window.decorView.rootView.isShown)
+            return
+
         AlertDialog.Builder(this).setTitle(R.string.update_available)
                 .setMessage(getString(R.string.update_for, project.title, project.version, version))
                 .setNegativeButton(R.string.no, null)
