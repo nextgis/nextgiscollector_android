@@ -59,6 +59,7 @@ import com.nextgis.maplibui.service.LayerFillService
 import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.longToast
+import com.pawegio.kandroid.runDelayed
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
 import java.io.File
@@ -108,10 +109,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         projectModel.selectedProject.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
             override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
                 projectModel.selectedProject.get()?.let {
-                    if (it.layers.size > 0)
-                        create(it)
-                    else
-                        runOnUiThread { toast(R.string.error_download_data) }
+                    create(it)
                 }
             }
         })
@@ -128,6 +126,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                                 toast(R.string.canceled)
                             else if (intent.hasExtra(LayerFillService.KEY_MESSAGE))
                                 longToast(intent.getStringExtra(LayerFillService.KEY_MESSAGE))
+                            error()
                         }
                         if (!intent.hasExtra(LayerFillService.KEY_MESSAGE))
                             return
@@ -155,9 +154,20 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         total--
                         check()
                     }
+                    LayerFillService.STATUS_START -> {
+                        binding.message.text = ""
+                        intent.getStringExtra(LayerFillService.KEY_TITLE)?.let { binding.status.text = it }
+                    }
+                    LayerFillService.STATUS_UPDATE -> {
+                        intent.getStringExtra(LayerFillService.KEY_MESSAGE)?.let { binding.message.text = it }
+                    }
                 }
             }
         }
+
+        val intentFilter = IntentFilter(LayerFillService.ACTION_UPDATE)
+        intentFilter.addAction(LayerFillService.ACTION_STOP)
+        registerReceiver(receiver, intentFilter)
 
         val extras = intent.extras
         val id = extras?.getInt("project", -1) ?: -1
@@ -171,6 +181,22 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 //        sample_text.text = stringFromJNI()
     }
 
+    private fun error() {
+        val intent = Intent(this, LayerFillService::class.java)
+        intent.action = LayerFillService.ACTION_STOP
+        startService(intent)
+        runDelayed(2000) { deleteAll() }
+        binding.apply {
+            projectModel?.let {
+                it.info.set(true)
+                it.error.set(true)
+            }
+            progress.visibility = View.GONE
+            message.visibility = View.GONE
+            status.visibility = View.GONE
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         if (preferences.contains("project")) {
@@ -180,14 +206,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        val intentFilter = IntentFilter(LayerFillService.ACTION_UPDATE)
-        registerReceiver(receiver, intentFilter)
-    }
-
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         try {
             unregisterReceiver(receiver)
         } catch (e: Exception) {
@@ -208,6 +228,36 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 }
             }
             R.id.create -> write()
+            R.id.retry -> retry()
+            R.id.cancel -> cancel()
+        }
+    }
+
+    private fun retry() {
+        binding.apply {
+            projectModel?.let {
+                it.info.set(false)
+                it.error.set(false)
+                it.isLoading.set(true)
+                it.selectedProject.get()?.let { project -> create(project) }
+            }
+            progress.visibility = View.VISIBLE
+            message.visibility = View.VISIBLE
+            status.visibility = View.VISIBLE
+            message.text = ""
+            status.text = ""
+        }
+    }
+
+    private fun cancel() {
+        binding.apply {
+            projectModel?.let {
+                it.info.set(false)
+                it.error.set(false)
+                it.isLoading.set(false)
+            }
+            status.text = ""
+            message.text = ""
         }
     }
 
@@ -290,6 +340,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun create(project: Project) {
+        if (project.layers.size == 0) {
+            runOnUiThread { toast(R.string.error_empty_dataset) }
+            return
+        }
+
         binding.projectModel?.isLoading?.set(true)
         preferences.edit().putString("project", project.json).apply()
         val base = getExternalFilesDir(null) ?: filesDir

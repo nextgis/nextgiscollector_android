@@ -34,10 +34,14 @@ class ProjectViewModel : ViewModel() {
     val selectedProject: ObservableField<Project> = ObservableField()
     val isLoading = ObservableField(true)
     val isEmpty = ObservableField(false)
+    val error = ObservableField(false)
+    val info = ObservableField(false)
     var email = ""
 
     private val onDataReadyCallback = object : ProjectModel.OnDataReadyCallback {
         override fun onProjectReady(project: Project?) {
+            info.set(false)
+            error.set(false)
             isEmpty.set(false)
             isLoading.set(false)
             selectedProject.set(project)
@@ -45,18 +49,24 @@ class ProjectViewModel : ViewModel() {
 
         override fun onDataReady(data: ArrayList<Project>) {
             isEmpty.set(data.size == 0)
+            info.set(isEmpty.get())
+            error.set(false)
             isLoading.set(false)
             projects.postValue(data)
         }
     }
 
     fun load(private: Boolean) {
+        info.set(false)
+        error.set(false)
         isEmpty.set(false)
         isLoading.set(true)
         projectModel.getProjects(private, onDataReadyCallback, email)
     }
 
     fun load(id: Int) {
+        info.set(false)
+        error.set(false)
         isEmpty.set(false)
         isLoading.set(true)
         projectModel.getProject(id, onDataReadyCallback, email)

@@ -25,7 +25,6 @@ import android.Manifest
 import android.accounts.Account
 import android.content.*
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
@@ -42,7 +41,6 @@ import com.nextgis.maplib.api.INGWLayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
-import com.nextgis.maplib.map.TrackLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplibui.activity.TracksActivity
@@ -239,28 +237,6 @@ abstract class ProjectActivity : BaseActivity() {
         }
 
         total = accounts.size
-    }
-
-    private fun change(id: Int = -1) {
-        for (i in 0 until map.layerCount) {
-            val layer = map.getLayer(i)
-            if (layer is NGWVectorLayer) {
-                val account = app.getAccount(layer.accountName)
-                app.removeAccount(account)
-            }
-        }
-
-        val tracks = mapView.getLayersByType(Constants.LAYERTYPE_TRACKS)
-        if (tracks.size > 0) {
-            map.removeLayer(tracks[0])
-            val uri = Uri.parse("content://" + app.authority + "/" + TrackLayer.TABLE_TRACKS)
-            contentResolver.delete(uri, null, null)
-        }
-        map.delete()
-        preferences.edit().remove("project").apply()
-        val intent = IntentFor<ProjectListActivity>(this)
-        intent.putExtra("project", id)
-        startActivity(intent)
     }
 
     private fun ask() {

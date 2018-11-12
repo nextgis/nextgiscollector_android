@@ -22,6 +22,7 @@
 package com.nextgis.collector.activity
 
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.v7.app.AppCompatActivity
@@ -29,7 +30,11 @@ import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.data.Project
 import com.nextgis.maplib.map.MapDrawable
+import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.map.TrackLayer
+import com.nextgis.maplib.util.Constants
 import com.nextgis.maplibui.mapui.MapViewOverlays
+import com.pawegio.kandroid.IntentFor
 import org.json.JSONObject
 
 abstract class BaseActivity : AppCompatActivity() {
@@ -49,4 +54,31 @@ abstract class BaseActivity : AppCompatActivity() {
         val json = preferences.getString("project", "{}")
         project = Project(JSONObject(json))
     }
+
+    protected fun deleteAll() {
+        for (i in 0 until map.layerCount) {
+            val layer = map.getLayer(i)
+            if (layer is NGWVectorLayer) {
+                val account = app.getAccount(layer.accountName)
+                app.removeAccount(account)
+            }
+        }
+
+        val tracks = mapView.getLayersByType(Constants.LAYERTYPE_TRACKS)
+        if (tracks.size > 0) {
+            map.removeLayer(tracks[0])
+            val uri = Uri.parse("content://" + app.authority + "/" + TrackLayer.TABLE_TRACKS)
+            contentResolver.delete(uri, null, null)
+        }
+        map.delete()
+        preferences.edit().remove("project").apply()
+    }
+
+    protected fun change(id: Int = -1) {
+        deleteAll()
+        val intent = IntentFor<ProjectListActivity>(this)
+        intent.putExtra("project", id)
+        startActivity(intent)
+    }
+
 }
