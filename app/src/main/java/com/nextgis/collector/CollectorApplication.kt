@@ -37,9 +37,10 @@ class CollectorApplication : GISApplication() {
     }
 
     override fun onCreate() {
-        super.onCreate()
         if (!BuildConfig.DEBUG)
             Sentry.init(AndroidSentryClientFactory(applicationContext))
+        super.onCreate()
+        checkTracksLayerExistence()
     }
 
     override fun getAuthority(): String {
@@ -64,7 +65,6 @@ class CollectorApplication : GISApplication() {
 
     override fun getMap(): MapBase {
         val map = super.getMap()
-        checkTracksLayerExistence()
         return map
     }
 
@@ -72,13 +72,13 @@ class CollectorApplication : GISApplication() {
         val tracks = ArrayList<ILayer>()
         LayerGroup.getLayersByType(mMap, Constants.LAYERTYPE_TRACKS, tracks)
         if (tracks.isEmpty()) {
-            val trackLayerName = getString(R.string.tracks)
             val trackLayer = TrackLayerUI(applicationContext, mMap.createLayerStorage("tracks"))
-            trackLayer.name = trackLayerName
+            trackLayer.name = getString(R.string.tracks)
             trackLayer.isVisible = true
             mMap.addLayer(trackLayer)
             mMap.save()
-        }
+        } else
+            mMap.moveLayer(map.layerCount - 1, tracks.first())
     }
 
 }
