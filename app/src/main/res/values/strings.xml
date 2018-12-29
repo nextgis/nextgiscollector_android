@@ -28,4 +28,5 @@
     <string name="device_id">Your device ID</string>
     <string name="sign_out_ngid">Sign out from NextGIS</string>
     <string name="sign_out_ngid_message">>Are you sure to sign out from NextGIS? Current map and data will be deleted.</string>
+    <string name="track_cloud">Tracks cloud sync</string>
 </resources>

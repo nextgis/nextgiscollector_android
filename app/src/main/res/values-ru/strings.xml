@@ -49,4 +49,5 @@
     <string name="device_id">Ваш ID устройства</string>
     <string name="sign_out_ngid">Выйти из аккаунта</string>
     <string name="sign_out_ngid_message">Выйти из аккаунта NextGIS? Все текущие данные и карта будут удалены.</string>
+    <string name="track_cloud">Отправлять треки в облако</string>
 </resources>

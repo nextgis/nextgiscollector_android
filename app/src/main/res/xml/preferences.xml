@@ -23,4 +23,10 @@
     <Preference
         android:key="sign_out"
         android:title="@string/sign_out_ngid" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="track_send"
+        android:title="@string/track_cloud" />
+
 </PreferenceScreen>
