@@ -334,6 +334,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     }
                 }
                 this.project = project
+                preferences.edit().putString("project", project.json).apply()
                 open()
             }
         }
@@ -346,7 +347,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         }
 
         binding.projectModel?.isLoading?.set(true)
-        preferences.edit().putString("project", project.json).apply()
         val base = getExternalFilesDir(null) ?: filesDir
         val file = File(base, CollectorApplication.TREE)
         FileUtil.writeToFile(file, project.tree)
