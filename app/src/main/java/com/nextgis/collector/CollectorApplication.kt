@@ -21,12 +21,12 @@
 
 package com.nextgis.collector
 
-import com.nextgis.maplib.map.MapBase
+import com.nextgis.maplib.api.ILayer
+import com.nextgis.maplib.map.LayerGroup
+import com.nextgis.maplib.util.Constants
+import com.nextgis.maplib.util.SettingsConstants.KEY_PREF_TRACK_SEND
 import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.mapui.TrackLayerUI
-import com.nextgis.maplib.map.LayerGroup
-import com.nextgis.maplib.api.ILayer
-import com.nextgis.maplib.util.Constants
 import io.sentry.Sentry
 import io.sentry.android.AndroidSentryClientFactory
 
@@ -41,6 +41,19 @@ class CollectorApplication : GISApplication() {
             Sentry.init(AndroidSentryClientFactory(applicationContext))
         super.onCreate()
         checkTracksLayerExistence()
+        updateFromPreviousVersion()
+    }
+
+    private fun updateFromPreviousVersion() {
+        val currentVersionCode = BuildConfig.VERSION_CODE
+        val savedVersionCode = mSharedPreferences.getInt("last", 0)
+
+        if (savedVersionCode == 0)
+            mSharedPreferences.edit().putBoolean(KEY_PREF_TRACK_SEND, true).apply()
+
+        if (savedVersionCode < currentVersionCode) {
+            mSharedPreferences.edit().putInt("last", currentVersionCode).apply()
+        }
     }
 
     override fun getAuthority(): String {
@@ -61,11 +74,6 @@ class CollectorApplication : GISApplication() {
 
     override fun getAccountsType(): String {
         return "com.nextgiscollector.account"//Constants.NGW_ACCOUNT_TYPE
-    }
-
-    override fun getMap(): MapBase {
-        val map = super.getMap()
-        return map
     }
 
     private fun checkTracksLayerExistence() {
