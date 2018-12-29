@@ -43,6 +43,7 @@ import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
+import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.service.TrackerService
@@ -145,6 +146,15 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     private fun controlTrack(item: MenuItem) {
+        if (!PermissionUtil.hasPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+            requestForPermissions(object : OnPermissionCallback {
+                override fun onPermissionGranted() {
+                    controlTrack(item)
+                }
+            }, false)
+            return
+        }
+
         val trackerService = IntentFor<TrackerService>(this)
         trackerService.putExtra(ConstantsUI.TARGET_CLASS, this.javaClass.name)
         val unfinished = setTracksTitle(item)
@@ -260,12 +270,13 @@ abstract class ProjectActivity : BaseActivity() {
             var json = JSONObject()
             val id = project.id
             val email = preferences.getString(PREF_EMAIL, "")
-            val response = ProjectModel.getResponse("$id", email)
-            var json = JSONObject()
-            response?.let {
-                try {
-                    json = JSONObject(response.responseBody)
-                } catch (e: Exception) {
+            email?.let {
+                val response = ProjectModel.getResponse("$id", email)
+                response?.let {
+                    try {
+                        json = JSONObject(response.responseBody)
+                    } catch (e: Exception) {
+                    }
                 }
             }
 
