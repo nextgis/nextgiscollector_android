@@ -31,6 +31,7 @@ import android.support.v4.content.ContextCompat
 import com.github.paolorotolo.appintro.AppIntro
 import com.github.paolorotolo.appintro.AppIntroFragment
 import com.nextgis.collector.R
+import com.nextgis.maplib.util.PermissionUtil
 import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
 
@@ -57,8 +58,12 @@ class IntroActivity : AppIntro() {
 
     override fun onDonePressed(currentFragment: Fragment) {
         super.onDonePressed(currentFragment)
-        val permissions = arrayOf(Manifest.permission.GET_ACCOUNTS, Manifest.permission.WRITE_SYNC_SETTINGS)
-        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_CODE)
+        if (!PermissionUtil.hasPermission(this, Manifest.permission.WRITE_SYNC_SETTINGS)
+                || !PermissionUtil.hasPermission(this, Manifest.permission.GET_ACCOUNTS)) {
+            val permissions = arrayOf(Manifest.permission.GET_ACCOUNTS, Manifest.permission.WRITE_SYNC_SETTINGS)
+            ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_CODE)
+        } else
+            openProjectList()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -71,8 +76,13 @@ class IntroActivity : AppIntro() {
 
         if (granted) {
             PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean(INTRO_SHOWN, true).apply()
-            startActivity<ProjectListActivity>()
+            openProjectList()
         } else
             longToast(R.string.permission_denied)
+    }
+
+    private fun openProjectList() {
+        startActivity<ProjectListActivity>()
+        finish()
     }
 }
