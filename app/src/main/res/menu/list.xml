@@ -2,7 +2,7 @@
   ~ Project:  NextGIS Collector
   ~ Purpose:  Light mobile GIS for collecting data
   ~ Author:   Stanislav Petriakov, becomeglory@gmail.com
-  ~ **********************************************************************
+  ~ *********************************************************************
   ~ Copyright (c) 2018 NextGIS, info@nextgis.com
   ~
   ~ This program is free software: you can redistribute it and/or modify
@@ -21,35 +21,6 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <item
-        android:id="@+id/menu_sync"
-        android:icon="@drawable/ic_cloud_sync"
-        android:title="@string/sync"
-        app:showAsAction="always" />
-
-    <item
-        android:icon="@drawable/ic_walk"
-        android:title="@string/tracks"
-        app:showAsAction="always">
-
-        <menu>
-            <item
-                android:id="@+id/menu_track"
-                android:title="@string/start"
-                app:showAsAction="ifRoom" />
-
-            <item
-                android:id="@+id/menu_track_list"
-                android:title="@string/track_list"
-                app:showAsAction="ifRoom" />
-        </menu>
-    </item>
-
-    <item
-        android:id="@+id/menu_change_project"
-        android:title="@string/change_project"
-        app:showAsAction="never" />
 
     <item
         android:id="@+id/menu_settings"

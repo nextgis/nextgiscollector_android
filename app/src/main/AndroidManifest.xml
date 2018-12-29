@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Project:  NextGIS Collector
   ~ Purpose:  Light mobile GIS for collecting data
   ~ Author:   Stanislav Petriakov, becomeglory@gmail.com
@@ -20,24 +19,24 @@
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<manifest package="com.nextgis.collector"
-          xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.nextgis.collector">
 
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
-    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
-    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
-    <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
-    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
-    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:name=".CollectorApplication"
@@ -52,55 +51,60 @@
             android:name=".activity.ProjectListActivity"
             android:label="@string/app_name">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <activity
             android:name=".activity.IntroActivity"
             android:label="@string/intro"
-            android:theme="@style/AppTheme.TranslucentStatusBar"/>
+            android:theme="@style/AppTheme.TranslucentStatusBar" />
 
         <activity
             android:name=".activity.MapActivity"
             android:launchMode="singleTask"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name=".activity.AddFeatureActivity"
             android:label="@string/add_feature"
             android:launchMode="singleTask"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
+            android:name=".activity.PreferenceActivity"
+            android:label="@string/action_settings"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name="com.nextgis.maplibui.account.NGWAuthenticatorService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator"/>
+                <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
             <meta-data
                 android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator"/>
+                android:resource="@xml/authenticator" />
         </service>
 
         <service
             android:name="com.nextgis.maplib.service.NGWSyncService"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.content.SyncAdapter"/>
+                <action android:name="android.content.SyncAdapter" />
             </intent-filter>
             <meta-data
                 android:name="android.content.SyncAdapter"
-                android:resource="@xml/syncadapter"/>
+                android:resource="@xml/syncadapter" />
         </service>
 
         <provider
             android:name="com.nextgis.maplib.datasource.LayerContentProvider"
             android:authorities="com.nextgis.collector"
             android:exported="false"
-            android:syncable="true"/>
+            android:syncable="true" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -109,7 +113,7 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths"/>
+                android:resource="@xml/provider_paths" />
         </provider>
 
     </application>

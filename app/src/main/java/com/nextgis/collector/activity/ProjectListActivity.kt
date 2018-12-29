@@ -36,6 +36,8 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import com.nextgis.collector.CollectorApplication
@@ -425,17 +427,17 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         return tmsLayer
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-//    external fun stringFromJNI(): String
-//
-//    companion object {
-//
-//         Used to load the 'native-lib' library on application startup.
-//        init {
-//            System.loadLibrary("native-lib")
-//        }
-//    }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        when (item?.itemId) {
+            R.id.menu_settings -> startActivity<PreferenceActivity>()
+            else -> return super.onOptionsItemSelected(item)
+        }
+        return true
+    }
+
 }

@@ -138,6 +138,7 @@ abstract class ProjectActivity : BaseActivity() {
             R.id.menu_change_project -> ask()
             R.id.menu_track -> controlTrack(item)
             R.id.menu_track_list -> startActivity<TracksActivity>()
+            R.id.menu_settings -> startActivity<PreferenceActivity>()
             else -> return super.onOptionsItemSelected(item)
         }
         return true
@@ -163,6 +164,7 @@ abstract class ProjectActivity : BaseActivity() {
     private fun setTracksTitle(item: MenuItem?): Boolean {
         val unfinished = hasUnfinishedTracks(this)
         item?.setTitle(if (unfinished) R.string.tracks_stop else R.string.start)
+        invalidateOptionsMenu()
         return unfinished
     }
 
@@ -255,6 +257,7 @@ abstract class ProjectActivity : BaseActivity() {
     private fun checkUpdates() {
         showSnackbar(R.string.check_update)
         runAsync {
+            var json = JSONObject()
             val id = project.id
             val email = preferences.getString(PREF_EMAIL, "")
             val response = ProjectModel.getResponse("$id", email)
