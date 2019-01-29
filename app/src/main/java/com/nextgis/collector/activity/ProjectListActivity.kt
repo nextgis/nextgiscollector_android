@@ -50,20 +50,19 @@ import com.nextgis.collector.data.RemoteLayerTMS
 import com.nextgis.collector.databinding.ActivityProjectListBinding
 import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
+import com.nextgis.maplib.datasource.ngw.LayerWithStyles
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
+import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
 import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
-import com.pawegio.kandroid.longToast
-import com.pawegio.kandroid.runDelayed
-import com.pawegio.kandroid.startActivity
-import com.pawegio.kandroid.toast
+import com.pawegio.kandroid.*
 import java.io.File
 
 class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
@@ -111,7 +110,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         projectModel.selectedProject.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
             override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
                 projectModel.selectedProject.get()?.let {
-                    create(it)
+                    prepare(it)
                 }
             }
         })
@@ -241,7 +240,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 it.info.set(false)
                 it.error.set(false)
                 it.isLoading.set(true)
-                it.selectedProject.get()?.let { project -> create(project) }
+                it.selectedProject.get()?.let { project -> prepare(project) }
             }
             progress.visibility = View.VISIBLE
             message.visibility = View.VISIBLE
@@ -342,16 +341,35 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         }
     }
 
-    private fun create(project: Project) {
+    private fun getFullUrl(url: String): String {
+        val uri = Uri.parse(Uri.decode(url))
+        val scheme = uri.scheme ?: "http"
+        return scheme + "://" + uri.authority
+    }
+
+    private fun prepare(project: Project) {
         if (project.layers.size == 0) {
             runOnUiThread { toast(R.string.error_empty_dataset) }
             return
         }
 
         binding.projectModel?.isLoading?.set(true)
+        runAsync {
+            create(project)
+        }
+    }
+
+    private fun create(project: Project) {
         val base = getExternalFilesDir(null) ?: filesDir
         val file = File(base, CollectorApplication.TREE)
         FileUtil.writeToFile(file, project.tree)
+
+        val needAccount = project.user.isNotBlank() && project.url.isNotBlank()
+        val fullUrl = getFullUrl(project.url)
+        if (needAccount) {
+            app.addAccount(project.title, fullUrl, project.user, project.password, "ngw")
+        }
+
         total = project.layers.size
         for (layer in project.layers) {
             var mapLayer: ILayer? = null
@@ -365,11 +383,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 }
                 "ngw", "ngfp" -> {
                     val resource = layer as RemoteLayerNGW
-                    if (project.user.isNotBlank()) {
+                    if (needAccount) {
                         resource.login = project.user
                         resource.password = project.password
                     }
-                    addVector(resource)
+                    addVector(resource, project.title, fullUrl, project.user, project.password)
                 }
             }
             mapLayer?.let { map.addLayer(mapLayer) }
@@ -401,22 +419,21 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         start(intent, layer)
     }
 
-    private fun addVector(layer: RemoteLayerNGW) {
+    private fun addVector(layer: RemoteLayerNGW, accountName: String, url: String, user: String, pass: String) {
         val intent = Intent(this, LayerFillService::class.java)
         intent.action = LayerFillService.ACTION_ADD_TASK
 
-        if (layer.type == "ngw") {
-            val uri = Uri.parse(Uri.decode(layer.url))
-            val scheme = uri.scheme ?: "http"
-            val fullUrl = scheme + "://" + uri.authority
-            val accountName = "Collector " + System.currentTimeMillis()
-            app.addAccount(accountName, fullUrl, layer.login, layer.password, "ngw")
-            val id = uri.lastPathSegment?.toLongOrNull()
-            intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
-            intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
-        }
-
+        val uri = Uri.parse(Uri.decode(layer.url))
+        val id = uri.lastPathSegment?.toLongOrNull()
+        intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
+        intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
         intent.putExtra(LayerFillService.KEY_SYNC, layer.syncable)
+        if (layer.type == "ngfp")
+            id?.let {
+                val forms = arrayListOf<Long>()
+                LayerWithStyles.fillStyles(url, user, pass, it, null, forms)
+                forms.firstOrNull()?.let { form -> layer.url = NGWUtil.getFormUrl(url, form) }
+            }
         start(intent, layer)
     }
 

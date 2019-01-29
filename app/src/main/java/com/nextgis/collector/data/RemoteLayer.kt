@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,11 +31,11 @@ import com.nextgis.collector.writeBoolean
 import com.nextgis.maplib.util.Constants
 
 
-open class RemoteLayer(val title: String, val type: String, val description: String, val url: String, val visible: Boolean, val minZoom: Float, val maxZoom:
-Float) : BaseObservable(), KParcelable {
+open class RemoteLayer(val title: String, val type: String, val description: String, var url: String,
+                       val visible: Boolean, val minZoom: Float, val maxZoom: Float) : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readBoolean(),
-            parcel.readFloat(), parcel.readFloat())
+    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
+            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
