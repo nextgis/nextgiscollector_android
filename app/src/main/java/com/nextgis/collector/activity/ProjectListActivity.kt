@@ -326,7 +326,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     } else
                         i++
 
-                    if (layer is VectorLayer) {
+                    if (layer is VectorLayer && id >= 0 && id < project.layers.size) {
                         val vector = project.layers[id] as RemoteLayerNGW
                         if (vector.styleable) {
                             layer.setRenderer(vector.renderer)
