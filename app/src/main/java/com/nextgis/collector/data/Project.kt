@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,15 +30,18 @@ import com.nextgis.collector.KParcelable.Companion.readArrayList
 import com.nextgis.collector.KParcelable.Companion.readStringFrom
 import com.nextgis.collector.parcelableCreator
 import org.json.JSONObject
+import java.util.*
 
 
 class Project(val id: Int, val title: String, val description: String, val screen: String, version: Int,
-              val layers: ArrayList<RemoteLayer>, val tree: String) : BaseObservable(), KParcelable {
+              val layers: ArrayList<RemoteLayer>, val tree: String,
+              val url: String, val user: String, val hash: String) : BaseObservable(), KParcelable {
 
     private constructor(parcel: Parcel) : this(parcel.readInt(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
-            parcel.readInt(), readArrayList(parcel), readStringFrom(parcel))
+            parcel.readInt(), readArrayList(parcel), readStringFrom(parcel),
+            readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel))
 
-    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), "", json.optString("screen"), json.optInt("version"), ArrayList(), "")
+    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), "", json.optString("screen"), json.optInt("version"), ArrayList(), "", "", "", "")
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
@@ -48,6 +51,9 @@ class Project(val id: Int, val title: String, val description: String, val scree
         dest.writeInt(version)
         dest.writeArray(layers.toArray())
         dest.writeString(tree)
+        dest.writeString(url)
+        dest.writeString(user)
+        dest.writeString(hash)
     }
 
     companion object {
@@ -75,5 +81,15 @@ class Project(val id: Int, val title: String, val description: String, val scree
     val isMapMain: Boolean
         get() {
             return screen != "list"
+        }
+
+    val password: String
+        get() {
+            val array = arrayListOf<Int>()
+            array.addAll(hash.chunked(4).map { it.toInt(16) - version })
+            for (i in 0 until version)
+                array.add(0, array.removeAt(array.size - 1))
+            val length = array.removeAt(0)
+            return array.dropLast(array.size - length).map { it.toChar() }.joinToString("")
         }
 }

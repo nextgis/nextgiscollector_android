@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,10 +29,13 @@ import com.nextgis.collector.writeBoolean
 import org.json.JSONObject
 
 
-class RemoteLayerNGW(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val login: String, val password: String?, val editable: Boolean, val syncable: Boolean, var style: String = "")
+class RemoteLayerNGW(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float,
+                     var login: String, var password: String?, val editable: Boolean, val syncable: Boolean, var style: String = "")
     : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom) {
 
-    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), readStringFrom(parcel), readStringFrom(parcel), parcel.readBoolean(), parcel.readBoolean(), readStringFrom(parcel))
+    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
+            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), readStringFrom(parcel),
+            readStringFrom(parcel), parcel.readBoolean(), parcel.readBoolean(), readStringFrom(parcel))
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         super.writeToParcel(dest, flags)

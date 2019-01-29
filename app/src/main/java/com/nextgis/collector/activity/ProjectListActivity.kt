@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -364,7 +364,12 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     addRaster(layer)
                 }
                 "ngw", "ngfp" -> {
-                    addVector(layer as RemoteLayerNGW)
+                    val resource = layer as RemoteLayerNGW
+                    if (project.user.isNotBlank()) {
+                        resource.login = project.user
+                        resource.password = project.password
+                    }
+                    addVector(resource)
                 }
             }
             mapLayer?.let { map.addLayer(mapLayer) }

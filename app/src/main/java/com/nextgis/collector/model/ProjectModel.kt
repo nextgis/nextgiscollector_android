@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,7 +96,10 @@ class ProjectModel {
         val jsonLayers = jsonProject.optJSONArray("layers")
         val layers = parseLayers(jsonLayers)
         val tree = parseTree(jsonLayers)
-        return Project(id, title, description, screen, version, layers, tree.json)
+        val url = jsonProject.optString("url")
+        val user = jsonProject.optString("username")
+        val hash = jsonProject.optString("hash")
+        return Project(id, title, description, screen, version, layers, tree.json, url, user, hash)
     }
 
     private fun parseTree(json: JSONArray?): ResourceTree {
