@@ -366,8 +366,13 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         val needAccount = project.user.isNotBlank() && project.url.isNotBlank()
         val fullUrl = getFullUrl(project.url)
+        val authority = fullUrl.split("://")[1]
         if (needAccount) {
-            app.addAccount(project.title, fullUrl, project.user, project.password, "ngw")
+            val success = app.addAccount(authority, fullUrl, project.user, project.password, "ngw")
+            if (!success) {
+                toast(R.string.error_auth)
+                return
+            }
         }
 
         total = project.layers.size
@@ -387,7 +392,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         resource.login = project.user
                         resource.password = project.password
                     }
-                    addVector(resource, project.title, fullUrl, project.user, project.password)
+                    addVector(resource, authority, fullUrl, project.user, project.password)
                 }
             }
             mapLayer?.let { map.addLayer(mapLayer) }
@@ -396,11 +401,15 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         check()
     }
 
-    private fun start(intent: Intent, layer: RemoteLayer) {
+    private fun start(intent: Intent, layer: RemoteLayer, formUrl: String = "") {
         var type = LayerFillService.NGW_LAYER
+        var url = layer.url
         when (layer.type) {
             "ngrc" -> type = LayerFillService.TMS_LAYER
-            "ngfp" -> type = LayerFillService.VECTOR_LAYER_WITH_FORM
+            "ngfp" -> {
+                type = LayerFillService.VECTOR_LAYER_WITH_FORM
+                url = formUrl
+            }
         }
         intent.putExtra(LayerFillService.KEY_NAME, layer.title)
         intent.putExtra(LayerFillService.KEY_LAYER_PATH, map.createLayerStorage(layer.path))
@@ -409,7 +418,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.putExtra(LayerFillService.KEY_VISIBLE, layer.visible)
         intent.putExtra(LayerFillService.KEY_MIN_ZOOM, layer.minZoom)
         intent.putExtra(LayerFillService.KEY_MAX_ZOOM, layer.maxZoom)
-        intent.putExtra(LayerFillService.KEY_URI, Uri.parse(layer.url))
+        intent.putExtra(LayerFillService.KEY_URI, Uri.parse(url))
         startService(intent)
     }
 
@@ -428,13 +437,14 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
         intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
         intent.putExtra(LayerFillService.KEY_SYNC, layer.syncable)
+        var formUrl = ""
         if (layer.type == "ngfp")
             id?.let {
                 val forms = arrayListOf<Long>()
                 LayerWithStyles.fillStyles(url, user, pass, it, null, forms)
-                forms.firstOrNull()?.let { form -> layer.url = NGWUtil.getFormUrl(url, form) }
+                forms.firstOrNull()?.let { form -> formUrl = NGWUtil.getFormUrl(url, form) }
             }
-        start(intent, layer)
+        start(intent, layer, formUrl)
     }
 
     private fun createTMS(layer: RemoteLayerTMS): ILayer {

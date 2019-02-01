@@ -31,7 +31,7 @@ import com.nextgis.collector.writeBoolean
 import com.nextgis.maplib.util.Constants
 
 
-open class RemoteLayer(val title: String, val type: String, val description: String, var url: String,
+open class RemoteLayer(val title: String, val type: String, val description: String, val url: String,
                        val visible: Boolean, val minZoom: Float, val maxZoom: Float) : BaseObservable(), KParcelable {
 
     private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
