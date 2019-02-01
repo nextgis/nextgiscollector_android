@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * ********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,14 +74,14 @@ class IntroActivity : AppIntro() {
             if (result != PackageManager.PERMISSION_GRANTED)
                 granted = false
 
-        if (granted) {
-            PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean(INTRO_SHOWN, true).apply()
+        if (granted)
             openProjectList()
-        } else
+        else
             longToast(R.string.permission_denied)
     }
 
     private fun openProjectList() {
+        PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean(INTRO_SHOWN, true).apply()
         startActivity<ProjectListActivity>()
         finish()
     }
