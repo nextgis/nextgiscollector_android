@@ -182,7 +182,7 @@ abstract class ProjectActivity : BaseActivity() {
         this.onPermissionCallback = onPermissionCallback
         val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
         val fine = Manifest.permission.ACCESS_FINE_LOCATION
-        val photo = Manifest.permission.READ_EXTERNAL_STORAGE
+        val photo = Manifest.permission.WRITE_EXTERNAL_STORAGE
         val geoStatus = ActivityCompat.checkSelfPermission(this, fine)
         val memStatus = ActivityCompat.checkSelfPermission(this, photo)
         if (geoStatus != PackageManager.PERMISSION_GRANTED || memStatus != PackageManager.PERMISSION_GRANTED && memory) {
