@@ -100,7 +100,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         newIntent = intent
         binding.apply {
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
-            container.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
+            mapContainer.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
         }
         setCenter()
 

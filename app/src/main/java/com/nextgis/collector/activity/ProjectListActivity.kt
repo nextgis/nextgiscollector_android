@@ -71,6 +71,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     private lateinit var receiver: BroadcastReceiver
     @Volatile
     private var total = 0
+    private val queue = arrayListOf<Intent>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,7 +140,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             val account = app.getAccount(ngwLayer.accountName)
 
                             val project = binding.projectModel?.selectedProject?.get()
-                            val remote = project?.layers?.first { it.path == ngwLayer.path.name }
+                            val remote = project?.layers?.firstOrNull { it.path == ngwLayer.path.name }
 
                             if (remote is RemoteLayerNGW) {
                                 ngwLayer.setIsEditable(remote.editable && remote.syncable)
@@ -399,9 +400,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         }
         map.save()
         check()
+        start()
     }
 
-    private fun start(intent: Intent, layer: RemoteLayer, formUrl: String = "") {
+    private fun queue(intent: Intent, layer: RemoteLayer, formUrl: String = "") {
         var type = LayerFillService.NGW_LAYER
         var url = layer.url
         when (layer.type) {
@@ -419,13 +421,19 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.putExtra(LayerFillService.KEY_MIN_ZOOM, layer.minZoom)
         intent.putExtra(LayerFillService.KEY_MAX_ZOOM, layer.maxZoom)
         intent.putExtra(LayerFillService.KEY_URI, Uri.parse(url))
-        ContextCompat.startForegroundService(this, intent)
+        queue.add(intent)
+    }
+
+    private fun start() {
+        for (intent in queue)
+            ContextCompat.startForegroundService(this, intent)
+        queue.clear()
     }
 
     private fun addRaster(layer: RemoteLayer) {
         val intent = Intent(this, LayerFillService::class.java)
         intent.action = LayerFillService.ACTION_ADD_TASK
-        start(intent, layer)
+        queue(intent, layer)
     }
 
     private fun addVector(layer: RemoteLayerNGW, accountName: String, url: String, user: String, pass: String) {
@@ -444,7 +452,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 LayerWithStyles.fillStyles(url, user, pass, it, null, forms)
                 forms.firstOrNull()?.let { form -> formUrl = NGWUtil.getFormUrl(url, form) }
             }
-        start(intent, layer, formUrl)
+        queue(intent, layer, formUrl)
     }
 
     private fun createTMS(layer: RemoteLayerTMS): ILayer {
