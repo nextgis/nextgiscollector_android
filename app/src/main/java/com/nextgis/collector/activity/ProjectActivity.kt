@@ -28,6 +28,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.Toolbar
 import android.util.Log
@@ -163,11 +164,11 @@ abstract class ProjectActivity : BaseActivity() {
             trackerService.action = TrackerService.ACTION_STOP
         } else if (unfinished) {
             trackerService.action = TrackerService.ACTION_STOP
-            startService(trackerService)
+            ContextCompat.startForegroundService(this, trackerService)
             trackerService.action = null
         }
 
-        startService(trackerService)
+        ContextCompat.startForegroundService(this, trackerService)
         setTracksTitle(item)
     }
 

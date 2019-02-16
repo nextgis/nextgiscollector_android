@@ -185,7 +185,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     private fun error() {
         val intent = Intent(this, LayerFillService::class.java)
         intent.action = LayerFillService.ACTION_STOP
-        startService(intent)
+        ContextCompat.startForegroundService(this, intent)
         runDelayed(2000) { deleteAll() }
         binding.apply {
             projectModel?.let {
@@ -370,7 +370,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         if (needAccount) {
             val success = app.addAccount(authority, fullUrl, project.user, project.password, "ngw")
             if (!success) {
-                toast(R.string.error_auth)
+                runOnUiThread { toast(R.string.error_auth) }
                 return
             }
         }
@@ -419,7 +419,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.putExtra(LayerFillService.KEY_MIN_ZOOM, layer.minZoom)
         intent.putExtra(LayerFillService.KEY_MAX_ZOOM, layer.maxZoom)
         intent.putExtra(LayerFillService.KEY_URI, Uri.parse(url))
-        startService(intent)
+        ContextCompat.startForegroundService(this, intent)
     }
 
     private fun addRaster(layer: RemoteLayer) {

@@ -203,16 +203,18 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
                     map.setZoomAndCenter(zoom, center)
                 }
                 val id = it.getIntExtra(NEW_FEATURE, -1)
-                val layer = map.getLayerById(id) as NGWVectorLayerUI?
-                selectedLayer = layer
-                setTitle(getString(R.string.new_feature), layer?.name)
-                setToolbar()
-                overlay.setSelectedLayer(layer)
-                overlay.selectedFeature = Feature()
-                startEdit()
-                overlay.createNewGeometry()
-                overlay.setHasEdits(true)
-                historyOverlay.saveToHistory(overlay.selectedFeature)
+                val selected = map.getLayerById(id) as NGWVectorLayerUI?
+                selected?.let { layer ->
+                    selectedLayer = layer
+                    setTitle(getString(R.string.new_feature), layer.name)
+                    setToolbar()
+                    overlay.setSelectedLayer(layer)
+                    overlay.selectedFeature = Feature()
+                    startEdit()
+                    overlay.createNewGeometry()
+                    overlay.setHasEdits(true)
+                    historyOverlay.saveToHistory(overlay.selectedFeature)
+                }
                 it.removeExtra(NEW_FEATURE)
                 returnToList = true
             }
