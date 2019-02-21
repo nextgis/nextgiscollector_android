@@ -59,8 +59,7 @@ abstract class BaseActivity : AppCompatActivity() {
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
             if (layer is NGWVectorLayer) {
-                val account = app.getAccount(layer.accountName)
-                app.removeAccount(account)
+                app.getAccount(layer.accountName)?.let { app.removeAccount(it) }
             }
         }
 
