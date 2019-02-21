@@ -72,6 +72,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     @Volatile
     private var total = 0
     private val queue = arrayListOf<Intent>()
+    private val layers = arrayListOf<NGWVectorLayer>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,6 +119,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action?.equals(LayerFillService.ACTION_STOP) == true) {
+                    toast(R.string.canceled)
+                    reset()
+                    return
+                }
                 val serviceStatus = intent.getShortExtra(LayerFillService.KEY_STATUS, 0)
                 when (serviceStatus) {
                     LayerFillService.STATUS_STOP -> {
@@ -129,6 +135,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             else if (intent.hasExtra(LayerFillService.KEY_MESSAGE))
                                 longToast(intent.getStringExtra(LayerFillService.KEY_MESSAGE))
                             error()
+                            return
                         }
                         if (!intent.hasExtra(LayerFillService.KEY_MESSAGE))
                             return
@@ -149,7 +156,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                                     ngwLayer.syncType = Constants.SYNC_ALL
                                 }
 
-                                ngwLayer.save()
+                                layers.add(ngwLayer)
                             }
                         }
 
@@ -173,29 +180,32 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         val extras = intent.extras
         val id = extras?.getInt("project", -1) ?: -1
-        if (id >= 0)
+        if (id >= 0) {
             load(id)
-        else
-            projectModel.load(private = false)
-
-        chooseTitle(private = false)
-//         Example of a call to a native method
-//        sample_text.text = stringFromJNI()
+            chooseTitle(private = false)
+        } else {
+            val private = preferences.getBoolean("latest_projects", false)
+            binding.mode.tag = private
+            switch()
+        }
     }
 
     private fun error() {
         val intent = Intent(this, LayerFillService::class.java)
         intent.action = LayerFillService.ACTION_STOP
         ContextCompat.startForegroundService(this, intent)
+        reset()
+    }
+
+    private fun reset() {
         runDelayed(2000) { deleteAll() }
         binding.apply {
             projectModel?.let {
                 it.info.set(true)
                 it.error.set(true)
+                it.isLoading.set(false)
+                it.isLoaded.set(false)
             }
-            progress.visibility = View.GONE
-            message.visibility = View.GONE
-            status.visibility = View.GONE
         }
     }
 
@@ -218,20 +228,23 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.mode -> {
-                binding.apply {
-                    val private = if (mode.tag != null) mode.tag as Boolean else true
-                    val icon = if (private) R.drawable.earth else R.drawable.lock
-                    val drawable = ContextCompat.getDrawable(this@ProjectListActivity, icon)
-                    mode.setImageDrawable(drawable)
-                    chooseTitle(private)
-                    projectModel?.load(private = private)
-                    mode.tag = !private
-                }
-            }
+            R.id.mode -> switch()
             R.id.create -> write()
             R.id.retry -> retry()
             R.id.cancel -> cancel()
+        }
+    }
+
+    private fun switch() {
+        binding.apply {
+            val private = if (mode.tag != null) mode.tag as Boolean else true
+            val icon = if (private) R.drawable.earth else R.drawable.lock
+            val drawable = ContextCompat.getDrawable(this@ProjectListActivity, icon)
+            mode.setImageDrawable(drawable)
+            chooseTitle(private)
+            projectModel?.load(private = private)
+            mode.tag = !private
+            preferences.edit().putBoolean("latest_projects", private).apply()
         }
     }
 
@@ -241,11 +254,9 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 it.info.set(false)
                 it.error.set(false)
                 it.isLoading.set(true)
+                it.isLoaded.set(false)
                 it.selectedProject.get()?.let { project -> prepare(project) }
             }
-            progress.visibility = View.VISIBLE
-            message.visibility = View.VISIBLE
-            status.visibility = View.VISIBLE
             message.text = ""
             status.text = ""
         }
@@ -257,6 +268,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 it.info.set(false)
                 it.error.set(false)
                 it.isLoading.set(false)
+                it.isLoaded.set(true)
             }
             status.text = ""
             message.text = ""
@@ -333,6 +345,9 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             layer.setRenderer(vector.renderer)
                             vector.style = ""
                         }
+
+                        val ngw = layers.firstOrNull { it.id == layer.id }
+                        ngw?.save()
                     }
                 }
                 this.project = project
@@ -348,16 +363,35 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         return scheme + "://" + uri.authority
     }
 
+    private fun needAccount(project: Project): Boolean {
+        return project.user.isNotBlank() && project.url.isNotBlank()
+    }
+
     private fun prepare(project: Project) {
         if (project.layers.size == 0) {
-            runOnUiThread { toast(R.string.error_empty_dataset) }
+            toast(R.string.error_empty_dataset)
             return
         }
 
         binding.projectModel?.isLoading?.set(true)
-        runAsync {
-            create(project)
+        binding.projectModel?.isLoaded?.set(false)
+        runOnUiThread { account(project) }
+    }
+
+    private fun account(project: Project) {
+        if (needAccount(project)) {
+            val fullUrl = getFullUrl(project.url)
+            val authority = fullUrl.split("://")[1]
+            app.getAccount(authority)?.let { app.removeAccount(it) }
+            val success = app.addAccount(authority, fullUrl, project.user, project.password, "ngw")
+            if (!success) {
+                toast(R.string.error_auth)
+                reset()
+                return
+            }
         }
+
+        runAsync { create(project) }
     }
 
     private fun create(project: Project) {
@@ -365,16 +399,9 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         val file = File(base, CollectorApplication.TREE)
         FileUtil.writeToFile(file, project.tree)
 
-        val needAccount = project.user.isNotBlank() && project.url.isNotBlank()
+        val needAccount = needAccount(project)
         val fullUrl = getFullUrl(project.url)
         val authority = fullUrl.split("://")[1]
-        if (needAccount) {
-            val success = app.addAccount(authority, fullUrl, project.user, project.password, "ngw")
-            if (!success) {
-                runOnUiThread { toast(R.string.error_auth) }
-                return
-            }
-        }
 
         total = project.layers.size
         for (layer in project.layers) {

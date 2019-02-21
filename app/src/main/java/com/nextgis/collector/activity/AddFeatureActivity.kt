@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * ********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -146,10 +146,13 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     }
 
     override fun onPermissionGranted() {
-        if (layer?.geometryType == 1 || layer?.geometryType == 4)
-            layer?.showEditForm(this, -1, null)
-        else
-            toast(R.string.not_implemented)
+        if (layer != null) {
+            if (layer?.geometryType == 1 || layer?.geometryType == 4)
+                layer?.showEditForm(this, -1, null)
+            else
+                toast(R.string.not_implemented)
+        } else
+            toast(R.string.error_layer_not_inited)
     }
 
 }

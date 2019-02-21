@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ class ProjectViewModel : ViewModel() {
     var projects = MutableLiveData<ArrayList<Project>>()
     val selectedProject: ObservableField<Project> = ObservableField()
     val isLoading = ObservableField(true)
+    val isLoaded = ObservableField(false)
     val isEmpty = ObservableField(false)
     val error = ObservableField(false)
     val info = ObservableField(false)
@@ -44,6 +45,7 @@ class ProjectViewModel : ViewModel() {
             error.set(false)
             isEmpty.set(false)
             isLoading.set(false)
+            isLoaded.set(true)
             selectedProject.set(project)
         }
 
@@ -52,6 +54,7 @@ class ProjectViewModel : ViewModel() {
             info.set(isEmpty.get())
             error.set(false)
             isLoading.set(false)
+            isLoaded.set(true)
             projects.postValue(data)
         }
     }
@@ -61,6 +64,7 @@ class ProjectViewModel : ViewModel() {
         error.set(false)
         isEmpty.set(false)
         isLoading.set(true)
+        isLoaded.set(false)
         projectModel.getProjects(private, onDataReadyCallback, email)
     }
 
@@ -69,6 +73,7 @@ class ProjectViewModel : ViewModel() {
         error.set(false)
         isEmpty.set(false)
         isLoading.set(true)
+        isLoaded.set(false)
         projectModel.getProject(id, onDataReadyCallback, email)
     }
 }
