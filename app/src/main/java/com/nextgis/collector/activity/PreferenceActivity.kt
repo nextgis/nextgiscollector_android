@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * ********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,9 @@ import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.preference.*
 import android.support.v7.widget.RecyclerView
+import android.view.Menu
 import android.view.MenuItem
+import com.nextgis.collector.BuildConfig
 import com.nextgis.maplibui.util.NGIDUtils
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ActivityPreferenceBinding
@@ -36,6 +38,8 @@ import com.nextgis.collector.viewmodel.SettingsViewModel
 import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.pawegio.kandroid.IntentFor
 import kotlinx.android.synthetic.main.toolbar.*
+import java.text.DateFormat
+import java.util.*
 
 class PreferenceActivity : BaseActivity() {
     private lateinit var binding: ActivityPreferenceBinding
@@ -55,14 +59,26 @@ class PreferenceActivity : BaseActivity() {
         supportFragmentManager.beginTransaction().replace(R.id.container, PreferencesFragment()).commit()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.about, menu)
+        return true
+    }
+
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId) {
-            android.R.id.home -> {
-                finish()
-                return true
-            }
+            android.R.id.home -> finish()
+            R.id.menu_about -> about()
         }
-        return super.onOptionsItemSelected(item)
+        return true
+    }
+
+    private fun about() {
+        val date = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(BuildConfig.BUILD_TIME))
+        val builder = AlertDialog.Builder(this)
+                .setTitle(R.string.about)
+                .setMessage(getString(R.string.about_message, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, date))
+                .setPositiveButton(R.string.ok, null)
+        builder.show()
     }
 
     class PreferencesFragment : PreferenceFragmentCompat() {
