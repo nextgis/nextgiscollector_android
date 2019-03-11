@@ -169,13 +169,12 @@ abstract class ProjectActivity : BaseActivity() {
         }
 
         ContextCompat.startForegroundService(this, trackerService)
-        setTracksTitle(item)
+        runDelayedOnUiThread(2500) { setTracksTitle(item) }
     }
 
     private fun setTracksTitle(item: MenuItem?): Boolean {
         val unfinished = hasUnfinishedTracks(this)
         item?.setTitle(if (unfinished) R.string.tracks_stop else R.string.start)
-        invalidateOptionsMenu()
         return unfinished
     }
 
