@@ -24,24 +24,24 @@ package com.nextgis.collector.data
 import android.databinding.BaseObservable
 import android.databinding.Bindable
 import android.os.Parcel
-import com.nextgis.collector.BR
-import com.nextgis.collector.KParcelable
+import com.nextgis.collector.*
 import com.nextgis.collector.KParcelable.Companion.readArrayList
 import com.nextgis.collector.KParcelable.Companion.readStringFrom
-import com.nextgis.collector.parcelableCreator
 import org.json.JSONObject
 import java.util.*
 
 
 class Project(val id: Int, val title: String, val description: String, val screen: String, version: Int,
-              val layers: ArrayList<RemoteLayer>, val tree: String,
+              val layers: ArrayList<RemoteLayer>, val tree: String, val private: Boolean,
               val url: String, val user: String, val hash: String) : BaseObservable(), KParcelable {
 
     private constructor(parcel: Parcel) : this(parcel.readInt(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
-            parcel.readInt(), readArrayList(parcel), readStringFrom(parcel),
+            parcel.readInt(), readArrayList(parcel), readStringFrom(parcel), parcel.readBoolean(),
             readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel))
 
-    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), "", json.optString("screen"), json.optInt("version"), ArrayList(), "", "", "", "")
+    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), "",
+            json.optString("screen"), json.optInt("version"), ArrayList(), "",
+            json.optBoolean("private"), "", "", "")
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
@@ -51,6 +51,7 @@ class Project(val id: Int, val title: String, val description: String, val scree
         dest.writeInt(version)
         dest.writeArray(layers.toArray())
         dest.writeString(tree)
+        dest.writeBoolean(private)
         dest.writeString(url)
         dest.writeString(user)
         dest.writeString(hash)
@@ -74,6 +75,7 @@ class Project(val id: Int, val title: String, val description: String, val scree
             json.put("title", title)
             json.put("id", id)
             json.put("screen", screen)
+            json.put("private", private)
             json.put("version", version)
             return json.toString()
         }
@@ -85,6 +87,9 @@ class Project(val id: Int, val title: String, val description: String, val scree
 
     val password: String
         get() {
+            if (private)
+                return hash
+
             val array = arrayListOf<Int>()
             array.addAll(hash.chunked(4).map { it.toInt(16) - version })
             for (i in 0 until version)

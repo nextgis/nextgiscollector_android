@@ -63,6 +63,7 @@ import com.nextgis.maplibui.service.LayerFillService
 import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.*
+import kotlinx.android.synthetic.main.activity_project_list.*
 import java.io.File
 
 class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
@@ -180,12 +181,13 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         val extras = intent.extras
         val id = extras?.getInt("project", -1) ?: -1
+        val private = extras?.getBoolean("private", true) ?: true
         if (id >= 0) {
-            load(id)
+            load(id, private)
             chooseTitle(private = false)
         } else {
-            val private = preferences.getBoolean("latest_projects", false)
-            binding.mode.tag = private
+            val latest = preferences.getBoolean("latest_projects", true)
+            binding.mode.tag = latest
             switch()
         }
     }
@@ -304,7 +306,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         AlertDialog.Builder(this).setTitle(R.string.join_project)
                 .setMessage(getString(R.string.join_message, project.title))
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes) { _, _ -> load(project.id) }
+                .setPositiveButton(R.string.yes) { _, _ -> load(project.id, mode.tag as Boolean) }
                 .show()
     }
 
@@ -313,8 +315,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         supportActionBar?.title = getString(title)
     }
 
-    private fun load(id: Int) {
-        binding.projectModel?.load(id)
+    private fun load(id: Int, private: Boolean) {
+        binding.projectModel?.load(id, !private)
     }
 
     private fun open() {
@@ -369,7 +371,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
     private fun prepare(project: Project) {
         if (project.layers.size == 0) {
-            toast(R.string.error_empty_dataset)
+            runOnUiThread { toast(R.string.error_empty_dataset) }
             return
         }
 

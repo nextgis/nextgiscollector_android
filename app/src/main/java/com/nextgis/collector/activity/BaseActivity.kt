@@ -73,10 +73,13 @@ abstract class BaseActivity : AppCompatActivity() {
         preferences.edit().remove("project").apply()
     }
 
-    protected fun change(id: Int = -1) {
+    protected fun change(project: Project? = null) {
         deleteAll()
         val intent = IntentFor<ProjectListActivity>(this)
-        intent.putExtra("project", id)
+        project?.let {
+            intent.putExtra("project", it.id)
+            intent.putExtra("private", it.private)
+        }
         startActivity(intent)
     }
 

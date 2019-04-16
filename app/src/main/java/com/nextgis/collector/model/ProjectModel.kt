@@ -26,6 +26,7 @@ import com.nextgis.collector.data.*
 import com.nextgis.collector.data.ResourceTree.Companion.parseResources
 import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.maplib.util.HttpResponse
+import com.nextgis.maplib.util.NGWUtil
 import com.pawegio.kandroid.runAsync
 import org.json.JSONArray
 import org.json.JSONObject
@@ -33,10 +34,13 @@ import org.json.JSONObject
 
 class ProjectModel {
     companion object {
-        fun getResponse(path: String, email: String): HttpResponse? {
+        private fun base(private: Boolean): String = if (private) CollectorApplication.BASE_NGW_URL else CollectorApplication.BASE_URL
+
+        fun getResponse(path: String, email: String, private: Boolean): HttpResponse? {
             try {
                 val hash = NetworkUtil.hash(email)
-                val target = "${CollectorApplication.BASE_URL}/$path"
+                val base = base(private)
+                val target = "$base/$path"
                 val connection = NetworkUtil.getHttpConnection("GET", target, hash)
                 return NetworkUtil.getHttpResponse(connection, false)
 //                return NetworkUtil.get(target, null, null, false)
@@ -50,56 +54,74 @@ class ProjectModel {
 
     fun getProjects(private: Boolean, onDataReadyCallback: OnDataReadyCallback, email: String) {
         runAsync {
-            val response = getResponse("?namespace=" + if (private) "private" else "public", email)
+            val namespace = "?namespace=" + if (private) "private" else "public"
+            val response = getResponse(namespace, email, private)
             var list = ArrayList<Project>()
             response?.let {
                 if (it.isOk)
-                    list = parseProjects(it.responseBody)
+                    list = parseProjects(it.responseBody, private)
             }
             onDataReadyCallback.onDataReady(list)
         }
     }
 
-    fun getProject(id: Int, onDataReadyCallback: OnDataReadyCallback, email: String) {
+    fun getProject(id: Int, onDataReadyCallback: OnDataReadyCallback, email: String, private: Boolean) {
         runAsync {
             var project: Project? = null
-            val response = getResponse("$id", email)
+            val response = getResponse("$id", email, private)
             response?.let {
                 val json = try {
                     JSONObject(response.responseBody)
                 } catch (e: Exception) {
                     JSONObject()
                 }
-                project = parseProject(json)
+                project = parseProject(json, private)
             }
             onDataReadyCallback.onProjectReady(project)
         }
     }
 
-    private fun parseProjects(data: String): ArrayList<Project> {
+    private fun parseProjects(data: String, private: Boolean): ArrayList<Project> {
         val list = ArrayList<Project>()
         val json = JSONArray(data)
         for (i in 0 until json.length()) {
             val jsonProject = json.getJSONObject(i)
-            val project = parseProject(jsonProject)
+            val project = parseProject(jsonProject, private)
             list.add(project)
         }
         return list
     }
 
-    private fun parseProject(jsonProject: JSONObject): Project {
-        val title = jsonProject.optString("title")
+    private fun parseProject(jsonProject: JSONObject, private: Boolean): Project {
+        val title = jsonProject.optString(if (private) "project_name" else "title")
         val screen = jsonProject.optString("screen")
         val id = jsonProject.optInt("id")
         val version = jsonProject.optInt("version")
         val description = jsonProject.optString("description")
-        val jsonLayers = jsonProject.optJSONArray("layers")
-        val layers = parseLayers(jsonLayers)
+
+        var url = jsonProject.optString("url")
+        var user = jsonProject.optString("username")
+        var hash = jsonProject.optString("hash")
+        if (private) {
+            url = jsonProject.optString("ngw_url")
+            user = jsonProject.optString("username")
+            hash = jsonProject.optString("password")
+        }
+
+        var jsonLayers = jsonProject.optJSONArray(if (private) "items" else "layers")
+        jsonLayers?.let {
+            var str = jsonLayers.toString().replace("\"display_name\"", "\"title\"")
+            str = str.replace("\"resource_cls\"", "\"type\"")
+//            str = str.replace("\"item_type\"", "\"type\"")
+            str = str.replace("\"children\"", "\"layers\"")
+//        str = str.replace("\"resource_id\"", "\"id\"")
+            jsonLayers = JSONArray(str)
+        }
+
+        val layers = parseLayers(jsonLayers, url)
         val tree = parseTree(jsonLayers)
-        val url = jsonProject.optString("url")
-        val user = jsonProject.optString("username")
-        val hash = jsonProject.optString("hash")
-        return Project(id, title, description, screen, version, layers, tree.json, url, user, hash)
+
+        return Project(id, title, description, screen, version, layers, tree.json, private, url, user, hash)
     }
 
     private fun parseTree(json: JSONArray?): ResourceTree {
@@ -108,7 +130,7 @@ class ProjectModel {
         return tree
     }
 
-    private fun parseLayers(json: JSONArray?): ArrayList<RemoteLayer> {
+    private fun parseLayers(json: JSONArray?, base: String): ArrayList<RemoteLayer> {
         val jsonLayers = ArrayList<RemoteLayer>()
         json?.let { data ->
             for (j in 0 until data.length()) {
@@ -117,17 +139,26 @@ class ProjectModel {
                 val type = jsonLayer.optString("type")
                 val layerTitle = jsonLayer.optString("title")
                 val description = jsonLayer.optString("description")
-                val url = jsonLayer.optString("url")
+                var url = jsonLayer.optString("url")
                 val visible = jsonLayer.optBoolean("visible")
                 val minZoom = jsonLayer.optDouble("min_zoom").toFloat()
                 val maxZoom = jsonLayer.optDouble("max_zoom").toFloat()
                 when (type) {
-                    "tms", "ngrc" -> {
-                        val lifetime = jsonLayer.optLong("lifetime")
-                        val tmsType = jsonLayer.optInt("tms_type")
-                        layer = RemoteLayerTMS(layerTitle, type, description, url, visible, minZoom, maxZoom, lifetime, tmsType)
+                    "qgis_vector_style", "mapserver_vector_style" -> {
+                        jsonLayer.put("type", "tms")
+                        url = NGWUtil.getTMSUrl(base, arrayOf(jsonLayer.getLong("resource_id")))
+                        layer = tmsLayer(jsonLayer, layerTitle, type, description, url, visible, minZoom, maxZoom)
                     }
-                    "ngw", "ngfp" -> {
+                    "tms", "ngrc", "basemap_layer" -> {
+                        jsonLayer.put("type", "tms")
+                        layer = tmsLayer(jsonLayer, layerTitle, type, description, url, visible, minZoom, maxZoom)
+                    }
+                    "ngw", "ngfp", "vector_layer" -> {
+                        if (jsonLayer.has("item_type")) {
+                            val hasForm = if (jsonLayer.optBoolean("form")) "ngfp" else "ngw"
+                            jsonLayer.put("type", hasForm)
+                            url = NGWUtil.getResourceUrl(base, jsonLayer.getLong("resource_id"))
+                        }
                         val login = jsonLayer.optString("login")
                         val password = if (jsonLayer.isNull("password")) null else jsonLayer.optString("password")
                         val editable = jsonLayer.optBoolean("editable")
@@ -136,9 +167,10 @@ class ProjectModel {
                         val jsonStyle = style?.toString() ?: ""
                         layer = RemoteLayerNGW(layerTitle, type, description, url, visible, minZoom, maxZoom, login, password, editable, syncable, jsonStyle)
                     }
-                    "dir" -> {
+                    else -> { // "dir", "group"
+                        jsonLayer.put("type", "dir")
                         val childLayers = jsonLayer.optJSONArray("layers")
-                        val parsed = parseLayers(childLayers)
+                        val parsed = parseLayers(childLayers, url)
                         jsonLayers.addAll(parsed)
                     }
                 }
@@ -148,6 +180,13 @@ class ProjectModel {
             }
         }
         return jsonLayers
+    }
+
+    private fun tmsLayer(jsonLayer: JSONObject, layerTitle: String, type: String, description: String,
+                         url: String, visible: Boolean, minZoom: Float, maxZoom: Float): RemoteLayerTMS {
+        val lifetime = jsonLayer.optLong("lifetime")
+        val tmsType = jsonLayer.optInt("tms_type")
+        return RemoteLayerTMS(layerTitle, type, description, url, visible, minZoom, maxZoom, lifetime, tmsType)
     }
 
     interface OnDataReadyCallback {

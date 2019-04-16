@@ -112,7 +112,7 @@ abstract class ProjectActivity : BaseActivity() {
             sync()
         } else {
             update = false
-            change(project.id)
+            change(project)
         }
     }
 
@@ -271,9 +271,10 @@ abstract class ProjectActivity : BaseActivity() {
         runAsync {
             var json = JSONObject()
             val id = project.id
+            val private = project.private
             val email = preferences.getString(PREF_EMAIL, "")
             email?.let {
-                val response = ProjectModel.getResponse("$id", email)
+                val response = ProjectModel.getResponse("$id", email, private)
                 response?.let {
                     try {
                         json = JSONObject(response.responseBody)
