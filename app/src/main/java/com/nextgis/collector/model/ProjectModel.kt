@@ -93,7 +93,7 @@ class ProjectModel {
     }
 
     private fun parseProject(jsonProject: JSONObject, private: Boolean): Project {
-        val title = jsonProject.optString(if (private) "project_name" else "title")
+        val title = jsonProject.optString("title")
         val screen = jsonProject.optString("screen")
         val id = jsonProject.optInt("id")
         val version = jsonProject.optInt("version")
@@ -136,7 +136,7 @@ class ProjectModel {
             for (j in 0 until data.length()) {
                 val jsonLayer = data.getJSONObject(j)
                 var layer: RemoteLayer? = null
-                val type = jsonLayer.optString("type")
+                var type = jsonLayer.optString("type")
                 val layerTitle = jsonLayer.optString("title")
                 val description = jsonLayer.optString("description")
                 var url = jsonLayer.optString("url")
@@ -145,19 +145,23 @@ class ProjectModel {
                 val maxZoom = jsonLayer.optDouble("max_zoom").toFloat()
                 when (type) {
                     "qgis_vector_style", "mapserver_vector_style" -> {
-                        jsonLayer.put("type", "tms")
+                        type = "tms"
+                        jsonLayer.put("type", type)
                         url = NGWUtil.getTMSUrl(base, arrayOf(jsonLayer.getLong("resource_id")))
+                        jsonLayer.put("url", url)
                         layer = tmsLayer(jsonLayer, layerTitle, type, description, url, visible, minZoom, maxZoom)
                     }
                     "tms", "ngrc", "basemap_layer" -> {
-                        jsonLayer.put("type", "tms")
+                        type = "tms"
+                        jsonLayer.put("type", type)
                         layer = tmsLayer(jsonLayer, layerTitle, type, description, url, visible, minZoom, maxZoom)
                     }
                     "ngw", "ngfp", "vector_layer" -> {
-                        if (jsonLayer.has("item_type")) {
-                            val hasForm = if (jsonLayer.optBoolean("form")) "ngfp" else "ngw"
-                            jsonLayer.put("type", hasForm)
+                        if (jsonLayer.has("item_type") || type == "vector_layer") {
+                            type = if (jsonLayer.optBoolean("form")) "ngfp" else "ngw"
+                            jsonLayer.put("type", type)
                             url = NGWUtil.getResourceUrl(base, jsonLayer.getLong("resource_id"))
+                            jsonLayer.put("url", url)
                         }
                         val login = jsonLayer.optString("login")
                         val password = if (jsonLayer.isNull("password")) null else jsonLayer.optString("password")
@@ -170,7 +174,7 @@ class ProjectModel {
                     else -> { // "dir", "group"
                         jsonLayer.put("type", "dir")
                         val childLayers = jsonLayer.optJSONArray("layers")
-                        val parsed = parseLayers(childLayers, url)
+                        val parsed = parseLayers(childLayers, base)
                         jsonLayers.addAll(parsed)
                     }
                 }

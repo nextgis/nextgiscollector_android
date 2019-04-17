@@ -359,8 +359,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         }
     }
 
-    private fun getFullUrl(url: String): String {
-        val uri = Uri.parse(Uri.decode(url))
+    private fun getFullUrl(project: Project): String {
+        if (project.private)
+            return project.url
+
+        val uri = Uri.parse(Uri.decode(project.url))
         val scheme = uri.scheme ?: "http"
         return scheme + "://" + uri.authority
     }
@@ -382,7 +385,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
     private fun account(project: Project) {
         if (needAccount(project)) {
-            val fullUrl = getFullUrl(project.url)
+            val fullUrl = getFullUrl(project)
             val authority = fullUrl.split("://")[1]
             app.getAccount(authority)?.let { app.removeAccount(it) }
             val success = app.addAccount(authority, fullUrl, project.user, project.password, "ngw")
@@ -402,7 +405,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         FileUtil.writeToFile(file, project.tree)
 
         val needAccount = needAccount(project)
-        val fullUrl = getFullUrl(project.url)
+        val fullUrl = getFullUrl(project)
         val authority = fullUrl.split("://")[1]
 
         total = project.layers.size
