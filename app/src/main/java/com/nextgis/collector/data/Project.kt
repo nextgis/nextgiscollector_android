@@ -87,9 +87,6 @@ class Project(val id: Int, val title: String, val description: String, val scree
 
     val password: String
         get() {
-            if (private)
-                return hash
-
             val array = arrayListOf<Int>()
             array.addAll(hash.chunked(4).map { it.toInt(16) - version })
             for (i in 0 until version)

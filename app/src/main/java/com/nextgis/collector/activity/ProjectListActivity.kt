@@ -494,7 +494,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         tmsLayer.maxZoom = layer.maxZoom
         tmsLayer.name = layer.title
         tmsLayer.url = layer.url
-        tmsLayer.tileMaxAge = layer.lifetime
+        tmsLayer.tileMaxAge = layer.lifetime * 60 * 1000
         tmsLayer.tmsType = layer.tmsType
         return tmsLayer
     }

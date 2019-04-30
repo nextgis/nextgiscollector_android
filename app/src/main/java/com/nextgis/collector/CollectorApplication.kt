@@ -33,7 +33,8 @@ import io.sentry.android.AndroidSentryClientFactory
 class CollectorApplication : GISApplication() {
     companion object {
         const val BASE_URL = "http://collector.nextgis.com/api/project"
-        const val BASE_NGW_URL = "http://dev.nextgis.com/collector_hub/api/collector/projects"
+//        const val BASE_NGW_URL = "http://dev.nextgis.com/collector_hub/api/collector/projects"
+        const val BASE_NGW_URL = "http://collector-hub.nextgis.com/api/collector/projects"
         const val TREE = "resource.tree"
     }
 
