@@ -306,7 +306,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         AlertDialog.Builder(this).setTitle(R.string.join_project)
                 .setMessage(getString(R.string.join_message, project.title))
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes) { _, _ -> load(project.id, mode.tag as Boolean) }
+                .setPositiveButton(R.string.yes) { _, _ -> load(project.id, !(mode.tag as Boolean)) }
                 .show()
     }
 
@@ -316,7 +316,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun load(id: Int, private: Boolean) {
-        binding.projectModel?.load(id, !private)
+        binding.projectModel?.load(id, private)
     }
 
     private fun open() {
