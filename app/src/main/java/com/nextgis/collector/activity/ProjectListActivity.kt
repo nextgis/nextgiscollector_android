@@ -477,7 +477,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)
         intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
         intent.putExtra(LayerFillService.KEY_SYNC, layer.syncable)
-        var formUrl = ""
+        var formUrl = layer.url
         if (layer.type == "ngfp")
             id?.let {
                 val forms = arrayListOf<Long>()
