@@ -83,12 +83,14 @@ class ProjectModel {
 
     private fun parseProjects(data: String, private: Boolean): ArrayList<Project> {
         val list = ArrayList<Project>()
-        val json = JSONArray(data)
-        for (i in 0 until json.length()) {
-            val jsonProject = json.getJSONObject(i)
-            val project = parseProject(jsonProject, private)
-            list.add(project)
-        }
+        try {
+            val json = JSONArray(data)
+            for (i in 0 until json.length()) {
+                val jsonProject = json.getJSONObject(i)
+                val project = parseProject(jsonProject, private)
+                list.add(project)
+            }
+        } catch (ignored: Exception) {}
         return list
     }
 

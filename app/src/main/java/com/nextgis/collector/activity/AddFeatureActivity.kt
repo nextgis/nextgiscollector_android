@@ -41,6 +41,7 @@ import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
 import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
+import java.io.FileNotFoundException
 
 class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener, ProjectActivity.OnPermissionCallback {
     companion object {
@@ -72,8 +73,13 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 
         val base = getExternalFilesDir(null) ?: filesDir
         val file = File(base, CollectorApplication.TREE)
-        val json = FileUtil.readFromFile(file)
-        tree.parse(json)
+        try {
+            val json = FileUtil.readFromFile(file)
+            tree.parse(json)
+        } catch (e: FileNotFoundException) {
+            toast(R.string.error_form_create)
+            return
+        }
 
         var hasChanges = false
         for (i in 0 until map.layerCount) {
