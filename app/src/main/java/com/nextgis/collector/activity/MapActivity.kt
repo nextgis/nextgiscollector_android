@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,7 +54,10 @@ import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.*
 import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.api.MapViewEventListener
+import com.nextgis.maplibui.mapui.NGWRasterLayerUI
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
+import com.nextgis.maplibui.mapui.NGWWebMapLayerUI
+import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.overlay.CurrentLocationOverlay
 import com.nextgis.maplibui.overlay.CurrentTrackOverlay
 import com.nextgis.maplibui.overlay.EditLayerOverlay
@@ -475,6 +478,18 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     override fun onItemClick(layer: Layer) {
 
+    }
+
+    override fun onDownloadTilesClick(layer: Layer) {
+        val env: GeoEnvelope = map.currentBounds
+
+        if (layer is RemoteTMSLayerUI) {
+            layer.downloadTiles(this, env)
+        } else if (layer is NGWRasterLayerUI) {
+            layer.downloadTiles(this, env)
+        } else if (layer is NGWWebMapLayerUI) {
+            layer.downloadTiles(this, env)
+        }
     }
 
     override fun onLongPress(event: MotionEvent) {

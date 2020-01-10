@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018, 2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,11 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ItemLayerBinding
+import com.nextgis.maplib.datasource.GeoEnvelope
 import com.nextgis.maplib.map.Layer
+import com.nextgis.maplibui.mapui.NGWRasterLayerUI
+import com.nextgis.maplibui.mapui.NGWWebMapLayerUI
+import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 
 
 class LayersAdapter(private var items: List<Layer>,
@@ -43,6 +47,7 @@ class LayersAdapter(private var items: List<Layer>,
 
     interface OnItemClickListener {
         fun onItemClick(layer: Layer)
+        fun onDownloadTilesClick(layer: Layer)
     }
 
     class ViewHolder(private var binding: ItemLayerBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -55,9 +60,8 @@ class LayersAdapter(private var items: List<Layer>,
                 val off = R.drawable.ic_action_visibility_off_light
                 binding.visibility.setImageResource(if (repo.isVisible) on else off)
             }
-            if (listener != null) {
-                binding.root.setOnClickListener({ _ -> listener.onItemClick(repo) })
-            }
+            binding.downloadTiles.setOnClickListener { listener?.onDownloadTilesClick(repo) }
+            binding.root.setOnClickListener { listener?.onItemClick(repo) }
 
             binding.executePendingBindings()
         }

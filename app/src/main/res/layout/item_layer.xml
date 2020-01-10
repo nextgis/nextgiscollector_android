@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Project:  NextGIS Collector
   ~ Purpose:  Light mobile GIS for collecting data
   ~ Author:   Stanislav Petriakov, becomeglory@gmail.com
   ~ **********************************************************************
-  ~ Copyright (c) 2018 NextGIS, info@nextgis.com
+  ~ Copyright (c) 2018, 2020 NextGIS, info@nextgis.com
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -20,14 +19,16 @@
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
+        <import type="android.view.View" />
+
         <variable
             name="layer"
-            type="com.nextgis.maplib.map.Layer"/>
+            type="com.nextgis.maplib.map.Layer" />
     </data>
 
     <android.support.constraint.ConstraintLayout
@@ -47,15 +48,29 @@
             app:layout_constraintEnd_toStartOf="@id/visibility"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="Layer name"/>
+            tools:text="Layer name" />
+
+        <ImageButton
+            android:id="@+id/download_tiles"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:background="@null"
+            android:padding="4dp"
+            android:src="@drawable/ic_download"
+            android:visibility="@{safeUnbox(layer.type == 1 || layer.type == 2 || layer.type == 8) ? View.VISIBLE : View.GONE}"
+            app:layout_constraintEnd_toStartOf="@id/visibility"
+            tools:ignore="ContentDescription" />
 
         <ImageButton
             android:id="@+id/visibility"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:background="@null"
             android:src="@{layer.visible ? @drawable/ic_action_visibility_on_light : @drawable/ic_action_visibility_off_light}"
             app:layout_constraintEnd_toEndOf="parent"
-            tools:ignore="ContentDescription"/>
+            tools:ignore="ContentDescription"
+            tools:src="@drawable/ic_action_visibility_off_light" />
     </android.support.constraint.ConstraintLayout>
 </layout>
