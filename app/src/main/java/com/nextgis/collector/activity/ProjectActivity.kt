@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * ********************************************************************
- * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -284,10 +284,10 @@ abstract class ProjectActivity : BaseActivity() {
             }
 
             runOnUiThread {
-                val version = json.optInt("version")
+                val version = json.optInt("version", -1)
                 when {
                     version > project.version -> showUpdateDialog(version)
-                    version == 0 -> toast(R.string.error_network_unavailable)
+                    version == -1 -> toast(R.string.error_network_unavailable)
                     else -> toast(R.string.no_updates)
                 }
             }
