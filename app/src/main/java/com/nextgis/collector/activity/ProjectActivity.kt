@@ -42,6 +42,7 @@ import com.nextgis.maplib.api.INGWLayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.PermissionUtil
@@ -51,6 +52,7 @@ import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.service.TrackerService.hasUnfinishedTracks
 import com.nextgis.maplibui.service.TrackerService.isTrackerServiceRunning
 import com.nextgis.maplibui.util.ConstantsUI
+import com.nextgis.maplibui.util.ExportGeoJSONBatchTask
 import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
 import com.pawegio.kandroid.*
 import org.json.JSONObject
@@ -138,12 +140,24 @@ abstract class ProjectActivity : BaseActivity() {
         when (item?.itemId) {
             R.id.menu_sync -> sync()
             R.id.menu_change_project -> ask()
+            R.id.menu_backup -> backup()
             R.id.menu_track -> controlTrack(item)
             R.id.menu_track_list -> startActivity<TracksActivity>()
             R.id.menu_settings -> startActivity<PreferenceActivity>()
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    private fun backup() {
+        val layers = arrayListOf<VectorLayer>()
+        for (i in 0 until map.layerCount) {
+            val layer = map.getLayer(i)
+            if (layer is NGWVectorLayer)
+                layers.add(layer)
+        }
+        val exportTask = ExportGeoJSONBatchTask(this, layers, true, project.title)
+        exportTask.execute()
     }
 
     private fun controlTrack(item: MenuItem) {
