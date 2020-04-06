@@ -92,7 +92,7 @@
         </service>
 
         <service
-            android:name="com.nextgis.maplib.service.NGWSyncService"
+            android:name=".SyncService"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
