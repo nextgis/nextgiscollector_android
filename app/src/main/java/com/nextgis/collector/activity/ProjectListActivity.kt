@@ -55,6 +55,7 @@ import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
+import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
@@ -329,7 +330,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     private fun check() {
         if (total <= 0) {
             binding.projectModel?.selectedProject?.get()?.let { project ->
-                val paths = project.layers.map { it.path }
+                val paths = project.layers.map { it.path }.reversed()
                 var i = 0
                 while (i < map.layerCount) {
                     val layer = map.getLayer(i)
@@ -342,7 +343,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         i++
 
                     if (layer is VectorLayer && id >= 0 && id < project.layers.size) {
-                        val vector = project.layers[id] as RemoteLayerNGW
+                        val vector = project.layers.reversed()[id] as RemoteLayerNGW
                         if (vector.styleable) {
                             layer.setRenderer(vector.renderer)
                             vector.style = ""
@@ -495,7 +496,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         tmsLayer.name = layer.title
         tmsLayer.url = layer.url
         tmsLayer.tileMaxAge = layer.lifetime * 60 * 1000
-        tmsLayer.tmsType = layer.tmsType
+        val type = if (layer.tmsType == 0) GeoConstants.TMSTYPE_OSM else layer.tmsType
+        tmsLayer.tmsType = type
         return tmsLayer
     }
 

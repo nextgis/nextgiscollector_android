@@ -146,7 +146,7 @@ class ProjectModel {
                 val minZoom = jsonLayer.optDouble("min_zoom").toFloat()
                 val maxZoom = jsonLayer.optDouble("max_zoom").toFloat()
                 when (type) {
-                    "qgis_vector_style", "mapserver_vector_style" -> {
+                    "qgis_vector_style", "mapserver_style" -> {
                         type = "tms"
                         jsonLayer.put("type", type)
                         url = NGWUtil.getTMSUrl(base, arrayOf(jsonLayer.getLong("resource_id")))
