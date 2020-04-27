@@ -53,4 +53,5 @@
     <string name="about">About</string>
     <string name="about_message">Version %1$s\nRevision %2$d\nRelease date %3$s</string>
     <string name="backup_layers">Backup data</string>
+    <string name="restart_app">Please restart the app</string>
 </resources>

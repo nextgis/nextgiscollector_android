@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 package com.nextgis.collector
 
+import android.widget.Toast
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.map.LayerGroup
 import com.nextgis.maplib.util.Constants
@@ -29,6 +30,8 @@ import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.mapui.TrackLayerUI
 import io.sentry.Sentry
 import io.sentry.android.AndroidSentryClientFactory
+import java.lang.Exception
+import kotlin.system.exitProcess
 
 class CollectorApplication : GISApplication() {
     companion object {
@@ -82,11 +85,16 @@ class CollectorApplication : GISApplication() {
         val tracks = ArrayList<ILayer>()
         LayerGroup.getLayersByType(mMap, Constants.LAYERTYPE_TRACKS, tracks)
         if (tracks.isEmpty()) {
-            val trackLayer = TrackLayerUI(applicationContext, mMap.createLayerStorage("tracks"))
-            trackLayer.name = getString(R.string.tracks)
-            trackLayer.isVisible = true
-            mMap.addLayer(trackLayer)
-            mMap.save()
+            try {
+                val trackLayer = TrackLayerUI(applicationContext, mMap.createLayerStorage("tracks"))
+                trackLayer.name = getString(R.string.tracks)
+                trackLayer.isVisible = true
+                mMap.addLayer(trackLayer)
+                mMap.save()
+            } catch (e: Exception) {
+                Toast.makeText(this, R.string.restart_app, Toast.LENGTH_SHORT).show()
+                exitProcess(0)
+            }
         } else
             mMap.moveLayer(map.layerCount - 1, tracks.first())
     }

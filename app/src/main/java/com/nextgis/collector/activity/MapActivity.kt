@@ -250,16 +250,17 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
                 val result = historyOverlay.onOptionsItemSelected(item.itemId)
                 if (result) {
                     val undoRedoFeature = historyOverlay.feature
-                    val feature = overlay.selectedFeature
-                    feature.geometry = undoRedoFeature.geometry
-                    overlay.fillDrawItems(undoRedoFeature.geometry)
+                    overlay.selectedFeature?.let { feature ->
+                        feature.geometry = undoRedoFeature.geometry
+                        overlay.fillDrawItems(undoRedoFeature.geometry)
 
-                    val original = selectedLayer?.getGeometryForId(feature.id)
-                    val hasEdits = original != null && undoRedoFeature.geometry == original
-                    overlay.setHasEdits(!hasEdits)
+                        val original = selectedLayer?.getGeometryForId(feature.id)
+                        val hasEdits = original != null && undoRedoFeature.geometry == original
+                        overlay.setHasEdits(!hasEdits)
 
-                    mapView.buffer()
-                    mapView.postInvalidate()
+                        mapView.buffer()
+                        mapView.postInvalidate()
+                    }
                 }
 
                 return result

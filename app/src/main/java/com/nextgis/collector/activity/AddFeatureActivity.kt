@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * ********************************************************************
- * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ import com.nextgis.collector.databinding.ActivityAddFeatureBinding
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.FileUtil
+import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.pawegio.kandroid.IntentFor
 import com.pawegio.kandroid.startActivity
@@ -43,7 +44,7 @@ import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 import java.io.FileNotFoundException
 
-class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener, ProjectActivity.OnPermissionCallback {
+class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener {
     companion object {
         const val PERMISSIONS_CODE = 625
     }
@@ -120,16 +121,21 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     }
 
     override fun onMapClick(id: String) {
-        val intent = IntentFor<MapActivity>(this)
-        layerByPath(id)?.let {
-            intent.putExtra(MapActivity.NEW_FEATURE, it.id)
-            startActivity(intent)
-        }
+        this.layer = layerByPath(id)
+        requestForPermissions(object : OnPermissionCallback {
+            override fun onPermissionGranted() {
+                startEdit(true)
+            }
+        }, true)
     }
 
     override fun onGpsClick(id: String) {
         this.layer = layerByPath(id)
-        requestForPermissions(this, true)
+        requestForPermissions(object : OnPermissionCallback {
+            override fun onPermissionGranted() {
+                startEdit(false)
+            }
+        }, true)
     }
 
     override fun onDirClick(id: String) {
@@ -151,10 +157,15 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onPermissionGranted() {
+    private fun startEdit(map: Boolean) {
         if (layer != null) {
-            if (layer?.geometryType == 1 || layer?.geometryType == 4)
-                layer?.showEditForm(this, -1, null)
+            if (layer?.geometryType == GeoConstants.GTPoint || layer?.geometryType == GeoConstants.GTMultiPoint)
+                if (map) {
+                    val intent = IntentFor<MapActivity>(this)
+                    intent.putExtra(MapActivity.NEW_FEATURE, layer?.id)
+                    startActivity(intent)
+                } else
+                    layer?.showEditForm(this, -1, null)
             else
                 toast(R.string.not_implemented)
         } else

@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -145,7 +145,12 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         val isNgw = intent.getBooleanExtra(LayerFillService.KEY_SYNC, false)
                         if (success && !canceled && isNgw) {
                             val id = intent.getIntExtra(LayerFillService.KEY_REMOTE_ID, -1)
-                            val ngwLayer = map.getLayerById(id) as NGWVectorLayer
+                            val ngwLayer = map.getLayerById(id) as? NGWVectorLayer
+                            if (ngwLayer == null) {
+                                longToast(R.string.error_file_create)
+                                error()
+                                return
+                            }
                             val account = app.getAccount(ngwLayer.accountName)
 
                             val project = binding.projectModel?.selectedProject?.get()

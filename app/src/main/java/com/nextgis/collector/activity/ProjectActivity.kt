@@ -199,13 +199,18 @@ abstract class ProjectActivity : BaseActivity() {
         val photo = Manifest.permission.WRITE_EXTERNAL_STORAGE
         val geoStatus = ActivityCompat.checkSelfPermission(this, fine)
         val memStatus = ActivityCompat.checkSelfPermission(this, photo)
-        if (geoStatus != PackageManager.PERMISSION_GRANTED || memStatus != PackageManager.PERMISSION_GRANTED && memory) {
-            val permissions: Array<String> = if (memory)
-                arrayOf(coarse, fine, photo)
-            else
-                arrayOf(coarse, fine)
-            ActivityCompat.requestPermissions(this, permissions, AddFeatureActivity.PERMISSIONS_CODE)
-        } else
+        val geoAllowed = geoStatus == PackageManager.PERMISSION_GRANTED
+        val memAllowed = memStatus == PackageManager.PERMISSION_GRANTED
+        val permissions = arrayListOf<String>()
+        if (!geoAllowed) {
+            permissions.add(coarse)
+            permissions.add(fine)
+        }
+        if (!memAllowed && memory)
+            permissions.add(photo)
+        if (permissions.size > 0)
+            ActivityCompat.requestPermissions(this, permissions.toTypedArray(), AddFeatureActivity.PERMISSIONS_CODE)
+        else
             onPermissionCallback.onPermissionGranted()
     }
 
