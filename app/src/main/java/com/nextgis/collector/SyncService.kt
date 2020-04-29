@@ -28,7 +28,6 @@ import android.util.Log
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.service.NGWSyncService
 import com.nextgis.maplib.util.Constants
-import io.sentry.Sentry
 
 class SyncService: NGWSyncService() {
 
@@ -67,16 +66,16 @@ class SyncService: NGWSyncService() {
             when (action) {
                 SyncAdapter.SYNC_START -> {
                     mIsSyncStarted = true
-                    Sentry.capture("Sync started")
+//                    Sentry.capture("Sync started")
                 }
                 SyncAdapter.SYNC_FINISH -> {
                     mIsSyncStarted = false
-                    Sentry.capture("Sync error: ${intent.getStringExtra(SyncAdapter.EXCEPTION)}")
+//                    Sentry.capture("Sync error: ${intent.getStringExtra(SyncAdapter.EXCEPTION)}")
                 }
                 SyncAdapter.SYNC_CANCELED -> {
                     Log.d(Constants.TAG, "SyncAdapter - SYNC_CANCELED is received")
                     mIsSyncStarted = false
-                    Sentry.capture("Sync cancelled")
+//                    Sentry.capture("Sync cancelled")
                 }
                 SyncAdapter.SYNC_CHANGES -> {
                 }
