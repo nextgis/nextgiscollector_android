@@ -53,4 +53,6 @@
     <string name="about">О программе</string>
     <string name="about_message">Версия %1$s\nРевизия %2$d\nДата сборки %3$s</string>
     <string name="restart_app">Перезапустите приложение</string>
+    <string name="project_version">Версия проекта: %d</string>
+    <string name="project_about">О проекте</string>
 </resources>

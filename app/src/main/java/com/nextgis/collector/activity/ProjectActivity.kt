@@ -31,11 +31,14 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.Toolbar
+import android.text.method.LinkMovementMethod
+import android.text.util.Linkify
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.TextView
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
 import com.nextgis.maplib.api.INGWLayer
@@ -141,12 +144,35 @@ abstract class ProjectActivity : BaseActivity() {
             R.id.menu_sync -> sync()
             R.id.menu_change_project -> ask()
             R.id.menu_backup -> backup()
+            R.id.menu_about -> about()
             R.id.menu_track -> controlTrack(item)
             R.id.menu_track_list -> startActivity<TracksActivity>()
             R.id.menu_settings -> startActivity<PreferenceActivity>()
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    private fun about() {
+        var info = ""
+        if (project.description.isNotBlank())
+            info += project.description + "\n\n"
+        info += getString(R.string.project_version, project.version)
+//        TODO add instandce name and project id
+//        if (project.instance.isNotBlank())
+//            info += "\n" + getString(R.string.project_instance, project.url)
+        val builder = AlertDialog.Builder(this).setTitle(project.title)
+                .setMessage(info)
+                .setPositiveButton(R.string.ok, null)
+                .show()
+
+        val message = builder.findViewById<TextView>(android.R.id.message)
+        if (message != null) {
+            message.movementMethod = LinkMovementMethod.getInstance()
+            message.linksClickable = true
+            message.autoLinkMask = Linkify.ALL
+            Linkify.addLinks(message, Linkify.ALL)
+        }
     }
 
     private fun backup() {

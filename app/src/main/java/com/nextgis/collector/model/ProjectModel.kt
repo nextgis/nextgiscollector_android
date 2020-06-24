@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ class ProjectModel {
         val screen = jsonProject.optString("screen")
         val id = jsonProject.optInt("id")
         val version = jsonProject.optInt("version")
-        val description = jsonProject.optString("description")
+        val description = if (jsonProject.isNull("description")) "" else jsonProject.optString("description")
 
         var url = jsonProject.optString("url")
         var user = jsonProject.optString("username")

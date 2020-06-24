@@ -53,6 +53,11 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/menu_about"
+        android:title="@string/project_about"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_change_project"
         android:title="@string/change_project"
         app:showAsAction="never" />

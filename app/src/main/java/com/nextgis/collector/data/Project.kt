@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,9 +39,9 @@ class Project(val id: Int, val title: String, val description: String, val scree
             parcel.readInt(), readArrayList(parcel), readStringFrom(parcel), parcel.readBoolean(),
             readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel))
 
-    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), "",
+    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), json.optString("description", ""),
             json.optString("screen"), json.optInt("version"), ArrayList(), "",
-            json.optBoolean("private"), "", "", "")
+            json.optBoolean("private"), json.optString("url"), "", "")
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
@@ -77,6 +77,8 @@ class Project(val id: Int, val title: String, val description: String, val scree
             json.put("screen", screen)
             json.put("private", private)
             json.put("version", version)
+            json.put("description", description)
+            json.put("url", url)
             return json.toString()
         }
 

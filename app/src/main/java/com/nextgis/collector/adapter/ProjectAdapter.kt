@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018 NextGIS, info@nextgis.com
+ * Copyright (c) 2018, 2020 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ class ProjectAdapter(private var items: ArrayList<Project>,
         fun bind(repo: Project, listener: OnItemClickListener?) {
             binding.project = repo
             if (listener != null) {
-                binding.root.setOnClickListener({ _ -> listener.onItemClick(repo) })
+                binding.root.setOnClickListener { _ -> listener.onItemClick(repo) }
             }
 
             binding.executePendingBindings()
