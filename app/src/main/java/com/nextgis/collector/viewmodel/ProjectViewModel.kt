@@ -59,21 +59,21 @@ class ProjectViewModel : ViewModel() {
         }
     }
 
-    fun load(private: Boolean) {
+    fun load(private: Boolean, base: String) {
         info.set(false)
         error.set(false)
         isEmpty.set(false)
         isLoading.set(true)
         isLoaded.set(false)
-        projectModel.getProjects(private, onDataReadyCallback, email)
+        projectModel.getProjects(base, private, onDataReadyCallback, email)
     }
 
-    fun load(id: Int, private: Boolean) {
+    fun load(id: Int, private: Boolean, base: String) {
         info.set(false)
         error.set(false)
         isEmpty.set(false)
         isLoading.set(true)
         isLoaded.set(false)
-        projectModel.getProject(id, onDataReadyCallback, email, private)
+        projectModel.getProject(base, id, onDataReadyCallback, email, private)
     }
 }

@@ -61,8 +61,7 @@ import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
-import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
-import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
+import com.nextgis.maplibui.util.NGIDUtils.*
 import com.pawegio.kandroid.*
 import kotlinx.android.synthetic.main.activity_project_list.*
 import java.io.File
@@ -250,7 +249,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             val drawable = ContextCompat.getDrawable(this@ProjectListActivity, icon)
             mode.setImageDrawable(drawable)
             chooseTitle(private)
-            projectModel?.load(private = private)
+            val url = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
+            projectModel?.load(private = private, base = url ?: COLLECTOR_HUB_URL)
             mode.tag = !private
             preferences.edit().putBoolean("latest_projects", private).apply()
         }
@@ -322,7 +322,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun load(id: Int, private: Boolean) {
-        binding.projectModel?.load(id, private)
+        val url = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
+        binding.projectModel?.load(id, private, url ?: COLLECTOR_HUB_URL)
     }
 
     private fun open() {

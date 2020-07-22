@@ -27,6 +27,7 @@ import com.nextgis.collector.data.ResourceTree.Companion.parseResources
 import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.maplib.util.HttpResponse
 import com.nextgis.maplib.util.NGWUtil
+import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_PROJECTS_URL
 import com.pawegio.kandroid.runAsync
 import org.json.JSONArray
 import org.json.JSONObject
@@ -34,14 +35,18 @@ import org.json.JSONObject
 
 class ProjectModel {
     companion object {
-        private fun base(private: Boolean): String = if (private) CollectorApplication.BASE_NGW_URL else CollectorApplication.BASE_URL
+        fun getBaseUrl(base: String, private: Boolean): String {
+            return if (private) {
+                base + COLLECTOR_PROJECTS_URL
+            } else {
+                CollectorApplication.BASE_URL
+            }
+        }
 
-        fun getResponse(path: String, email: String, private: Boolean): HttpResponse? {
+        fun getResponse(path: String, email: String): HttpResponse? {
             try {
                 val hash = NetworkUtil.hash(email)
-                val base = base(private)
-                val target = "$base/$path"
-                val connection = NetworkUtil.getHttpConnection("GET", target, hash)
+                val connection = NetworkUtil.getHttpConnection("GET", path, hash)
                 return NetworkUtil.getHttpResponse(connection, false)
 //                return NetworkUtil.get(target, null, null, false)
             } catch (e: Exception) {
@@ -52,10 +57,11 @@ class ProjectModel {
 
     }
 
-    fun getProjects(private: Boolean, onDataReadyCallback: OnDataReadyCallback, email: String) {
+    fun getProjects(url: String, private: Boolean, onDataReadyCallback: OnDataReadyCallback, email: String) {
         runAsync {
             val namespace = "?namespace=" + if (private) "private" else "public"
-            val response = getResponse(namespace, email, private)
+            val path = getBaseUrl(url, private) + "/$namespace"
+            val response = getResponse(path, email)
             var list = ArrayList<Project>()
             response?.let {
                 if (it.isOk)
@@ -65,10 +71,11 @@ class ProjectModel {
         }
     }
 
-    fun getProject(id: Int, onDataReadyCallback: OnDataReadyCallback, email: String, private: Boolean) {
+    fun getProject(url: String, id: Int, onDataReadyCallback: OnDataReadyCallback, email: String, private: Boolean) {
         runAsync {
             var project: Project? = null
-            val response = getResponse("$id", email, private)
+            val path = getBaseUrl(url, private) + "/$id"
+            val response = getResponse(path, email)
             response?.let {
                 val json = try {
                     JSONObject(response.responseBody)

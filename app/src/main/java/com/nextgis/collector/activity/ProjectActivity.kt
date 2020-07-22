@@ -48,6 +48,7 @@ import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
+import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
@@ -56,9 +57,11 @@ import com.nextgis.maplibui.service.TrackerService.hasUnfinishedTracks
 import com.nextgis.maplibui.service.TrackerService.isTrackerServiceRunning
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.ExportGeoJSONBatchTask
-import com.nextgis.maplibui.util.NGIDUtils.PREF_EMAIL
+import com.nextgis.maplibui.util.NGIDUtils.*
 import com.pawegio.kandroid.*
 import org.json.JSONObject
+import java.io.File
+import java.io.IOException
 
 
 abstract class ProjectActivity : BaseActivity() {
@@ -80,6 +83,17 @@ abstract class ProjectActivity : BaseActivity() {
         intentFilter.addAction(SyncAdapter.SYNC_FINISH)
         intentFilter.addAction(SyncAdapter.SYNC_CANCELED)
         registerReceiver(syncReceiver, intentFilter)
+
+        get(this) { response ->
+            if (response.isOk) {
+                var support = getExternalFilesDir(null)
+                support = if (support == null) File(filesDir, Constants.SUPPORT) else File(support, Constants.SUPPORT)
+                try {
+                    FileUtil.writeToFile(support, response.responseBody)
+                } catch (ignored: IOException) {
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -319,7 +333,9 @@ abstract class ProjectActivity : BaseActivity() {
             val private = project.private
             val email = preferences.getString(PREF_EMAIL, "")
             email?.let {
-                val response = ProjectModel.getResponse("$id", email, private)
+                val base = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
+                val url = ProjectModel.getBaseUrl(base ?: COLLECTOR_HUB_URL, private)
+                val response = ProjectModel.getResponse("$url/$id", email)
                 response?.let {
                     try {
                         json = JSONObject(response.responseBody)
