@@ -45,7 +45,7 @@
     <string name="app_name_private">Personal projects</string>
     <string name="create_new">Start your own project</string>
     <string name="no_projects">No projects found</string>
-    <string name="write_us">Want to start your own data collection project with NextGIS Collector? Ping us at <a href='mailto:info@nextgis.com'>info@nextgis.com</a></string>
+    <string name="write_us">Want to start your own data collection project with NextGIS Collector? Get <a href='https://nextgis.com/pricing-base'>Premium</a></string>
     <string name="device_id">Your device ID</string>
     <string name="sign_out_ngid">Sign out from NextGIS</string>
     <string name="sign_out_ngid_message">>Are you sure to sign out from NextGIS? Current map and data will be deleted.</string>

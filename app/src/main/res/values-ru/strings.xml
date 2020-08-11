@@ -45,13 +45,14 @@
     <string name="app_name_private">Личные проекты</string>
     <string name="create_new">Создать свой проект</string>
     <string name="no_projects">Нет проектов</string>
-    <string name="write_us">Хотите организовать свой сбор данных с помощью NextGIS Collector? Напишите нам на <a href='mailto:info@nextgis.com'>info@nextgis.com</a></string>
+    <string name="write_us">Хотите организовать свой сбор данных в NextGIS Collector? Подпишитесь на <a href="https://nextgis.ru/pricing-base">Премиум</a></string>
     <string name="device_id">Ваш ID устройства</string>
     <string name="sign_out_ngid">Выйти из аккаунта</string>
     <string name="sign_out_ngid_message">Выйти из аккаунта NextGIS? Все текущие данные и карта будут удалены.</string>
     <string name="track_cloud">Отправлять треки в облако</string>
     <string name="about">О программе</string>
     <string name="about_message">Версия %1$s\nРевизия %2$d\nДата сборки %3$s</string>
+    <string name="backup_layers">Сохранить архив</string>
     <string name="restart_app">Перезапустите приложение</string>
     <string name="project_version">Версия проекта: %d</string>
     <string name="project_about">О проекте</string>
