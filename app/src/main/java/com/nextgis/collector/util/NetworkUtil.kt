@@ -21,11 +21,13 @@
 
 package com.nextgis.collector.util
 
+import android.content.SharedPreferences
 import com.nextgis.collector.BuildConfig
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.HttpResponse
 import com.nextgis.maplib.util.NetworkUtil.*
+import com.nextgis.maplibui.util.NGIDUtils
 import java.io.IOException
 import java.io.OutputStream
 import java.math.BigInteger
@@ -111,6 +113,12 @@ class NetworkUtil {
 
             response.isOk = true
             return response
+        }
+
+        fun getEmailOrUsername(preferences: SharedPreferences): String {
+            val email = preferences.getString(NGIDUtils.PREF_EMAIL, "")
+            val username = preferences.getString(NGIDUtils.PREF_USERNAME, "")
+            return if (email.isNullOrBlank() || email == "null") username ?: "" else email
         }
     }
 }

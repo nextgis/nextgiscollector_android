@@ -48,6 +48,7 @@ import com.nextgis.collector.data.RemoteLayer
 import com.nextgis.collector.data.RemoteLayerNGW
 import com.nextgis.collector.data.RemoteLayerTMS
 import com.nextgis.collector.databinding.ActivityProjectListBinding
+import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.datasource.ngw.LayerWithStyles
@@ -100,7 +101,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_project_list)
         val projectModel = ViewModelProviders.of(this).get(ProjectViewModel::class.java)
-        projectModel.email = preferences.getString(PREF_EMAIL, "") ?: ""
+        projectModel.email = NetworkUtil.getEmailOrUsername(preferences)
         binding.projectModel = projectModel
         binding.executePendingBindings()
 

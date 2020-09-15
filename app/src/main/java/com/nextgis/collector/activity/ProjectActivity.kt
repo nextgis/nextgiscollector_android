@@ -41,6 +41,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
+import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.maplib.api.INGWLayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapContentProviderHelper
@@ -331,16 +332,14 @@ abstract class ProjectActivity : BaseActivity() {
             var json = JSONObject()
             val id = project.id
             val private = project.private
-            val email = preferences.getString(PREF_EMAIL, "")
-            email?.let {
-                val base = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
-                val url = ProjectModel.getBaseUrl(base ?: COLLECTOR_HUB_URL, private)
-                val response = ProjectModel.getResponse("$url/$id", email)
-                response?.let {
-                    try {
-                        json = JSONObject(response.responseBody)
-                    } catch (e: Exception) {
-                    }
+            val base = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
+            val url = ProjectModel.getBaseUrl(base ?: COLLECTOR_HUB_URL, private)
+            val email = NetworkUtil.getEmailOrUsername(preferences)
+            val response = ProjectModel.getResponse("$url/$id", email)
+            response?.let {
+                try {
+                    json = JSONObject(response.responseBody)
+                } catch (e: Exception) {
                 }
             }
 
