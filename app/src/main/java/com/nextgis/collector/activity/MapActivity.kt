@@ -96,11 +96,12 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        newIntent = intent
+
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         overlay = EditLayerOverlay(this, mapView)
-        setup(with = toolbar)
+        setup(with = toolbar, skipUpdateCheck = newIntent?.hasExtra(NEW_FEATURE))
 
-        newIntent = intent
         binding.apply {
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
             mapContainer.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))

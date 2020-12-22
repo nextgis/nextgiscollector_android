@@ -110,9 +110,10 @@ abstract class ProjectActivity : BaseActivity() {
 
     protected abstract fun init()
 
-    protected fun setup(with: Toolbar) {
+    protected fun setup(with: Toolbar, skipUpdateCheck: Boolean? = false) {
         setSupportActionBar(with)
-        checkUpdates()
+        if (skipUpdateCheck != true)
+            checkUpdates()
         init()
     }
 
