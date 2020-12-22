@@ -38,6 +38,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
@@ -48,7 +50,6 @@ import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
-import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.activity.TracksActivity
@@ -57,8 +58,10 @@ import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.service.TrackerService.hasUnfinishedTracks
 import com.nextgis.maplibui.service.TrackerService.isTrackerServiceRunning
 import com.nextgis.maplibui.util.ConstantsUI
+import com.nextgis.maplibui.util.ControlHelper
 import com.nextgis.maplibui.util.ExportGeoJSONBatchTask
-import com.nextgis.maplibui.util.NGIDUtils.*
+import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
+import com.nextgis.maplibui.util.NGIDUtils.get
 import com.pawegio.kandroid.*
 import org.json.JSONObject
 import java.io.File
@@ -67,10 +70,13 @@ import java.io.IOException
 
 abstract class ProjectActivity : BaseActivity() {
     @Volatile
-    private var total: Int = 0
     private var update = false
     private var syncReceiver: SyncReceiver = SyncReceiver()
     private var onPermissionCallback: OnPermissionCallback? = null
+    private val isSyncActive: Boolean
+        get() {
+            return findViewById<FrameLayout>(R.id.overlay).visibility == View.VISIBLE
+        }
 
     interface OnPermissionCallback {
         fun onPermissionGranted()
@@ -116,7 +122,7 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     private fun showUpdateDialog(version: Int) {
-        if (!window.decorView.rootView.isShown)
+        if (!window.decorView.rootView.isShown || isSyncActive)
             return
 
         AlertDialog.Builder(this).setTitle(R.string.update_available)
@@ -126,8 +132,27 @@ abstract class ProjectActivity : BaseActivity() {
                 .show()
     }
 
-    private fun update() {
-        if (updateSubtitle()) {
+    private fun update(withDialog: Boolean = true) {
+        if (isSyncActive) {
+            if (withDialog) {
+                val progressBar = ProgressBar(this)
+                val lp: LinearLayout.LayoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT)
+                lp.bottomMargin = ControlHelper.dpToPx(16, resources)
+                progressBar.layoutParams = lp
+                AlertDialog.Builder(this)
+                        .setTitle(R.string.wait_sync_stopping)
+                        .setView(progressBar)
+                        .setCancelable(false)
+                        .show()
+            }
+            runDelayedOnUiThread(5000) { update(withDialog = false) }
+            return
+        }
+        val hasChanges = hasChanges()
+        setSubtitle(hasChanges)
+        if (hasChanges) {
             update = true
             sync()
         } else {
@@ -269,18 +294,8 @@ abstract class ProjectActivity : BaseActivity() {
             longToast(R.string.permission_denied)
     }
 
-    private fun updateSubtitle(): Boolean {
-        for (i in 0 until map.layerCount) {
-            val layer = map.getLayer(i)
-            if (layer is NGWVectorLayer) {
-                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
-                if (changesCount > 0) {
-                    setSubtitle(true)
-                    return true
-                }
-            }
-        }
-        return false
+    private fun updateSubtitle() {
+        setSubtitle(hasChanges())
     }
 
     protected fun setSubtitle(hasChanges: Boolean) {
@@ -309,8 +324,6 @@ abstract class ProjectActivity : BaseActivity() {
             }
 //            }
         }
-
-        total = accounts.size
     }
 
     private fun ask() {
@@ -358,22 +371,16 @@ abstract class ProjectActivity : BaseActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d(Constants.TAG, "Got: ${intent.action}")
             if (intent.action == SyncAdapter.SYNC_START) {
-                if (total > 0)
-                    findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
-                else
-                    showSnackbar(info = R.string.sync_changes)
+                findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
             } else if (intent.action == SyncAdapter.SYNC_FINISH || intent.action == SyncAdapter.SYNC_CANCELED) {
                 if (intent.hasExtra(SyncAdapter.EXCEPTION))
                     toast(intent.getStringExtra(SyncAdapter.EXCEPTION))
 
-                total = 0//--
-//                if (total <= 0) {
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.GONE
                 if (update)
                     update()
                 else
                     updateSubtitle()
-//                }
             }
         }
     }

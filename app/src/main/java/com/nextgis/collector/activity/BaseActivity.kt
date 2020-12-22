@@ -33,6 +33,7 @@ import com.nextgis.maplib.map.MapDrawable
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.TrackLayer
 import com.nextgis.maplib.util.Constants
+import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplibui.mapui.MapViewOverlays
 import com.pawegio.kandroid.IntentFor
 import org.json.JSONObject
@@ -71,6 +72,19 @@ abstract class BaseActivity : AppCompatActivity() {
         }
         map.delete()
         preferences.edit().remove("project").apply()
+    }
+
+    protected fun hasChanges(): Boolean {
+        for (i in 0 until map.layerCount) {
+            val layer = map.getLayer(i)
+            if (layer is NGWVectorLayer) {
+                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
+                if (changesCount > 0) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     protected fun change(project: Project? = null) {
