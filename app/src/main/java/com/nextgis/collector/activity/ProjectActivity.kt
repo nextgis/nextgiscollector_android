@@ -217,6 +217,14 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     private fun backup() {
+        if (!PermissionUtil.hasPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            requestForPermissions(object : OnPermissionCallback {
+                override fun onPermissionGranted() {
+                    backup()
+                }
+            }, true, geo = false)
+            return
+        }
         val layers = arrayListOf<VectorLayer>()
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
@@ -259,7 +267,7 @@ abstract class ProjectActivity : BaseActivity() {
         return unfinished
     }
 
-    protected fun requestForPermissions(onPermissionCallback: OnPermissionCallback, memory: Boolean) {
+    protected fun requestForPermissions(onPermissionCallback: OnPermissionCallback, memory: Boolean, geo: Boolean = true) {
         this.onPermissionCallback = onPermissionCallback
         val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
         val fine = Manifest.permission.ACCESS_FINE_LOCATION
@@ -269,7 +277,7 @@ abstract class ProjectActivity : BaseActivity() {
         val geoAllowed = geoStatus == PackageManager.PERMISSION_GRANTED
         val memAllowed = memStatus == PackageManager.PERMISSION_GRANTED
         val permissions = arrayListOf<String>()
-        if (!geoAllowed) {
+        if (!geoAllowed && geo) {
             permissions.add(coarse)
             permissions.add(fine)
         }
