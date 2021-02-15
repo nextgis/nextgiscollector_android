@@ -3,7 +3,7 @@
   ~ Purpose:  Light mobile GIS for collecting data
   ~ Author:   Stanislav Petriakov, becomeglory@gmail.com
   ~ *********************************************************************
-  ~ Copyright (c) 2020 NextGIS, info@nextgis.com
+  ~ Copyright (c) 2020-2021 NextGIS, info@nextgis.com
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -42,10 +42,12 @@
     <string name="update_available">Навсозии дастрас аст</string>
     <string name="update_for">Барнома барои \"%1$s\"  аз версияи %2$d то %3$d пайдо шуд. Мехоҳед онро ҳозир нав кунед?</string>
     <string name="app_name_public">Лоиҳаҳои ҷамъиятӣ</string>
-    <string name="app_name_private">Лоиҳаҳои шахсӣ</string>
+    <string name="app_name_private">Лоиҳаҳои коллексия</string>
     <string name="create_new">Лоиҳаи худро таҳия кунед</string>
-    <string name="no_projects">Лоиҳаҳо нест</string>
-    <string name="write_us">Мехоҳед, ки ҷамъоварии маълумотро бо NextGIS Collector созед? Ба мо имейли мо фиристед <a href='mailto:info@nextgis.com'> info@nextgis.com</a></string>
+    <string name="no_projects">Шумо ба ягон лоиҳа илова карда нашудаед. Ба администратор номи корбарии худро гӯед: %1$s</string>
+    <string name="premium_url">https://nextgis.com/pricing-base</string>
+    <string name="details">Бештар</string>
+    <string name="write_us">Мехоҳед, ки ҷамъоварии маълумотро бо NextGIS Collector созед? Ба мо имейли мо фиристед <a href='mailto:info@nextgis.com'>info@nextgis.com</a></string>
     <string name="device_id">Шиносаи дастгоҳи шумо</string>
     <string name="sign_out_ngid">Баромад аз мизбон</string>
     <string name="sign_out_ngid_message">Аз ҳисоби NextGIS хориҷ шавед? Ҳама маълумоти ҷорӣ ва харита нест карда мешаванд.</string>

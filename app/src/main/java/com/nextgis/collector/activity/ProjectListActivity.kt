@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2021 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,6 @@ import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
 import com.nextgis.maplibui.util.NGIDUtils.*
 import com.pawegio.kandroid.*
-import kotlinx.android.synthetic.main.activity_project_list.*
 import java.io.File
 
 class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
@@ -190,11 +189,9 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         val private = extras?.getBoolean("private", true) ?: true
         if (id >= 0) {
             load(id, private)
-            chooseTitle(private = false)
+            setTitle()
         } else {
-            val latest = preferences.getBoolean("latest_projects", true)
-            binding.mode.tag = latest
-            switch()
+            loadProjects()
         }
     }
 
@@ -236,24 +233,17 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.mode -> switch()
             R.id.create -> write()
             R.id.retry -> retry()
             R.id.cancel -> cancel()
         }
     }
 
-    private fun switch() {
+    private fun loadProjects() {
         binding.apply {
-            val private = if (mode.tag != null) mode.tag as Boolean else true
-            val icon = if (private) R.drawable.earth else R.drawable.lock
-            val drawable = ContextCompat.getDrawable(this@ProjectListActivity, icon)
-            mode.setImageDrawable(drawable)
-            chooseTitle(private)
+            setTitle()
             val url = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
-            projectModel?.load(private = private, base = url ?: COLLECTOR_HUB_URL)
-            mode.tag = !private
-            preferences.edit().putBoolean("latest_projects", private).apply()
+            projectModel?.load(private = true, base = url ?: COLLECTOR_HUB_URL)
         }
     }
 
@@ -317,9 +307,12 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 .show()
     }
 
-    private fun chooseTitle(private: Boolean) {
-        val title = if (private) R.string.app_name_private else R.string.app_name_public
-        supportActionBar?.title = getString(title)
+    /**
+     * This was used to determine title for public or private project
+     *
+     */
+    private @Deprecated("Useless", replaceWith = ReplaceWith("supportActionBar?.title")) fun setTitle() {
+        supportActionBar?.title = getString(R.string.app_name_private)
     }
 
     private fun load(id: Int, private: Boolean) {
