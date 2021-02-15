@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * ********************************************************************
- * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2021 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -199,20 +199,18 @@ abstract class ProjectActivity : BaseActivity() {
         if (project.description.isNotBlank())
             info += project.description + "\n\n"
         info += getString(R.string.project_version, project.version)
-//        TODO add instandce name and project id
+//        TODO add instance name and project id
 //        if (project.instance.isNotBlank())
 //            info += "\n" + getString(R.string.project_instance, project.url)
         val builder = AlertDialog.Builder(this).setTitle(project.title)
                 .setMessage(info)
                 .setPositiveButton(R.string.ok, null)
-                .show()
+                .create()
 
+        builder.show()
         val message = builder.findViewById<TextView>(android.R.id.message)
         if (message != null) {
             message.movementMethod = LinkMovementMethod.getInstance()
-            message.linksClickable = true
-            message.autoLinkMask = Linkify.ALL
-            Linkify.addLinks(message, Linkify.ALL)
         }
     }
 

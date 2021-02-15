@@ -35,7 +35,6 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
 import android.text.method.LinkMovementMethod
-import android.text.util.Linkify
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -276,34 +275,28 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
     private fun write() {
         val builder = AlertDialog.Builder(this).setTitle(R.string.create_new)
-                .setMessage(getString(R.string.write_us))
+                .setMessage(R.string.write_us)
                 .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok) { _, _ -> email() }
-                .show()
+                .setPositiveButton(R.string.details) { _, _ -> details() }
+                .create()
 
+        builder.show()
         val message = builder.findViewById<TextView>(android.R.id.message)
         if (message != null) {
             message.movementMethod = LinkMovementMethod.getInstance()
-            message.linksClickable = true
-            message.autoLinkMask = Linkify.ALL
-            Linkify.addLinks(message, Linkify.ALL)
         }
-//                val browser = Intent(Intent.ACTION_VIEW, Uri.parse(NGIDUtils.NGID_MY))
-//                startActivity(browser)
     }
 
-    private fun email() {
-        val email = Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "info@nextgis.com", null))
-        email.putExtra(Intent.EXTRA_EMAIL, "mailto:info@nextgis.com")
-        email.putExtra(Intent.EXTRA_SUBJECT, "NextGIS Collector Project Request")
-        startActivity(Intent.createChooser(email, getString(R.string.ngid_email)))
+    private fun details() {
+        val browser = Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.premium_url)))
+        startActivity(browser)
     }
 
     override fun onItemClick(project: Project) {
         AlertDialog.Builder(this).setTitle(R.string.join_project)
                 .setMessage(getString(R.string.join_message, project.title))
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes) { _, _ -> load(project.id, !(mode.tag as Boolean)) }
+                .setPositiveButton(R.string.yes) { _, _ -> load(project.id, true) }
                 .show()
     }
 
