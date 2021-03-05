@@ -184,7 +184,10 @@ abstract class ProjectActivity : BaseActivity() {
         when (item?.itemId) {
             R.id.menu_sync -> sync()
             R.id.menu_change_project -> ask()
-            R.id.menu_backup -> backup()
+            R.id.menu_backup -> {
+                Log.d(Constants.TAG, "Backup button pressed")
+                backup()
+            }
             R.id.menu_about -> about()
             R.id.menu_track -> controlTrack(item)
             R.id.menu_track_list -> startActivity<TracksActivity>()
@@ -216,20 +219,28 @@ abstract class ProjectActivity : BaseActivity() {
 
     private fun backup() {
         if (!PermissionUtil.hasPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            Log.d(Constants.TAG, "No write permission granted, request it")
             requestForPermissions(object : OnPermissionCallback {
                 override fun onPermissionGranted() {
+                    Log.d(Constants.TAG, "Write permission granted")
                     backup()
                 }
             }, true, geo = false)
             return
         }
+        Log.d(Constants.TAG, "Backup started, total ${map.layerCount} layers")
         val layers = arrayListOf<VectorLayer>()
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
-            if (layer is NGWVectorLayer)
+            Log.d(Constants.TAG, "Processing layer '${layer.name}'")
+            if (layer is NGWVectorLayer) {
+                Log.d(Constants.TAG, "It is NGWVectorLayer, append")
                 layers.add(layer)
+            }
         }
-        val exportTask = ExportGeoJSONBatchTask(this, layers, true, project.title)
+        val saveLog = preferences.getBoolean("save_log", false)
+        Log.d(Constants.TAG, "Execute ExportGeoJSONBatchTask")
+        val exportTask = ExportGeoJSONBatchTask(this, layers, true, project.title, saveLog)
         exportTask.execute()
     }
 
