@@ -32,8 +32,6 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.Toolbar
 import android.text.method.LinkMovementMethod
-import android.text.util.Linkify
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -41,6 +39,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
 import com.nextgis.collector.util.NetworkUtil
@@ -51,6 +50,7 @@ import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
+import com.nextgis.maplib.util.MapUtil
 import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
@@ -62,10 +62,13 @@ import com.nextgis.maplibui.util.ControlHelper
 import com.nextgis.maplibui.util.ExportGeoJSONBatchTask
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.get
+import com.nextgis.maplibui.util.UiUtil
 import com.pawegio.kandroid.*
 import org.json.JSONObject
-import java.io.File
-import java.io.IOException
+import java.io.*
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import kotlin.collections.ArrayList
 
 
 abstract class ProjectActivity : BaseActivity() {
@@ -177,6 +180,7 @@ abstract class ProjectActivity : BaseActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         setTracksTitle(menu?.findItem(R.id.menu_track))
+        menu?.findItem(R.id.menu_share_log)?.isVisible = preferences.getBoolean("save_log", false)
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -185,9 +189,10 @@ abstract class ProjectActivity : BaseActivity() {
             R.id.menu_sync -> sync()
             R.id.menu_change_project -> ask()
             R.id.menu_backup -> {
-                Log.d(Constants.TAG, "Backup button pressed")
+                HyperLog.v(Constants.TAG, "Backup button pressed")
                 backup()
             }
+            R.id.menu_share_log -> shareLog()
             R.id.menu_about -> about()
             R.id.menu_track -> controlTrack(item)
             R.id.menu_track_list -> startActivity<TracksActivity>()
@@ -195,6 +200,61 @@ abstract class ProjectActivity : BaseActivity() {
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    private fun shareLog() {
+        HyperLog.getDeviceLogsInFile(this)
+        val dir = File(getExternalFilesDir(null), "LogFiles")
+        val size = FileUtil.getDirectorySize(dir)
+        if (size == 0L) {
+            toast(R.string.error_empty_dataset)
+            return
+        }
+
+        val files = zipLogs(dir)
+        val type = "text/plain"
+        UiUtil.share(files, type, this)
+    }
+
+    private fun zipLogs(dir: File): File? {
+        var temp = MapUtil.prepareTempDir(this, "shared_layers")
+        val outdated = arrayListOf<File>()
+        try {
+            val fileName = "ng-logs.zip"
+            if (temp == null) {
+                toast(R.string.error_file_create)
+            }
+
+            temp = File(temp, fileName)
+            temp.createNewFile()
+            val fos = FileOutputStream(temp, false)
+            val zos = ZipOutputStream(BufferedOutputStream(fos))
+
+            val buffer = ByteArray(1024)
+            var length: Int
+
+            for (file in dir.listFiles()) {
+                if (System.currentTimeMillis() - file.lastModified() > 60 * 60 * 1000)
+                    outdated.add(file)
+                try {
+                    val fis = FileInputStream(file)
+                    zos.putNextEntry(ZipEntry(file.name))
+                    while (fis.read(buffer).also { length = it } > 0) zos.write(buffer, 0, length)
+                    zos.closeEntry()
+                    fis.close()
+                } catch (ex: Exception) {
+                }
+            }
+
+            zos.close()
+            fos.close()
+        } catch (e: IOException) {
+            temp = null
+        }
+        for (file in outdated) {
+            file.delete()
+        }
+        return temp
     }
 
     private fun about() {
@@ -219,28 +279,27 @@ abstract class ProjectActivity : BaseActivity() {
 
     private fun backup() {
         if (!PermissionUtil.hasPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Log.d(Constants.TAG, "No write permission granted, request it")
+            HyperLog.v(Constants.TAG, "No write permission granted, request it")
             requestForPermissions(object : OnPermissionCallback {
                 override fun onPermissionGranted() {
-                    Log.d(Constants.TAG, "Write permission granted")
+                    HyperLog.v(Constants.TAG, "Write permission granted")
                     backup()
                 }
             }, true, geo = false)
             return
         }
-        Log.d(Constants.TAG, "Backup started, total ${map.layerCount} layers")
+        HyperLog.v(Constants.TAG, "Backup started, total ${map.layerCount} layers")
         val layers = arrayListOf<VectorLayer>()
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
-            Log.d(Constants.TAG, "Processing layer '${layer.name}'")
+            HyperLog.v(Constants.TAG, "Processing layer '${layer.name}'")
             if (layer is NGWVectorLayer) {
-                Log.d(Constants.TAG, "It is NGWVectorLayer, append")
+                HyperLog.v(Constants.TAG, "It is NGWVectorLayer, append")
                 layers.add(layer)
             }
         }
-        val saveLog = preferences.getBoolean("save_log", false)
-        Log.d(Constants.TAG, "Execute ExportGeoJSONBatchTask")
-        val exportTask = ExportGeoJSONBatchTask(this, layers, true, project.title, saveLog)
+        HyperLog.v(Constants.TAG, "Execute ExportGeoJSONBatchTask")
+        val exportTask = ExportGeoJSONBatchTask(this, layers, true, project.title)
         exportTask.execute()
     }
 
@@ -387,7 +446,7 @@ abstract class ProjectActivity : BaseActivity() {
 
     protected inner class SyncReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            Log.d(Constants.TAG, "Got: ${intent.action}")
+            HyperLog.v(Constants.TAG, "Got: ${intent.action}")
             if (intent.action == SyncAdapter.SYNC_START) {
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
             } else if (intent.action == SyncAdapter.SYNC_FINISH || intent.action == SyncAdapter.SYNC_CANCELED) {

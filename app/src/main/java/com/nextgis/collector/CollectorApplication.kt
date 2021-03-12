@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2021 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@
 
 package com.nextgis.collector
 
+import android.util.Log
 import android.widget.Toast
+import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.map.LayerGroup
 import com.nextgis.maplib.util.Constants
@@ -43,6 +45,10 @@ class CollectorApplication : GISApplication() {
         if (!BuildConfig.DEBUG)
             Sentry.init(AndroidSentryClientFactory(applicationContext))
         super.onCreate()
+        if (mSharedPreferences.getBoolean("save_log", false)) {
+            HyperLog.initialize(this)
+            HyperLog.setLogLevel(Log.VERBOSE)
+        }
         checkTracksLayerExistence()
         updateFromPreviousVersion()
     }
