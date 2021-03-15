@@ -22,7 +22,10 @@
 package com.nextgis.collector.activity
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.ProgressDialog
 import android.arch.lifecycle.ViewModelProviders
+import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
@@ -31,12 +34,11 @@ import android.support.v7.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuItem
 import com.nextgis.collector.BuildConfig
-import com.nextgis.maplibui.util.NGIDUtils
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ActivityPreferenceBinding
 import com.nextgis.collector.viewmodel.SettingsViewModel
-import com.nextgis.maplibui.activity.NGIDLoginActivity
-import com.pawegio.kandroid.IntentFor
+import com.nextgis.maplibui.util.NGIDUtils
+import com.pawegio.kandroid.runDelayedOnUiThread
 import kotlinx.android.synthetic.main.toolbar.*
 import java.text.DateFormat
 import java.util.*
@@ -100,11 +102,25 @@ class PreferenceActivity : BaseActivity() {
         }
 
         private fun signOut(activity: PreferenceActivity) {
+            val dialog = ProgressDialog(activity)
+            dialog.setTitle(R.string.waiting)
+            dialog.setCanceledOnTouchOutside(false)
+            dialog.setCancelable(false)
+            dialog.show()
+
             NGIDUtils.signOut(activity.preferences, activity)
-            val intent = IntentFor<NGIDLoginActivity>(activity)
-            intent.putExtra(NGIDLoginActivity.EXTRA_NEXT, ProjectListActivity::class.java)
-            startActivity(intent)
-            activity.finish()
+            activity.deleteAll()
+            runDelayedOnUiThread(2500) { rebirth(activity) }
+        }
+
+        // https://stackoverflow.com/a/46848226/2088273
+        private fun rebirth(activity: Activity) {
+            val packageManager = activity.packageManager
+            val intent = packageManager?.getLaunchIntentForPackage(activity.packageName)
+            val componentName = intent?.component
+            val mainIntent = Intent.makeRestartActivityTask(componentName)
+            startActivity(mainIntent)
+            Runtime.getRuntime().exit(0)
         }
 
         private fun setAllPreferencesToAvoidHavingExtraSpace(preference: Preference) {
