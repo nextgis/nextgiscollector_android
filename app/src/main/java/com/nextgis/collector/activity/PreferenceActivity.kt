@@ -31,13 +31,12 @@ import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.preference.*
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.BuildConfig
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ActivityPreferenceBinding
+import com.nextgis.collector.util.Logger
 import com.nextgis.collector.viewmodel.SettingsViewModel
 import com.nextgis.maplibui.util.NGIDUtils
 import com.pawegio.kandroid.runDelayedOnUiThread
@@ -66,8 +65,7 @@ class PreferenceActivity : BaseActivity() {
     override fun onDestroy() {
         super.onDestroy()
         if (preferences.getBoolean("save_log", false)) {
-            HyperLog.initialize(this)
-            HyperLog.setLogLevel(Log.VERBOSE)
+            Logger.initialize(this)
         }
     }
 

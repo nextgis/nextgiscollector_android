@@ -21,9 +21,8 @@
 
 package com.nextgis.collector
 
-import android.util.Log
 import android.widget.Toast
-import com.hypertrack.hyperlog.HyperLog
+import com.nextgis.collector.util.Logger
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.map.LayerGroup
 import com.nextgis.maplib.util.Constants
@@ -32,7 +31,6 @@ import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.mapui.TrackLayerUI
 import io.sentry.Sentry
 import io.sentry.android.AndroidSentryClientFactory
-import java.lang.Exception
 import kotlin.system.exitProcess
 
 class CollectorApplication : GISApplication() {
@@ -46,8 +44,7 @@ class CollectorApplication : GISApplication() {
             Sentry.init(AndroidSentryClientFactory(applicationContext))
         super.onCreate()
         if (mSharedPreferences.getBoolean("save_log", false)) {
-            HyperLog.initialize(this)
-            HyperLog.setLogLevel(Log.VERBOSE)
+            Logger.initialize(this)
         }
         checkTracksLayerExistence()
         updateFromPreviousVersion()
