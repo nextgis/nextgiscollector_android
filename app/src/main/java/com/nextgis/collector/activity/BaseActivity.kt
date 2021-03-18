@@ -52,8 +52,12 @@ abstract class BaseActivity : AppCompatActivity() {
         mapView = MapViewOverlays(this, app.map as MapDrawable)
         mapView.id = R.id.container
         map = mapView.map
-        val json = preferences.getString("project", "{}")
-        project = Project(JSONObject(json))
+        loadProject()
+    }
+
+    protected fun loadProject() {
+        val json = preferences.getString("project", null)
+        project = Project(JSONObject(json ?: "{}"))
     }
 
     protected fun deleteAll() {

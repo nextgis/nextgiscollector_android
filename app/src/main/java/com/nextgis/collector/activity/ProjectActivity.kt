@@ -108,6 +108,7 @@ abstract class ProjectActivity : BaseActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        loadProject()
         init()
     }
 
