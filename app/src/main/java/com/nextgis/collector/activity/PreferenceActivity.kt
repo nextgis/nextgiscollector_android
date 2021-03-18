@@ -113,7 +113,8 @@ class PreferenceActivity : BaseActivity() {
 
         private fun signOut(activity: PreferenceActivity) {
             val dialog = ProgressDialog(activity)
-            dialog.setTitle(R.string.waiting)
+            dialog.setTitle(R.string.sign_out_ngid)
+            dialog.setMessage(getString(R.string.waiting))
             dialog.setCanceledOnTouchOutside(false)
             dialog.setCancelable(false)
             dialog.show()
