@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * ********************************************************************
- * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2019, 2021 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,8 +31,10 @@ import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.preference.*
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.BuildConfig
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ActivityPreferenceBinding
@@ -59,6 +61,14 @@ class PreferenceActivity : BaseActivity() {
         binding.executePendingBindings()
 
         supportFragmentManager.beginTransaction().replace(R.id.container, PreferencesFragment()).commit()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (preferences.getBoolean("save_log", false)) {
+            HyperLog.initialize(this)
+            HyperLog.setLogLevel(Log.VERBOSE)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

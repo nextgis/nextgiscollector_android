@@ -12,8 +12,8 @@ android {
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 16
         targetSdkVersion 29
-        versionCode 45
-        versionName "1.5.14"
+        versionCode 46
+        versionName "1.5.15"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "NGCollector-$versionName")
         externalNativeBuild {
@@ -66,4 +66,5 @@ dependencies {
     implementation 'org.slf4j:slf4j-nop:1.7.30'
 
     implementation 'com.github.apl-devs:appintro:v4.2.3'
+    implementation 'com.hypertrack:hyperlog:0.0.10'
 }

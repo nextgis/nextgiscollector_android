@@ -50,7 +50,13 @@
         android:id="@+id/menu_backup"
         android:icon="@drawable/ic_database_export"
         android:title="@string/backup_layers"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_share_log"
+        android:icon="@drawable/ic_action_social_share_light"
+        android:title="@string/share_log"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/menu_about"

@@ -54,8 +54,10 @@
     <string name="track_cloud">Ба нигоҳдории абр трекро фиристед</string>
     <string name="about">Дар бораи барнома</string>
     <string name="about_message">Версия %1$s\nНусхаи %2$d\nСанаи сохтан %3$s</string>
+    <string name="backup_layers">Backup data</string>
     <string name="restart_app">Замимаро аз нав оғоз кунед</string>
     <string name="project_version">Project version: %d</string>
     <string name="project_about">About project</string>
     <string name="save_log">Extended logs</string>
+    <string name="share_log">Share log</string>
 </resources>
