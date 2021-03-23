@@ -218,7 +218,7 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     private fun zipLogs(dir: File): File? {
-        var temp = MapUtil.prepareTempDir(this, "shared_layers")
+        var temp = MapUtil.prepareTempDir(this, "shared_layers", false)
         val outdated = arrayListOf<File>()
         try {
             val fileName = "ng-logs.zip"
