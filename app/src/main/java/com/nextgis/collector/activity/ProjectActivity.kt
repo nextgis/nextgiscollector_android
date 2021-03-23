@@ -214,7 +214,7 @@ abstract class ProjectActivity : BaseActivity() {
 
         val files = zipLogs(dir)
         val type = "text/plain"
-        UiUtil.share(files, type, this)
+        UiUtil.share(files, type, this, false)
     }
 
     private fun zipLogs(dir: File): File? {
