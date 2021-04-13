@@ -57,18 +57,14 @@ import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.service.TrackerService.hasUnfinishedTracks
 import com.nextgis.maplibui.service.TrackerService.isTrackerServiceRunning
-import com.nextgis.maplibui.util.ConstantsUI
-import com.nextgis.maplibui.util.ControlHelper
-import com.nextgis.maplibui.util.ExportGeoJSONBatchTask
+import com.nextgis.maplibui.util.*
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.get
-import com.nextgis.maplibui.util.UiUtil
 import com.pawegio.kandroid.*
 import org.json.JSONObject
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.collections.ArrayList
 
 
 abstract class ProjectActivity : BaseActivity() {
@@ -295,13 +291,43 @@ abstract class ProjectActivity : BaseActivity() {
             val layer = map.getLayer(i)
             HyperLog.v(Constants.TAG, "Processing layer '${layer.name}'")
             if (layer is NGWVectorLayer) {
+                if (!layer.isEditable) {
+                    HyperLog.v(Constants.TAG, "It is NGWVectorLayer, but not editable")
+                    continue
+                }
                 HyperLog.v(Constants.TAG, "It is NGWVectorLayer, append")
                 layers.add(layer)
             }
         }
-        HyperLog.v(Constants.TAG, "Execute ExportGeoJSONBatchTask")
-        val exportTask = ExportGeoJSONBatchTask(this, layers, true, project.title)
-        exportTask.execute()
+        HyperLog.v(Constants.TAG, "Create dialog to choose layers for backup")
+        val checked = BooleanArray(layers.size)
+        for (i in 0 until layers.size) {
+            checked[i] = true
+        }
+        val names = layers.map { it.name }
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(R.string.choose_layers)
+                .setMultiChoiceItems(names.toTypedArray(), checked) { _, id, selected -> checked[id] = selected }
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ok) { _, _ ->
+                    HyperLog.v(Constants.TAG, "Filter selected layers only")
+                    val list = layers.filterIndexed { index, _ -> checked[index] }
+                    if (list.isEmpty()) {
+                        toast(R.string.error_empty_dataset)
+                        return@setPositiveButton
+                    }
+                    if (list.size == 1) {
+                        HyperLog.v(Constants.TAG, "Execute ExportGeoJSONTask")
+                        val exportTask = ExportGeoJSONTask(this, list.first(), true, false)
+                        exportTask.execute()
+                        return@setPositiveButton
+                    }
+                    HyperLog.v(Constants.TAG, "Execute ExportGeoJSONBatchTask")
+                    val exportTask = ExportGeoJSONBatchTask(this, list, true, project.title)
+                    exportTask.execute()
+                }
+        HyperLog.v(Constants.TAG, "Show dialog to choose layers for backup")
+        builder.show()
     }
 
     private fun controlTrack(item: MenuItem) {
