@@ -39,6 +39,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.ProjectAdapter
@@ -119,16 +120,19 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+                HyperLog.v(Constants.TAG, "BroadcastReceiver got action from LayerFillService: ${intent.action}")
                 if (intent.action?.equals(LayerFillService.ACTION_STOP) == true) {
                     toast(R.string.canceled)
                     reset()
                     return
                 }
                 val serviceStatus = intent.getShortExtra(LayerFillService.KEY_STATUS, 0)
+                HyperLog.v(Constants.TAG, "BroadcastReceiver got status from LayerFillService: $serviceStatus")
                 when (serviceStatus) {
                     LayerFillService.STATUS_STOP -> {
                         val canceled = intent.getBooleanExtra(LayerFillService.KEY_CANCELLED, false)
                         val success = intent.getBooleanExtra(LayerFillService.KEY_RESULT, false)
+                        HyperLog.v(Constants.TAG, "BroadcastReceiver stop with success: $success (canceled: $canceled)")
                         if (!success) {
                             if (canceled)
                                 toast(R.string.canceled)
@@ -141,6 +145,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             return
 
                         val isNgw = intent.getBooleanExtra(LayerFillService.KEY_SYNC, false)
+                        HyperLog.v(Constants.TAG, "BroadcastReceiver no error message found, isNgw: $isNgw")
                         if (success && !canceled && isNgw) {
                             val id = intent.getIntExtra(LayerFillService.KEY_REMOTE_ID, -1)
                             val ngwLayer = map.getLayerById(id) as? NGWVectorLayer
@@ -149,11 +154,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                                 error()
                                 return
                             }
-                            val account = app.getAccount(ngwLayer.accountName)
 
+                            val account = app.getAccount(ngwLayer.accountName)
                             val project = binding.projectModel?.selectedProject?.get()
                             val remote = project?.layers?.firstOrNull { it.path == ngwLayer.path.name }
-
                             if (remote is RemoteLayerNGW) {
                                 ngwLayer.setIsEditable(remote.editable && remote.syncable)
                                 if (remote.syncable) {
@@ -321,6 +325,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun check() {
+        HyperLog.v(Constants.TAG, "Check completeness, total: $total")
         if (total <= 0) {
             binding.projectModel?.selectedProject?.get()?.let { project ->
                 val paths = project.layers.map { it.path }.reversed()
@@ -403,15 +408,18 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         val authority = fullUrl.split("://")[1]
 
         total = project.layers.size
+        HyperLog.v(Constants.TAG, "Create layers, total: $total")
         for (layer in project.layers) {
             var mapLayer: ILayer? = null
             when (layer.type) {
                 "tms" -> {
                     mapLayer = createTMS(layer as RemoteLayerTMS)
                     total--
+                    HyperLog.v(Constants.TAG, "TMS layer found: ${layer.title}")
                 }
                 "ngrc" -> {
                     addRaster(layer)
+                    HyperLog.v(Constants.TAG, "NGRC layer found: ${layer.title}")
                 }
                 "ngw", "ngfp" -> {
                     val resource = layer as RemoteLayerNGW
@@ -420,11 +428,13 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         resource.password = project.password
                     }
                     addVector(resource, authority, fullUrl, project.user, project.password)
+                    HyperLog.v(Constants.TAG, "Vector layer found: ${layer.title}")
                 }
             }
             mapLayer?.let { map.addLayer(mapLayer) }
         }
         map.save()
+        HyperLog.v(Constants.TAG, "Save to map and start filling with features: $total")
         check()
         start()
     }
