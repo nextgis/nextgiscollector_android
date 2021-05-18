@@ -26,9 +26,11 @@ import com.nextgis.collector.util.Logger
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.map.LayerGroup
 import com.nextgis.maplib.util.Constants
+import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplib.util.SettingsConstants.KEY_PREF_TRACK_SEND
 import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.mapui.TrackLayerUI
+import com.nextgis.maplibui.service.TrackerService
 import io.sentry.Sentry
 import io.sentry.android.AndroidSentryClientFactory
 import kotlin.system.exitProcess
@@ -48,6 +50,7 @@ class CollectorApplication : GISApplication() {
         }
         checkTracksLayerExistence()
         updateFromPreviousVersion()
+        NGWUtil.UUID = TrackerService.getUid(this)
     }
 
     private fun updateFromPreviousVersion() {
