@@ -24,10 +24,16 @@ package com.nextgis.collector
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.support.v4.content.ContextCompat
 import android.util.Log
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
+import com.nextgis.maplib.map.MapBase
+import com.nextgis.maplib.map.MapContentProviderHelper
+import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.service.NGWSyncService
 import com.nextgis.maplib.util.Constants
+import com.nextgis.maplibui.service.RebuildCacheService
+import com.nextgis.maplibui.util.ConstantsUI
 
 class SyncService: NGWSyncService() {
 
@@ -58,12 +64,23 @@ class SyncService: NGWSyncService() {
         registerReceiver(mSyncReceiver, intentFilter)
     }
 
+    private fun rebuildLayersCaches(context: Context) {
+        val mapContentProviderHelper = MapBase.getInstance() as MapContentProviderHelper
+        for (i in 0 until mapContentProviderHelper.layerCount) {
+            (mapContentProviderHelper.getLayer(i) as? VectorLayer)?.let {
+                val intent = Intent(context, RebuildCacheService::class.java)
+                intent.putExtra(ConstantsUI.KEY_LAYER_ID, it.id)
+                intent.action = RebuildCacheService.ACTION_ADD_TASK
+                ContextCompat.startForegroundService(context, intent)
+            }
+        }
+    }
+
     inner class SyncReceiver : NGWSyncService.SyncReceiver() {
         override fun onReceive(
                 context: Context,
                 intent: Intent) {
-            val action = intent.action
-            when (action) {
+            when (intent.action) {
                 SyncAdapter.SYNC_START -> {
                     mIsSyncStarted = true
 //                    Sentry.capture("Sync started")
@@ -71,6 +88,7 @@ class SyncService: NGWSyncService() {
                 SyncAdapter.SYNC_FINISH -> {
                     mIsSyncStarted = false
 //                    Sentry.capture("Sync error: ${intent.getStringExtra(SyncAdapter.EXCEPTION)}")
+                    rebuildLayersCaches(context)
                 }
                 SyncAdapter.SYNC_CANCELED -> {
                     Log.d(Constants.TAG, "SyncAdapter - SYNC_CANCELED is received")
