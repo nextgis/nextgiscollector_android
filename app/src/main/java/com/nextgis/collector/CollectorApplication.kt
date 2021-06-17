@@ -51,6 +51,7 @@ class CollectorApplication : GISApplication() {
         checkTracksLayerExistence()
         updateFromPreviousVersion()
         NGWUtil.UUID = TrackerService.getUid(this)
+        NGWUtil.NGUA = "ng_collector"
     }
 
     private fun updateFromPreviousVersion() {
