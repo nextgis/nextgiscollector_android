@@ -5,15 +5,15 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'io.sentry.android.gradle'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     dataBinding.enabled = true
     defaultConfig {
         applicationId "com.nextgis.collector"
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 16
-        targetSdkVersion 29
-        versionCode 51
-        versionName "1.5.20"
+        targetSdkVersion 30
+        versionCode 52
+        versionName "1.5.21"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "NGCollector-$versionName")
         externalNativeBuild {

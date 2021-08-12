@@ -137,7 +137,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             if (canceled)
                                 toast(R.string.canceled)
                             else if (intent.hasExtra(LayerFillService.KEY_MESSAGE))
-                                longToast(intent.getStringExtra(LayerFillService.KEY_MESSAGE))
+                                longToast(intent.getStringExtra(LayerFillService.KEY_MESSAGE) ?: getString(R.string.sync_error))
                             error()
                             return
                         }
@@ -509,8 +509,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             R.id.menu_settings -> startActivity<PreferenceActivity>()
             else -> return super.onOptionsItemSelected(item)
         }

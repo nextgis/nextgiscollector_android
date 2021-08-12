@@ -181,8 +181,8 @@ abstract class ProjectActivity : BaseActivity() {
         return super.onPrepareOptionsMenu(menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             R.id.menu_sync -> sync()
             R.id.menu_change_project -> ask()
             R.id.menu_backup -> {
@@ -478,7 +478,7 @@ abstract class ProjectActivity : BaseActivity() {
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
             } else if (intent.action == SyncAdapter.SYNC_FINISH || intent.action == SyncAdapter.SYNC_CANCELED) {
                 if (intent.hasExtra(SyncAdapter.EXCEPTION))
-                    toast(intent.getStringExtra(SyncAdapter.EXCEPTION))
+                    toast(intent.getStringExtra(SyncAdapter.EXCEPTION) ?: getString(R.string.sync_error))
 
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.GONE
                 if (update)

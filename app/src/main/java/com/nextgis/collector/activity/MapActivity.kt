@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2021 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -244,7 +244,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         newIntent = intent
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item?.itemId) {
             R.id.menu_edit_save -> return saveEdits()
             R.id.menu_edit_undo, R.id.menu_edit_redo -> {

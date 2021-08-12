@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * ********************************************************************
- * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2021 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -143,8 +143,8 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         changeAdapter(id)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             android.R.id.home -> {
                 if (history.size > 0) {
                     history.removeAt(history.size - 1)
