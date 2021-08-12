@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2019 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2021 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,11 +34,12 @@ import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.TrackLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
+import com.nextgis.maplibui.activity.NGActivity
 import com.nextgis.maplibui.mapui.MapViewOverlays
 import com.pawegio.kandroid.IntentFor
 import org.json.JSONObject
 
-abstract class BaseActivity : AppCompatActivity() {
+abstract class BaseActivity : NGActivity() {
     protected lateinit var app: CollectorApplication
     protected lateinit var mapView: MapViewOverlays
     protected lateinit var map: MapDrawable

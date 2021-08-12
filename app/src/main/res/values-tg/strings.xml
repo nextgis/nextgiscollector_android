@@ -31,6 +31,7 @@
     <string name="intro_description1">Танҳо ба лоиҳае, ки мехоҳед, ҳамроҳ шавед ва ба ҷамъоварии маълумот шурӯъ кунед. NextGIS Collector тамоми қабатҳои лозимаро эҷод ва бор мекунад.</string>
     <string name="intro_description2">Барнома барои эҷод кардани ҳисоб дар нигоҳдории абри ва нигоҳ доштани маълумот саривақт иҷозати зеринро талаб мекунад.</string>
     <string name="permission_denied">Иҷозат дода намешавад</string>
+    <string name="requested_permissions">Application needs location permission to work properly.</string>
     <string name="by_gps">Низоми муайянкунии ҷаҳонии ҷои ист</string>
     <string name="by_hand">Дар харита</string>
     <string name="add_feature">Иловаи объект</string>

@@ -55,8 +55,6 @@ import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.service.TrackerService
-import com.nextgis.maplibui.service.TrackerService.hasUnfinishedTracks
-import com.nextgis.maplibui.service.TrackerService.isTrackerServiceRunning
 import com.nextgis.maplibui.util.*
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.get
@@ -66,8 +64,16 @@ import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
+import android.os.Build
+import android.support.annotation.RequiresApi
+import com.nextgis.maplibui.service.TrackerService.*
+
 
 abstract class ProjectActivity : BaseActivity() {
+    companion object {
+        const val LOCATION_REQUEST = 703
+    }
+
     @Volatile
     private var update = false
     private var syncReceiver: SyncReceiver = SyncReceiver()
@@ -76,6 +82,7 @@ abstract class ProjectActivity : BaseActivity() {
         get() {
             return findViewById<FrameLayout>(R.id.overlay).visibility == View.VISIBLE
         }
+    protected var trackItem: MenuItem? = null
 
     interface OnPermissionCallback {
         fun onPermissionGranted()
@@ -191,7 +198,7 @@ abstract class ProjectActivity : BaseActivity() {
             }
             R.id.menu_share_log -> shareLog()
             R.id.menu_about -> about()
-            R.id.menu_track -> controlTrack(item)
+            R.id.menu_track -> checkForBackgroundPermission(item)
             R.id.menu_track_list -> startActivity<TracksActivity>()
             R.id.menu_settings -> startActivity<PreferenceActivity>()
             else -> return super.onOptionsItemSelected(item)
@@ -330,16 +337,56 @@ abstract class ProjectActivity : BaseActivity() {
         builder.show()
     }
 
-    private fun controlTrack(item: MenuItem) {
+    private fun checkForBackgroundPermission(item: MenuItem) {
         if (!PermissionUtil.hasPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
             requestForPermissions(object : OnPermissionCallback {
                 override fun onPermissionGranted() {
-                    controlTrack(item)
+                    checkForBackgroundPermission(item)
                 }
             }, false)
             return
         }
 
+        showBackgroundDialog(this, object : BackgroundPermissionCallback {
+            override fun beforeAndroid10(hasBackgroundPermission: Boolean) {
+                if (!hasBackgroundPermission) {
+                    trackItem = item
+                    val permission = Manifest.permission.ACCESS_FINE_LOCATION
+                    requestPermissions(R.string.no_permission_granted, R.string.requested_permissions, LOCATION_REQUEST, permission)
+                } else {
+                    controlTrack(item)
+                }
+            }
+
+            @RequiresApi(api = Build.VERSION_CODES.Q)
+            override fun onAndroid10(hasBackgroundPermission: Boolean) {
+                if (!hasBackgroundPermission) {
+                    trackItem = item
+                    requestPermissions()
+                } else {
+                    controlTrack(item)
+                }
+            }
+
+            @RequiresApi(api = Build.VERSION_CODES.Q)
+            override fun afterAndroid10(hasBackgroundPermission: Boolean) {
+                if (!hasBackgroundPermission) {
+                    trackItem = item
+                    requestPermissions()
+                } else {
+                    controlTrack(item)
+                }
+            }
+        })
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private fun requestPermissions() {
+        val permissions = arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        ActivityCompat.requestPermissions(this, permissions, LOCATION_REQUEST)
+    }
+
+    private fun controlTrack(item: MenuItem?) {
         val trackerService = IntentFor<TrackerService>(this)
         trackerService.putExtra(ConstantsUI.TARGET_CLASS, this.javaClass.name)
         val unfinished = setTracksTitle(item)
@@ -387,13 +434,18 @@ abstract class ProjectActivity : BaseActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        var granted = requestCode == AddFeatureActivity.PERMISSIONS_CODE
+        var granted = true
         for (result in grantResults)
             if (result != PackageManager.PERMISSION_GRANTED)
                 granted = false
 
         if (granted) {
-            onPermissionCallback?.onPermissionGranted()
+            if (requestCode == AddFeatureActivity.PERMISSIONS_CODE)
+                onPermissionCallback?.onPermissionGranted()
+            if (requestCode ==  LOCATION_REQUEST) {
+                controlTrack(trackItem)
+                trackItem = null
+            }
         } else
             longToast(R.string.permission_denied)
     }
