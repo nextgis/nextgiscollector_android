@@ -100,6 +100,7 @@ abstract class BaseActivity : NGActivity() {
             intent.putExtra("private", it.private)
         }
         startActivity(intent)
+        finish()
     }
 
 }

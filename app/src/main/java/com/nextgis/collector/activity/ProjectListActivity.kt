@@ -94,7 +94,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         if (preferences.contains("project")) {
             open()
-            finish()
             return
         }
 
@@ -221,7 +220,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         super.onResume()
         if (preferences.contains("project")) {
             open()
-            finish()
             return
         }
     }
@@ -322,6 +320,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             startActivity<AddFeatureActivity>()
         else
             startActivity<MapActivity>()
+        finish()
     }
 
     private fun check() {
