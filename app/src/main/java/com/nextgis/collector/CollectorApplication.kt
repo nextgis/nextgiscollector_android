@@ -37,7 +37,7 @@ import kotlin.system.exitProcess
 
 class CollectorApplication : GISApplication() {
     companion object {
-        const val BASE_URL = "http://collector.nextgis.com/api/project"
+        const val BASE_URL = "https://collector.nextgis.com/api/project"
         const val TREE = "resource.tree"
     }
 
