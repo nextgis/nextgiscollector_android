@@ -105,6 +105,7 @@ class ProjectModel {
         val title = jsonProject.optString("title")
         val screen = jsonProject.optString("screen")
         val id = jsonProject.optInt("id")
+        val ngwId = jsonProject.optInt("ngw_project_id")
         val version = jsonProject.optInt("version")
         val description = if (jsonProject.isNull("description")) "" else jsonProject.optString("description")
 
@@ -130,7 +131,7 @@ class ProjectModel {
         val layers = parseLayers(jsonLayers, url)
         val tree = parseTree(jsonLayers)
 
-        return Project(id, title, description, screen, version, layers, tree.json, private, url, user, hash)
+        return Project(id, ngwId, title, description, screen, version, layers, tree.json, private, url, user, hash)
     }
 
     private fun parseTree(json: JSONArray?): ResourceTree {

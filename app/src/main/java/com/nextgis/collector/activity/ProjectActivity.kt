@@ -66,6 +66,8 @@ import java.util.zip.ZipOutputStream
 
 import android.os.Build
 import android.support.annotation.RequiresApi
+import android.text.SpannableString
+import android.text.util.Linkify
 import com.nextgis.maplibui.service.TrackerService.*
 
 
@@ -266,11 +268,14 @@ abstract class ProjectActivity : BaseActivity() {
         if (project.description.isNotBlank())
             info += project.description + "\n\n"
         info += getString(R.string.project_version, project.version)
-//        TODO add instance name and project id
-//        if (project.instance.isNotBlank())
-//            info += "\n" + getString(R.string.project_instance, project.url)
+        if (project.url.isNotBlank()) {
+            val url = "${project.url}/resource/${project.ngwId}"
+            info += "\n" + getString(R.string.project_instance, url, url)
+        }
+        val ss = SpannableString(info); // msg should have url to enable clicking
+        Linkify.addLinks(ss, Linkify.ALL);
         val builder = AlertDialog.Builder(this).setTitle(project.title)
-                .setMessage(info)
+                .setMessage(ss)
                 .setPositiveButton(R.string.ok, null)
                 .create()
 
@@ -278,6 +283,7 @@ abstract class ProjectActivity : BaseActivity() {
         val message = builder.findViewById<TextView>(android.R.id.message)
         if (message != null) {
             message.movementMethod = LinkMovementMethod.getInstance()
+            message.linksClickable = true
         }
     }
 

@@ -58,6 +58,7 @@
     <string name="backup_layers">Сохранить архив</string>
     <string name="restart_app">Перезапустите приложение</string>
     <string name="project_version">Версия проекта: %d</string>
+    <string name="project_instance">Адрес проекта: <a href="%1$s">%2$s</a></string>
     <string name="project_about">О проекте</string>
     <string name="save_log">Тщательное логгирование</string>
     <string name="share_log">Отправить лог</string>

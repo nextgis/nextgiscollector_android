@@ -3,7 +3,7 @@
  * Purpose:  Light mobile GIS for collecting data
  * Author:   Stanislav Petriakov, becomeglory@gmail.com
  * *********************************************************************
- * Copyright (c) 2018-2020 NextGIS, info@nextgis.com
+ * Copyright (c) 2018-2021 NextGIS, info@nextgis.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,20 +31,17 @@ import org.json.JSONObject
 import java.util.*
 
 
-class Project(val id: Int, val title: String, val description: String, val screen: String, version: Int,
-              val layers: ArrayList<RemoteLayer>, val tree: String, val private: Boolean,
-              val url: String, val user: String, val hash: String) : BaseObservable(), KParcelable {
+class Project(val id: Int, val ngwId: Int, val title: String, val description: String, val screen: String, version: Int, val layers: ArrayList<RemoteLayer>, val tree: String, val private: Boolean, val url: String, val user: String, val hash: String) : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readInt(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
-            parcel.readInt(), readArrayList(parcel), readStringFrom(parcel), parcel.readBoolean(),
-            readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel))
+    private constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readInt(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readInt(), readArrayList(parcel), readStringFrom(parcel), parcel.readBoolean(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel))
 
-    constructor(json: JSONObject) : this(json.optInt("id"), json.optString("title"), json.optString("description", ""),
+    constructor(json: JSONObject) : this(json.optInt("id"), json.optInt("ngwId"), json.optString("title"), json.optString("description", ""),
             json.optString("screen"), json.optInt("version"), ArrayList(), "",
             json.optBoolean("private"), json.optString("url"), "", "")
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
+        dest.writeInt(ngwId)
         dest.writeString(title)
         dest.writeString(description)
         dest.writeString(screen)
@@ -74,6 +71,7 @@ class Project(val id: Int, val title: String, val description: String, val scree
             val json = JSONObject()
             json.put("title", title)
             json.put("id", id)
+            json.put("ngwId", ngwId)
             json.put("screen", screen)
             json.put("private", private)
             json.put("version", version)
