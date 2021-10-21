@@ -55,7 +55,7 @@ dependencies {
         force = true
     }
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.pawegio.kandroid:kandroid:0.8.8@aar'
+    implementation 'com.github.pawegio:KAndroid:v0.8.8@aar'
     implementation project(':maplibui')
 
     testImplementation 'junit:junit:4.13'
