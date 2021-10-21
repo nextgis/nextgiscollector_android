@@ -21,7 +21,6 @@
 
 package com.nextgis.collector.activity
 
-import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -62,8 +61,10 @@ import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
-import com.nextgis.maplibui.util.NGIDUtils.*
+import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
+import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.*
+import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 
 class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
@@ -102,10 +103,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         projectModel.email = NetworkUtil.getEmailOrUsername(preferences)
         binding.projectModel = projectModel
         binding.executePendingBindings()
+        setSupportActionBar(toolbar)
 
         binding.projects.adapter = projectAdapter
         binding.projects.layoutManager = LinearLayoutManager(this)
-        projectModel.projects.observe(this, Observer { projects ->
+        projectModel.projects.observe(this, { projects ->
             projects?.let { projectAdapter.replaceData(it) }
         })
 
