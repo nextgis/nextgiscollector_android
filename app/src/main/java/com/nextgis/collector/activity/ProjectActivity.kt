@@ -289,6 +289,10 @@ abstract class ProjectActivity : BaseActivity() {
 
     private fun backup() {
         if (!PermissionUtil.hasPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                toast(R.string.manage_all_files_message)
+                return
+            }
             HyperLog.v(Constants.TAG, "No write permission granted, request it")
             requestForPermissions(object : OnPermissionCallback {
                 override fun onPermissionGranted() {
@@ -430,7 +434,8 @@ abstract class ProjectActivity : BaseActivity() {
             permissions.add(fine)
         }
         if (!memAllowed && memory)
-            permissions.add(photo)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R)
+                permissions.add(photo)
         if (permissions.size > 0)
             ActivityCompat.requestPermissions(this, permissions.toTypedArray(), AddFeatureActivity.PERMISSIONS_CODE)
         else
