@@ -288,11 +288,7 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     private fun backup() {
-        if (!PermissionUtil.hasPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                toast(R.string.manage_all_files_message)
-                return
-            }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && !PermissionUtil.hasPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             HyperLog.v(Constants.TAG, "No write permission granted, request it")
             requestForPermissions(object : OnPermissionCallback {
                 override fun onPermissionGranted() {
