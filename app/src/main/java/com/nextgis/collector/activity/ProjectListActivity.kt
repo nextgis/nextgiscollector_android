@@ -52,6 +52,7 @@ import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.datasource.ngw.LayerWithStyles
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.map.RemoteTMSLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
@@ -415,6 +416,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             when (layer.type) {
                 "tms" -> {
                     mapLayer = createTMS(layer as RemoteLayerTMS)
+                    if (needAccount) {
+                        val remoteTMSLayer = mapLayer as RemoteTMSLayer
+                        remoteTMSLayer.login = project.user
+                        remoteTMSLayer.password = project.password
+                    }
                     total--
                     HyperLog.v(Constants.TAG, "TMS layer found: ${layer.title}")
                 }
