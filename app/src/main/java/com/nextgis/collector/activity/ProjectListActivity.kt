@@ -353,6 +353,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         ngw?.save()
                     }
                 }
+                map.save()
                 this.project = project
                 preferences.edit().putString("project", project.json).apply()
                 open()
