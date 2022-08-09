@@ -472,7 +472,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             R.id.zoom_in -> if (mapView.canZoomIn()) mapView.zoomIn()
             R.id.zoom_out -> if (mapView.canZoomOut()) mapView.zoomOut()
             R.id.locate -> locateCurrentPosition()
-            R.id.add_feature -> startActivity<AddFeatureActivity>()
+            R.id.add_feature -> {
+                finish()
+                startActivity<AddFeatureActivity>()
+            }
             R.id.edit_geometry -> startEdit()
             R.id.edit_attributes -> selectedFeature?.let { selectedLayer?.showEditForm(this, it.id, it.geometry) }
         }

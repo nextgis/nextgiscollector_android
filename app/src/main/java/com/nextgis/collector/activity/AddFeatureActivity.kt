@@ -27,6 +27,7 @@ import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.EditableLayersAdapter
@@ -112,7 +113,11 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.show_map -> startActivity<MapActivity>()
+            R.id.show_map ->  {
+                finish()
+                startActivity<MapActivity>()
+            }
+
         }
     }
 
@@ -172,4 +177,12 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
             toast(R.string.error_layer_not_inited)
     }
 
+    override fun onStart() {
+        super.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Toast.makeText(this,"ON_RESUME", -1)
+    }
 }

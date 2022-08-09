@@ -99,8 +99,8 @@ abstract class BaseActivity : NGActivity() {
             intent.putExtra("project", it.id)
             intent.putExtra("private", it.private)
         }
-        startActivity(intent)
         finish()
+        startActivity(intent)
     }
 
 }
