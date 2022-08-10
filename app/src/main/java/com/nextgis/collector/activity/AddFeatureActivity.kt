@@ -164,7 +164,9 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 
     private fun startEdit(map: Boolean) {
         if (layer != null) {
-            if (layer?.geometryType == GeoConstants.GTPoint || layer?.geometryType == GeoConstants.GTMultiPoint)
+            if (layer?.geometryType == GeoConstants.GTPoint || layer?.geometryType == GeoConstants.GTMultiPoint
+                    || layer?.geometryType == GeoConstants.GTLineString || layer?.geometryType == GeoConstants.GTPolygon
+                    || layer?.geometryType == GeoConstants.GTMultiLineString || layer?.geometryType == GeoConstants.GTMultiPolygon)
                 if (map) {
                     val intent = IntentFor<MapActivity>(this)
                     intent.putExtra(MapActivity.NEW_FEATURE, layer?.id)
