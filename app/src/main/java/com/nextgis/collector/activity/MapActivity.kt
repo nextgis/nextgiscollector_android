@@ -548,8 +548,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         val mapEnv = map.screenToMap(GeoEnvelope(dMinX, dMaxX, dMinY, dMaxY)) ?: return
 
         val types = GeoConstants.GTPointCheck or GeoConstants.GTMultiPointCheck or
-                GeoConstants.GTLineString or GeoConstants.GTMultiLineString or
-                GeoConstants.GTPolygon or GeoConstants.GTMultiPolygon
+                GeoConstants.GTLineStringCheck or GeoConstants.GTMultiLineStringCheck or
+                GeoConstants.GTPolygonCheck or GeoConstants.GTMultiPolygonCheck
         val layers = mapView.getVectorLayersByType(types).filter {
             it is NGWVectorLayerUI && it.isEditable
         }

@@ -102,11 +102,11 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     private fun changeAdapter(dirId: String = "") {
         val level = tree.getLevel(dirId)
         val items = level.filter { it.type != "tms" && it.type != "ngrc" }
-        val layers = items.filter {
+        val layersResources = items.filter {
             val layer = map.getLayerByPathName(it.id)
             (layer as? NGWVectorLayerUI)?.isEditable ?: true
         }
-        binding.layers.adapter = EditableLayersAdapter(layers, this)
+        binding.layers.adapter = EditableLayersAdapter(layersResources, this, layers)
         supportActionBar?.setDisplayHomeAsUpEnabled(history.size != 0)
         supportActionBar?.setHomeButtonEnabled(history.size != 0)
     }
