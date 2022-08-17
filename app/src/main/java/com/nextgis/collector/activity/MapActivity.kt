@@ -61,6 +61,8 @@ import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.overlay.CurrentLocationOverlay
 import com.nextgis.maplibui.overlay.CurrentTrackOverlay
 import com.nextgis.maplibui.overlay.EditLayerOverlay
+import com.nextgis.maplibui.overlay.EditLayerOverlay.MODE_EDIT
+import com.nextgis.maplibui.overlay.EditLayerOverlay.MODE_EDIT_BY_WALK
 import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI
@@ -75,6 +77,7 @@ import java.io.IOException
 class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnItemClickListener, MapViewEventListener, GpsEventListener, ProjectActivity.OnPermissionCallback {
     companion object {
         const val NEW_FEATURE = "new_feature"
+        const val NEW_FEATURE_BY_WALK = "new_feature_by_walk"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -129,6 +132,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
         binding.layers.addItemDecoration(dividerItemDecoration)
         binding.executePendingBindings()
+
     }
 
     override fun init() {
@@ -165,6 +169,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         locationOverlay.startShowingCurrentLocation()
         app.gpsEventSource.addListener(this)
         currentCenter.crs = 0
+        startEditIfNeed()
     }
 
     override fun onStop() {
@@ -181,49 +186,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        if (overlay.mode == EditLayerOverlay.MODE_EDIT) {
+        if (overlay.mode == EditLayerOverlay.MODE_EDIT || overlay.mode == EditLayerOverlay.MODE_EDIT_BY_WALK) {
             menu?.clear()
             toolbar.inflateMenu(R.menu.edit_geometry)
         }
-        historyOverlay.defineUndoRedo()
-
-        newIntent?.let {
-            if (it.hasExtra(NEW_FEATURE)) {
-                var centerPoint: GeoPoint? = null
-                if (currentCenter.crs == 0) {
-                    val gps = Manifest.permission.ACCESS_FINE_LOCATION
-                    if (!PermissionUtil.hasPermission(this, gps)) {
-                        requestForPermissions(object : OnPermissionCallback {
-                            override fun onPermissionGranted() {
-                                lastKnown()?.let { point -> mapView.panTo(point) }
-                            }
-                        }, false)
-                    } else
-                        centerPoint = lastKnown()
-                } else
-                    centerPoint = currentCenter
-                centerPoint?.let { center ->
-                    val zoom = map.zoomLevel
-                    map.setZoomAndCenter(zoom, center)
-                }
-                val id = it.getIntExtra(NEW_FEATURE, -1)
-                val selected = map.getLayerById(id) as NGWVectorLayerUI?
-                selected?.let { layer ->
-                    selectedLayer = layer
-                    setTitle(getString(R.string.new_feature), layer.name)
-                    setToolbar()
-                    overlay.setSelectedLayer(layer)
-                    overlay.selectedFeature = Feature()
-                    startEdit()
-                    overlay.createNewGeometry()
-                    overlay.setHasEdits(true)
-                    historyOverlay.saveToHistory(overlay.selectedFeature)
-                }
-                it.removeExtra(NEW_FEATURE)
-                returnToList = true
-            }
-        }
-
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -360,6 +326,155 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             setUpToolbar()
     }
 
+    // run creating new object
+    fun startEditIfNeed(){
+        historyOverlay.defineUndoRedo()
+        newIntent?.let {
+            if (it.hasExtra(NEW_FEATURE) || it.hasExtra(NEW_FEATURE_BY_WALK)) {
+                var extraName : String
+                val id : Int?
+                if (it.hasExtra(NEW_FEATURE)) {
+                    id = it.getIntExtra(NEW_FEATURE, -1)
+                    extraName = NEW_FEATURE
+                } else  if (it.hasExtra(NEW_FEATURE_BY_WALK)) {
+                    id = it.getIntExtra(NEW_FEATURE_BY_WALK, -1)
+                    extraName = NEW_FEATURE_BY_WALK
+                } else {
+                    id = null
+                    extraName = ""
+                }
+
+                var centerPoint: GeoPoint? = null
+                if (currentCenter.crs == 0) {
+                    val gps = Manifest.permission.ACCESS_FINE_LOCATION
+                    if (!PermissionUtil.hasPermission(this, gps)) {
+                        requestForPermissions(object : OnPermissionCallback {
+                            override fun onPermissionGranted() {
+                                lastKnown()?.let { point -> mapView.panTo(point) }
+                            }
+                        }, false)
+                    } else
+                        centerPoint = lastKnown()
+                } else
+                    centerPoint = currentCenter
+                centerPoint?.let { center ->
+                    val zoom = map.zoomLevel
+                    map.setZoomAndCenter(zoom, center)
+                }
+
+
+                id?.let {
+                    val selected = map.getLayerById(id) as NGWVectorLayerUI?
+                    selected?.let { layer ->
+                        selectedLayer = layer
+                        setTitle(getString(R.string.new_feature), layer.name)
+                        setToolbar()
+                        overlay.setSelectedLayer(layer)
+                        overlay.selectedFeature = Feature()
+
+                        when(extraName == NEW_FEATURE){
+                            true -> {
+                                overlay.createNewGeometry()
+                                setMode(MODE_EDIT)
+                            }
+                            else -> {
+                                overlay.newGeometryByWalk()
+                                setMode(MODE_EDIT_BY_WALK)
+                            }
+                        }
+
+                        overlay.setHasEdits(true)
+                        historyOverlay.saveToHistory(overlay.selectedFeature)
+                    }
+                }
+
+                it.removeExtra(extraName)
+                returnToList = true
+            }
+
+        }
+    }
+
+    fun setMode(mode: Int){
+
+
+
+        // set editing mode (may be not from draft )
+        if (mode == MODE_EDIT){
+            add_feature.visibility = View.GONE
+            edit_attributes.visibility = View.GONE
+            edit_geometry.visibility = View.GONE
+            bottom_toolbar.visibility = View.VISIBLE
+            toolbar.menu.clear()
+            toolbar.inflateMenu(R.menu.edit_geometry)
+
+            overlay.mode = mode
+            bottom_toolbar.setOnMenuItemClickListener {
+                val result = overlay.onOptionsItemSelected(it.itemId)
+                if (result)
+                    historyOverlay.saveToHistory(overlay.selectedFeature)
+                else
+                    requestForPermissions(this, true)
+                result
+            }
+
+            historyOverlay.clearHistory()
+            historyOverlay.saveToHistory(selectedFeature)
+            overlay.setHasEdits(false)
+
+        }
+
+        if (mode == MODE_EDIT_BY_WALK){
+            add_feature.visibility = View.GONE
+            edit_attributes.visibility = View.GONE
+            edit_geometry.visibility = View.GONE
+            bottom_toolbar.visibility = View.VISIBLE
+            toolbar.menu.clear()
+            toolbar.inflateMenu(R.menu.edit_geometry)
+
+            overlay.mode = MODE_EDIT
+            overlay.mode = MODE_EDIT_BY_WALK
+
+            bottom_toolbar.setOnMenuItemClickListener {
+                val result = overlay.onOptionsItemSelected(it.itemId)
+                if (result)
+                    historyOverlay.saveToHistory(overlay.selectedFeature)
+                else
+                    requestForPermissions(this, true)
+                result
+            }
+
+            historyOverlay.clearHistory()
+            historyOverlay.saveToHistory(selectedFeature)
+            overlay.setHasEdits(false)
+
+        }
+
+    }
+
+    private fun startEdit(mode:Int) {
+        add_feature.visibility = View.GONE
+        edit_attributes.visibility = View.GONE
+        edit_geometry.visibility = View.GONE
+        bottom_toolbar.visibility = View.VISIBLE
+        toolbar.menu.clear()
+        toolbar.inflateMenu(R.menu.edit_geometry)
+
+        overlay.mode = mode
+        bottom_toolbar.setOnMenuItemClickListener {
+            val result = overlay.onOptionsItemSelected(it.itemId)
+            if (result)
+                historyOverlay.saveToHistory(overlay.selectedFeature)
+            else
+                requestForPermissions(this, true)
+            result
+        }
+
+        historyOverlay.clearHistory()
+        historyOverlay.saveToHistory(selectedFeature)
+        overlay.setHasEdits(false)
+    }
+
     private fun saveEdits(): Boolean {
         val feature = overlay.selectedFeature
         var featureId = -1L
@@ -368,6 +483,15 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         if (feature != null) {
             geometry = feature.geometry
             featureId = feature.id
+        }
+
+
+        if (overlay.mode == EditLayerOverlay.MODE_EDIT_BY_WALK) {
+            overlay.stopGeometryByWalk()
+            overlay.setMode(EditLayerOverlay.MODE_EDIT)
+            historyOverlay.clearHistory()
+            historyOverlay.defineUndoRedo()
+            return true
         }
 
         if (geometry == null || !geometry.isValid) {
@@ -401,28 +525,9 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         return true
     }
 
-    private fun startEdit() {
-        add_feature.visibility = View.GONE
-        edit_attributes.visibility = View.GONE
-        edit_geometry.visibility = View.GONE
-        bottom_toolbar.visibility = View.VISIBLE
-        toolbar.menu.clear()
-        toolbar.inflateMenu(R.menu.edit_geometry)
 
-        overlay.mode = EditLayerOverlay.MODE_EDIT
-        bottom_toolbar.setOnMenuItemClickListener {
-            val result = overlay.onOptionsItemSelected(it.itemId)
-            if (result)
-                historyOverlay.saveToHistory(overlay.selectedFeature)
-            else
-                requestForPermissions(this, true)
-            result
-        }
 
-        historyOverlay.clearHistory()
-        historyOverlay.saveToHistory(selectedFeature)
-        overlay.setHasEdits(false)
-    }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -476,7 +581,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
                 finish()
                 startActivity<AddFeatureActivity>()
             }
-            R.id.edit_geometry -> startEdit()
+            R.id.edit_geometry -> startEdit(MODE_EDIT)
             R.id.edit_attributes -> selectedFeature?.let { selectedLayer?.showEditForm(this, it.id, it.geometry) }
         }
     }

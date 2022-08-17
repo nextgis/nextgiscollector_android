@@ -129,16 +129,16 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         this.layer = layerByPath(id)
         requestForPermissions(object : OnPermissionCallback {
             override fun onPermissionGranted() {
-                startEdit(true)
+                startEdit(true, false)
             }
         }, true)
     }
 
-    override fun onGpsClick(id: String) {
+    override fun onGpsClick(id: String, useMap : Boolean) {
         this.layer = layerByPath(id)
         requestForPermissions(object : OnPermissionCallback {
             override fun onPermissionGranted() {
-                startEdit(false)
+                startEdit(false, useMap)
             }
         }, true)
     }
@@ -162,14 +162,17 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         return super.onOptionsItemSelected(item)
     }
 
-    private fun startEdit(map: Boolean) {
+    private fun startEdit(map: Boolean, useMap : Boolean) {
         if (layer != null) {
             if (layer?.geometryType == GeoConstants.GTPoint || layer?.geometryType == GeoConstants.GTMultiPoint
                     || layer?.geometryType == GeoConstants.GTLineString || layer?.geometryType == GeoConstants.GTPolygon
                     || layer?.geometryType == GeoConstants.GTMultiLineString || layer?.geometryType == GeoConstants.GTMultiPolygon)
-                if (map) {
+                if (map || useMap) {
                     val intent = IntentFor<MapActivity>(this)
-                    intent.putExtra(MapActivity.NEW_FEATURE, layer?.id)
+                    if (useMap)
+                        intent.putExtra(MapActivity.NEW_FEATURE_BY_WALK, layer?.id)
+                    else
+                        intent.putExtra(MapActivity.NEW_FEATURE, layer?.id)
                     startActivity(intent)
                 } else
                     layer?.showEditForm(this, -1, null)
