@@ -24,7 +24,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:accountType="com.nextgiscollector.account"
     android:allowParallelSyncs="false"
-    android:contentAuthority="com.nextgis.collector"
+    android:contentAuthority="@string/provider_auth"
     android:isAlwaysSyncable="true"
     android:supportsUploading="true"
     android:userVisible="true"/>

@@ -484,7 +484,9 @@ abstract class ProjectActivity : BaseActivity() {
                 val settings = Bundle()
                 settings.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
                 settings.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
-                ContentResolver.requestSync(accounts.first(), app.authority, settings)
+                ContentResolver.requestSync(accounts.first(),
+                    app.authority,
+                    settings)
             }
 //            }
         }

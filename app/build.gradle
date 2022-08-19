@@ -5,6 +5,22 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'io.sentry.android.gradle'
 
 android {
+
+    signingConfigs {
+        debug {
+            storeFile file('../../keystore_google')
+            storePassword ANDROID_STORE_PASSWORD
+            keyAlias ANDROID_KEY
+            keyPassword ANDROID_STORE_PASSWORD
+
+        }
+        release {
+            storeFile file('../../keystore_google')
+            storePassword ANDROID_STORE_PASSWORD
+            keyAlias ANDROID_KEY
+            keyPassword ANDROID_STORE_PASSWORD
+        }
+    }
     compileSdkVersion 30
     dataBinding.enabled = true
     defaultConfig {
@@ -16,16 +32,35 @@ android {
         versionName "1.5.30"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "NGCollector-$versionName")
+        signingConfig signingConfigs.debug
         externalNativeBuild {
             cmake {
                 cppFlags ""
             }
         }
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            resValue 'string', 'APP_NAME', '"NextGIS Collector"'
+
+            resValue 'string', 'provider_auth', '"com.nextgis.collector"'
+            buildConfigField "String", "providerAuth", '"com.nextgis.collector"'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-DEBUG'
+            resValue 'string', 'APP_NAME', '"DEV NextGIS Collector"'
+            resValue 'string', 'provider_auth', '"com.nextgis.collector.debug"'
+            buildConfigField "String", "providerAuth", '"com.nextgis.collector.debug"'
+            signingConfig signingConfigs.debug
+            debuggable true
         }
     }
 //    externalNativeBuild {

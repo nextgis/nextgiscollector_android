@@ -67,7 +67,7 @@ class CollectorApplication : GISApplication() {
     }
 
     override fun getAuthority(): String {
-        return BuildConfig.APPLICATION_ID
+        return BuildConfig.providerAuth
     }
 
     override fun showSettings(setting: String?) {
