@@ -83,7 +83,7 @@ class CollectorApplication : GISApplication() {
     }
 
     override fun getAccountsType(): String {
-        return "com.nextgiscollector.account"//Constants.NGW_ACCOUNT_TYPE
+        return BuildConfig.collector_accounts_auth //Constants.NGW_ACCOUNT_TYPE
     }
 
     private fun checkTracksLayerExistence() {

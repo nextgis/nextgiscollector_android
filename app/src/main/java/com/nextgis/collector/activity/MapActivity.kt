@@ -259,6 +259,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         val toggle = ActionBarDrawerToggle(this, binding.drawer, toolbar, R.string.layers_drawer_open, R.string.layers_drawer_close)
         binding.apply {
             drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+            drawer.refreshDrawableState()
             drawer.addDrawerListener(toggle)
             editAttributes.visibility = View.GONE
             editGeometry.visibility = View.GONE

@@ -23,6 +23,9 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools">
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <android.support.v4.widget.DrawerLayout
         android:id="@+id/drawer"
@@ -167,6 +170,8 @@
                 tools:listitem="@layout/item_layer"/>
         </android.support.constraint.ConstraintLayout>
 
-        <include layout="@layout/sync_overlay"/>
+
     </android.support.v4.widget.DrawerLayout>
+    <include layout="@layout/sync_overlay"/>
+</RelativeLayout>
 </layout>

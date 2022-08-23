@@ -22,7 +22,7 @@
 
 <sync-adapter
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accountType="com.nextgiscollector.account"
+    android:accountType="@string/collector_accounts_auth"
     android:allowParallelSyncs="false"
     android:contentAuthority="@string/provider_auth"
     android:isAlwaysSyncable="true"

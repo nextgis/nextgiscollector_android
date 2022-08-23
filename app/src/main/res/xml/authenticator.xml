@@ -22,7 +22,7 @@
 
 <account-authenticator
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accountType="com.nextgiscollector.account"
+    android:accountType="@string/collector_accounts_auth"
     android:icon="@drawable/ic_ngw"
     android:label="@string/nextgis_web"
     android:smallIcon="@drawable/ic_ngw"/>

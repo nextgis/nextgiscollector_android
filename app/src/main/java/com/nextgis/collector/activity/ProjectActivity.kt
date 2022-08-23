@@ -35,10 +35,6 @@ import android.text.method.LinkMovementMethod
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.ProgressBar
-import android.widget.TextView
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
@@ -65,9 +61,11 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 import android.os.Build
+import android.os.Handler
 import android.support.annotation.RequiresApi
 import android.text.SpannableString
 import android.text.util.Linkify
+import android.widget.*
 import com.nextgis.maplibui.service.TrackerService.*
 
 

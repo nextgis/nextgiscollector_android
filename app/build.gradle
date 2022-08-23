@@ -45,9 +45,11 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             resValue 'string', 'APP_NAME', '"NextGIS Collector"'
-
             resValue 'string', 'provider_auth', '"com.nextgis.collector"'
+            resValue 'string', 'collector_accounts_auth', '"com.nextgiscollector.account"'
+            resValue 'string', 'nextgis_accounts_auth', '"com.nextgis.account"'
             buildConfigField "String", "providerAuth", '"com.nextgis.collector"'
+            buildConfigField "String", "collector_accounts_auth", '"com.nextgiscollector.account"'
             signingConfig signingConfigs.release
         }
         debug {
@@ -58,7 +60,10 @@ android {
             versionNameSuffix '-DEBUG'
             resValue 'string', 'APP_NAME', '"DEV NextGIS Collector"'
             resValue 'string', 'provider_auth', '"com.nextgis.collector.debug"'
+            resValue 'string', 'collector_accounts_auth', '"com.nextgiscollector.account.debug"'
+            resValue 'string', 'nextgis_accounts_auth', '"com.nextgis.account.debug"'
             buildConfigField "String", "providerAuth", '"com.nextgis.collector.debug"'
+            buildConfigField "String", "collector_accounts_auth", '"com.nextgiscollector.account.debug"'
             signingConfig signingConfigs.debug
             debuggable true
         }
