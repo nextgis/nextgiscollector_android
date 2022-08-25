@@ -240,6 +240,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             R.id.create -> write()
             R.id.retry -> retry()
             R.id.cancel -> cancel()
+            R.id.refreshProjects -> refresh()
         }
     }
 
@@ -276,6 +277,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             status.text = ""
             message.text = ""
         }
+    }
+
+    private fun refresh() {
+        loadProjects()
     }
 
     private fun write() {

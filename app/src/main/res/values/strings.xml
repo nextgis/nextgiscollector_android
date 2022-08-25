@@ -62,4 +62,5 @@
     <string name="project_about">About project</string>
     <string name="save_log">Extended logs</string>
     <string name="share_log">Share log</string>
+    <string name="refresh_projects">refresh</string>
 </resources>

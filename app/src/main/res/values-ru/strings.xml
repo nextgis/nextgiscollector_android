@@ -62,4 +62,5 @@
     <string name="project_about">О проекте</string>
     <string name="save_log">Логирование</string>
     <string name="share_log">Отправить лог</string>
+    <string name="refresh_projects">Обновить</string>
 </resources>
