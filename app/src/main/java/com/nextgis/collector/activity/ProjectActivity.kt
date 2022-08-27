@@ -25,24 +25,36 @@ import android.Manifest
 import android.accounts.Account
 import android.content.*
 import android.content.pm.PackageManager
+import android.database.Cursor
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.support.annotation.RequiresApi
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.widget.Toolbar
+import android.text.SpannableString
 import android.text.method.LinkMovementMethod
+import android.text.util.Linkify
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
 import com.nextgis.collector.util.NetworkUtil
+import com.nextgis.maplib.api.IGISApplication
 import com.nextgis.maplib.api.INGWLayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.map.TrackLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
@@ -51,6 +63,7 @@ import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.service.TrackerService
+import com.nextgis.maplibui.service.TrackerService.*
 import com.nextgis.maplibui.util.*
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.get
@@ -59,14 +72,6 @@ import org.json.JSONObject
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-
-import android.os.Build
-import android.os.Handler
-import android.support.annotation.RequiresApi
-import android.text.SpannableString
-import android.text.util.Linkify
-import android.widget.*
-import com.nextgis.maplibui.service.TrackerService.*
 
 
 abstract class ProjectActivity : BaseActivity() {
@@ -310,12 +315,44 @@ abstract class ProjectActivity : BaseActivity() {
                 layers.add(layer)
             }
         }
+
+        // add tracksinfo
+        val tracksList = ArrayList<android.util.Pair<Int,String >>()
+
+        val application = application as IGISApplication
+        val authority = application.authority
+        val projection = null //arrayOf(TrackLayer.FIELD_ID, TrackLayer.FIELD_NAME, TrackLayer.FIELD_VISIBLE)
+        val selection = null // TrackLayer.FIELD_ID + " = ?"
+        val mContentUriTracks = Uri.parse("content://" + authority + "/" + TrackLayer.TABLE_TRACKS)
+
+        val tracksCursor : Cursor? = getContentResolver().query(
+                mContentUriTracks,
+                projection,
+                selection,
+                null,
+                null)
+        tracksCursor?.let {
+            while (it.moveToNext()){
+                val trackId = tracksCursor.getInt(tracksCursor.getColumnIndex(TrackLayer.FIELD_ID))
+                val trackName = tracksCursor.getString(tracksCursor.getColumnIndex(TrackLayer.FIELD_NAME))
+                var endTrack : Int? = tracksCursor.getInt(tracksCursor.getColumnIndex(TrackLayer.FIELD_END))
+                if (endTrack != null)
+                    tracksList.add(android.util.Pair(trackId,trackName))
+                }
+        }
+
         HyperLog.v(Constants.TAG, "Create dialog to choose layers for backup")
-        val checked = BooleanArray(layers.size)
+        var checked = BooleanArray(layers.size)
         for (i in 0 until layers.size) {
             checked[i] = true
         }
-        val names = layers.map { it.name }
+        var names = layers.map { it.name }
+        val tracksName = getString(R.string.tracks_to_archive)
+        if (tracksList.size > 0){
+            names = names + tracksName
+            checked = checked + true
+        }
+
         val builder = AlertDialog.Builder(this)
         builder.setTitle(R.string.choose_layers)
                 .setMultiChoiceItems(names.toTypedArray(), checked) { _, id, selected -> checked[id] = selected }
@@ -323,19 +360,27 @@ abstract class ProjectActivity : BaseActivity() {
                 .setPositiveButton(R.string.ok) { _, _ ->
                     HyperLog.v(Constants.TAG, "Filter selected layers only")
                     val list = layers.filterIndexed { index, _ -> checked[index] }
-                    if (list.isEmpty()) {
+                    if (list.isEmpty() &&
+                        (tracksList.size > 0 &&
+                                !checked[checked.size -1]) ) {
                         toast(R.string.error_empty_dataset)
                         return@setPositiveButton
                     }
-                    if (list.size == 1) {
+                    if (tracksList.size > 0 && !checked[checked.size -1])
+                        tracksList.clear()
+                    // choose one vector layer and it is not tracks
+                    if (list.size == 1 &&  tracksList.size == 0 ) {
                         HyperLog.v(Constants.TAG, "Execute ExportGeoJSONTask")
                         val exportTask = ExportGeoJSONTask(this, list.first(), true,
                             false, false, null)
                         exportTask.execute()
                         return@setPositiveButton
                     }
+
+                    // choose more than one layers
                     HyperLog.v(Constants.TAG, "Execute ExportGeoJSONBatchTask")
-                    val exportTask = ExportGeoJSONBatchTask(this, list, true, project.title)
+                    val exportTask = ExportGeoJSONBatchTask(this, list, true,
+                            project.title, tracksList)
                     exportTask.execute()
                 }
         HyperLog.v(Constants.TAG, "Show dialog to choose layers for backup")
