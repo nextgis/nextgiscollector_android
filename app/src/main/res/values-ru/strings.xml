@@ -63,4 +63,6 @@
     <string name="save_log">Логирование</string>
     <string name="share_log">Отправить лог</string>
     <string name="refresh_projects">Обновить</string>
+    <string name="alert_sync_turned_off">Синхронизация данных невозможна, так как она отключена на уровне операционной системы. Включить обратно?</string>
+    <string name="alert_sync_title">Синхронизация:</string>
 </resources>

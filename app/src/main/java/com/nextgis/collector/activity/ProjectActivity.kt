@@ -23,6 +23,7 @@ package com.nextgis.collector.activity
 
 import android.Manifest
 import android.accounts.Account
+import android.app.AlertDialog
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -33,7 +34,6 @@ import android.support.annotation.RequiresApi
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import android.support.v7.app.AlertDialog
 import android.support.v7.widget.Toolbar
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
@@ -509,12 +509,34 @@ abstract class ProjectActivity : BaseActivity() {
         supportActionBar?.setSubtitle(if (hasChanges) R.string.not_synced else R.string.all_synced)
     }
 
+    private fun checkAccountForSync(context: Context, account: Account) {
+        val isYourAccountSyncEnabled =
+            ContentResolver.getSyncAutomatically(account, getString(R.string.provider_auth))
+        if (!isYourAccountSyncEnabled) {
+            val onClickListener =
+                DialogInterface.OnClickListener { dialog, which ->
+                    ContentResolver.setSyncAutomatically(
+                        account,
+                        getString(R.string.provider_auth),
+                        true
+                    )
+                }
+            AlertDialog.Builder(context).setTitle(R.string.alert_sync_title)
+                .setMessage(R.string.alert_sync_turned_off)
+                .setPositiveButton(R.string.yes, onClickListener)
+                .setNegativeButton(R.string.cancel, null)
+                .create()
+                .show()
+        }
+    }
+
     protected fun sync() {
         val accounts = ArrayList<Account>()
         val layers = ArrayList<INGWLayer>()
 
         accountManager?.let {
             for (account in it.getAccountsByType(app.accountsType)) {
+                checkAccountForSync(this, account)
                 layers.clear()
                 MapContentProviderHelper.getLayersByAccount(map, account.name, layers)
                 val syncEnabled = NGWSettingsFragment.isAccountSyncEnabled(account, app.authority)
