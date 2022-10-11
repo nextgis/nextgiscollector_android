@@ -21,12 +21,15 @@
 
 package com.nextgis.collector
 
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import com.nextgis.collector.util.Logger
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.map.LayerGroup
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.NGWUtil
+import com.nextgis.maplib.util.NetworkUtil
 import com.nextgis.maplib.util.SettingsConstants.KEY_PREF_TRACK_SEND
 import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.mapui.TrackLayerUI
@@ -48,6 +51,18 @@ class CollectorApplication : GISApplication() {
         if (mSharedPreferences.getBoolean("save_log", false)) {
             Logger.initialize(this)
         }
+
+        // set userAgent info
+        //        Sentry.captureMessage("NGM2 Sentry is init.", Sentry.SentryEventLevel.DEBUG);
+
+        // set userAgent info
+        try {
+            NetworkUtil.setUserAgentPrefix("NextGIS-Collector/" + BuildConfig.VERSION_NAME)
+            NetworkUtil.setUserAgentPostfix(System.getProperty("http.agent") + " " + Build.MANUFACTURER)
+        } catch (ex: java.lang.Exception) {
+            Log.e(Constants.TAG, ex.message!!)
+        }
+
         checkTracksLayerExistence()
         updateFromPreviousVersion()
         NGWUtil.UUID = TrackerService.getUid(this)

@@ -60,7 +60,9 @@ class NetworkUtil {
             val url = URL(targetURL)
             val conn = url.openConnection() as HttpURLConnection
             conn.setRequestProperty("Accept", "*/*")
-            conn.setRequestProperty("User-Agent", "NextGIS Collector Mobile v" + BuildConfig.VERSION_NAME)
+            conn.setRequestProperty("User-Agent",
+                    getUserAgentPrefix() + " "
+                            + Constants.MAPLIB_USER_AGENT_PART + " " + getUserAgentPostfix())
             conn.setRequestProperty("Authorization", "Bicycle $token")
 
             conn.doInput = true

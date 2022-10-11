@@ -29,7 +29,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 30
         versionCode 61
-        versionName "1.5.30"
+        versionName "1.5.31"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "NGCollector-$versionName")
         signingConfig signingConfigs.debug
