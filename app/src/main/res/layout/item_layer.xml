@@ -31,7 +31,7 @@
             type="com.nextgis.maplib.map.Layer" />
     </data>
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="8dp">
@@ -72,5 +72,5 @@
             app:layout_constraintEnd_toEndOf="parent"
             tools:ignore="ContentDescription"
             tools:src="@drawable/ic_action_visibility_off_light" />
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

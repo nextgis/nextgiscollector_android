@@ -21,18 +21,18 @@
 
 package com.nextgis.collector.activity
 
-import android.arch.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProviders
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.databinding.DataBindingUtil
-import android.databinding.Observable
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.Observable
 import android.net.Uri
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.LinearLayoutManager
+import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
 import android.text.method.LinkMovementMethod
 import android.view.Menu
 import android.view.MenuItem
@@ -107,7 +107,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         setSupportActionBar(toolbar)
 
         binding.projects.adapter = projectAdapter
-        binding.projects.layoutManager = LinearLayoutManager(this)
+        binding.projects.layoutManager =
+            LinearLayoutManager(this)
         projectModel.projects.observe(this, { projects ->
             projects?.let { projectAdapter.replaceData(it) }
         })

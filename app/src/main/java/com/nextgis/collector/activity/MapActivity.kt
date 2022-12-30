@@ -26,15 +26,15 @@ import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Intent
-import android.databinding.DataBindingUtil
+import androidx.databinding.DataBindingUtil
 import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
-import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.ActionBarDrawerToggle
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -129,7 +129,11 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
         val manager = LinearLayoutManager(this)
         binding.layers.layoutManager = manager
-        val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
+        val dividerItemDecoration =
+            DividerItemDecoration(
+                this,
+                manager.orientation
+            )
         binding.layers.addItemDecoration(dividerItemDecoration)
         binding.executePendingBindings()
 

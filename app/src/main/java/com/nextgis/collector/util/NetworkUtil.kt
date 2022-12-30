@@ -22,7 +22,6 @@
 package com.nextgis.collector.util
 
 import android.content.SharedPreferences
-import com.nextgis.collector.BuildConfig
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.HttpResponse
@@ -60,9 +59,7 @@ class NetworkUtil {
             val url = URL(targetURL)
             val conn = url.openConnection() as HttpURLConnection
             conn.setRequestProperty("Accept", "*/*")
-            conn.setRequestProperty("User-Agent",
-                    getUserAgentPrefix() + " "
-                            + Constants.MAPLIB_USER_AGENT_PART + " " + getUserAgentPostfix())
+            conn.setRequestProperty("User-Agent", getUserAgent(Constants.MAPLIB_USER_AGENT_PART))
             conn.setRequestProperty("Authorization", "Bicycle $token")
 
             conn.doInput = true

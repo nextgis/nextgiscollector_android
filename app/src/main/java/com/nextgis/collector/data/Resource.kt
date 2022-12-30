@@ -21,7 +21,7 @@
 
 package com.nextgis.collector.data
 
-import android.databinding.BaseObservable
+import androidx.databinding.BaseObservable
 import android.os.Parcel
 import com.nextgis.collector.KParcelable
 import com.nextgis.collector.KParcelable.Companion.readArrayList

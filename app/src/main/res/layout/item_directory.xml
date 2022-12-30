@@ -30,7 +30,7 @@
             type="com.nextgis.collector.data.Resource"/>
     </data>
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="8dp">
@@ -69,5 +69,5 @@
             app:layout_constraintStart_toEndOf="@id/icon"
             app:layout_constraintTop_toBottomOf="@id/title"
             tools:text="Very long layer description text to wrap line in two or more"/>
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

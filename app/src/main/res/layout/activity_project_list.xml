@@ -31,12 +31,12 @@
             type="com.nextgis.collector.viewmodel.ProjectViewModel" />
     </data>
 
-    <android.support.design.widget.CoordinatorLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/coordinator"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <android.support.constraint.ConstraintLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             tools:context=".activity.ProjectListActivity">
@@ -119,7 +119,7 @@
                 app:layout_constraintStart_toEndOf="@+id/retry"
                 app:layout_constraintTop_toBottomOf="@id/info" />
 
-            <android.support.v7.widget.RecyclerView
+            <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/projects"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -177,6 +177,6 @@
 
                 </LinearLayout>
             </FrameLayout>
-        </android.support.constraint.ConstraintLayout>
-    </android.support.design.widget.CoordinatorLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

@@ -24,7 +24,7 @@ package com.nextgis.collector
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.util.Log
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapBase

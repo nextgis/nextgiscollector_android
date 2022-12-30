@@ -21,10 +21,10 @@
 
 package com.nextgis.collector.activity
 
-import android.databinding.DataBindingUtil
+import androidx.databinding.DataBindingUtil
 import android.os.Bundle
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
@@ -63,7 +63,11 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 
         val manager = LinearLayoutManager(this)
         binding.layers.layoutManager = manager
-        val dividerItemDecoration = DividerItemDecoration(this, manager.orientation)
+        val dividerItemDecoration =
+            DividerItemDecoration(
+                this,
+                manager.orientation
+            )
         binding.layers.addItemDecoration(dividerItemDecoration)
         binding.executePendingBindings()
     }

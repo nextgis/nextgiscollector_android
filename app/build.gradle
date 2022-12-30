@@ -21,16 +21,16 @@ android {
             keyPassword ANDROID_STORE_PASSWORD
         }
     }
-    compileSdkVersion 30
+    compileSdkVersion 32
     dataBinding.enabled = true
     defaultConfig {
         applicationId "com.nextgis.collector"
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 16
-        targetSdkVersion 30
-        versionCode 62
-        versionName "1.5.32"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        targetSdkVersion 32
+        versionCode 63
+        versionName "1.5.33"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
         signingConfig signingConfigs.debug
         externalNativeBuild {
@@ -78,29 +78,29 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "android.arch.lifecycle:runtime:$lifecycle_version"
-    implementation "android.arch.lifecycle:extensions:$lifecycle_version"
-    kapt "android.arch.lifecycle:compiler:$lifecycle_version"
+    implementation 'androidx.lifecycle:lifecycle-runtime:2.0.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
+    kapt 'androidx.lifecycle:lifecycle-compiler:2.0.0'
 
-    implementation('com.android.support:design:28.0.0') {
+    implementation('com.google.android.material:material:1.0.0') {
         force = true
     }
-    implementation('com.android.support:cardview-v7:28.0.0') {
+    implementation('androidx.cardview:cardview:1.0.0') {
         force = true
     }
-    implementation('com.android.support:appcompat-v7:28.0.0') {
+    implementation('androidx.appcompat:appcompat:1.0.0') {
         force = true
     }
-    implementation('com.android.support:support-v4:28.0.0') {
+    implementation('androidx.legacy:legacy-support-v4:1.0.0') {
         force = true
     }
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'com.github.pawegio:KAndroid:v0.8.8@aar'
     implementation project(':maplibui')
 
     testImplementation 'junit:junit:4.13'
 //    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
 
     implementation 'io.sentry:sentry-android:1.7.30'
     implementation 'org.slf4j:slf4j-nop:1.7.30'

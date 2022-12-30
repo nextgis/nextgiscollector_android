@@ -30,14 +30,10 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.support.annotation.RequiresApi
-import android.support.design.widget.Snackbar
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
-import android.support.v7.widget.Toolbar
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -45,6 +41,13 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.OnLifecycleEvent
+import com.google.android.material.snackbar.Snackbar
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
@@ -75,6 +78,7 @@ import java.util.zip.ZipOutputStream
 
 
 abstract class ProjectActivity : BaseActivity() {
+
     companion object {
         const val LOCATION_REQUEST = 703
     }
@@ -88,6 +92,8 @@ abstract class ProjectActivity : BaseActivity() {
             return findViewById<FrameLayout>(R.id.overlay).visibility == View.VISIBLE
         }
     protected var trackItem: MenuItem? = null
+
+    protected var mMessageReceiver: MessageReceiver? = null
 
     interface OnPermissionCallback {
         fun onPermissionGranted()
@@ -112,6 +118,7 @@ abstract class ProjectActivity : BaseActivity() {
                 }
             }
         }
+        mMessageReceiver = MessageReceiver()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -184,10 +191,13 @@ abstract class ProjectActivity : BaseActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main, menu)
-        return true
+        setTracksTitle(menu?.findItem(R.id.menu_track))
+        //updateTracksMenuItems(menu)
+        return super.onCreateOptionsMenu(menu)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        //updateTracksMenuItems(menu)
         setTracksTitle(menu?.findItem(R.id.menu_track))
         menu?.findItem(R.id.menu_share_log)?.isVisible = preferences.getBoolean("save_log", false)
         return super.onPrepareOptionsMenu(menu)
@@ -203,7 +213,11 @@ abstract class ProjectActivity : BaseActivity() {
             }
             R.id.menu_share_log -> shareLog()
             R.id.menu_about -> about()
-            R.id.menu_track -> checkForBackgroundPermission(item)
+            R.id.menu_track -> {
+                trackItem = item
+                mMessageReceiver?.updateTrackItem(item)
+                checkForBackgroundPermission(item)
+            }
             R.id.menu_track_list -> startActivity<TracksActivity>()
             R.id.menu_settings -> startActivity<PreferenceActivity>()
             else -> return super.onOptionsItemSelected(item)
@@ -401,6 +415,7 @@ abstract class ProjectActivity : BaseActivity() {
             override fun beforeAndroid10(hasBackgroundPermission: Boolean) {
                 if (!hasBackgroundPermission) {
                     trackItem = item
+                    mMessageReceiver?.updateTrackItem(item)
                     val permission = Manifest.permission.ACCESS_FINE_LOCATION
                     requestPermissions(R.string.no_permission_granted, R.string.requested_permissions, LOCATION_REQUEST, permission)
                 } else {
@@ -412,6 +427,7 @@ abstract class ProjectActivity : BaseActivity() {
             override fun onAndroid10(hasBackgroundPermission: Boolean) {
                 if (!hasBackgroundPermission) {
                     trackItem = item
+                    mMessageReceiver?.updateTrackItem(item)
                     requestPermissions()
                 } else {
                     controlTrack(item)
@@ -422,6 +438,7 @@ abstract class ProjectActivity : BaseActivity() {
             override fun afterAndroid10(hasBackgroundPermission: Boolean) {
                 if (!hasBackgroundPermission) {
                     trackItem = item
+                    mMessageReceiver?.updateTrackItem(item)
                     requestPermissions()
                 } else {
                     controlTrack(item)
@@ -449,13 +466,26 @@ abstract class ProjectActivity : BaseActivity() {
             trackerService.action = null
         }
 
-        ContextCompat.startForegroundService(this, trackerService)
-        runDelayedOnUiThread(2500) { setTracksTitle(item) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(trackerService)
+        } else {
+            ContextCompat.startForegroundService(this, trackerService)
+        }
+//        runDelayedOnUiThread(2500) {
+//            Log.e("TRACCKK", "runDelayedOnUiThread(2500)")
+//            setTracksTitle(item)
+//        }
+
+        runDelayedOnUiThread(300) {
+            setTracksTitle(item)
+        }
     }
 
     private fun setTracksTitle(item: MenuItem?): Boolean {
+
         val unfinished = hasUnfinishedTracks(this)
-        item?.setTitle(if (unfinished) R.string.tracks_stop else R.string.start)
+        val caption = getString(if (unfinished) R.string.tracks_stop else R.string.start)
+        item?.setTitle(caption)
         return unfinished
     }
 
@@ -496,6 +526,7 @@ abstract class ProjectActivity : BaseActivity() {
             if (requestCode ==  LOCATION_REQUEST) {
                 controlTrack(trackItem)
                 trackItem = null
+                mMessageReceiver?.clearTrackItem()
             }
         } else
             longToast(R.string.permission_denied)
@@ -615,4 +646,47 @@ abstract class ProjectActivity : BaseActivity() {
             }
         }
     }
+
+    protected class MessageReceiver() : BroadcastReceiver() {
+
+        var trackItem : MenuItem? = null;
+
+        fun updateTrackItem(item : MenuItem){
+            trackItem = item
+        }
+
+        fun clearTrackItem(){
+            trackItem = null
+        }
+
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == ConstantsUI.MESSAGE_INTENT_TRACK) {
+                val trackAction = intent.getBooleanExtra(ConstantsUI.KEY_MESSAGE_TRACK, false)
+
+                val caption = context.getString(if (trackAction) R.string.tracks_stop else R.string.start)
+
+                trackItem?.setTitle(caption)
+
+            }
+
+        }
+    }
+
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    override fun onResume() {
+        super.onResume()
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(ConstantsUI.MESSAGE_INTENT_TRACK)
+        registerReceiver(mMessageReceiver, intentFilter)
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(mMessageReceiver)
+
+    }
+
+
 }

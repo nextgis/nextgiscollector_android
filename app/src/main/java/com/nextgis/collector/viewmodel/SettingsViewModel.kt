@@ -21,9 +21,9 @@
 
 package com.nextgis.collector.viewmodel
 
-import android.arch.lifecycle.ViewModel
+import androidx.lifecycle.ViewModel
 import android.content.Context
-import android.databinding.ObservableField
+import androidx.databinding.ObservableField
 import com.nextgis.collector.model.SettingsModel
 
 class SettingsViewModel : ViewModel() {
