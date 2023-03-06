@@ -28,8 +28,8 @@ android {
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 16
         targetSdkVersion 32
-        versionCode 65
-        versionName "1.5.33"
+        versionCode 66
+        versionName "1.5.34"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
         signingConfig signingConfigs.debug
