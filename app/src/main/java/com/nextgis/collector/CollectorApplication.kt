@@ -21,6 +21,7 @@
 
 package com.nextgis.collector
 
+import android.app.Activity
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -90,7 +91,7 @@ class CollectorApplication : GISApplication() {
         return BuildConfig.providerAuth
     }
 
-    override fun showSettings(setting: String?) {
+    override fun showSettings(setting: String?, code: Int, activity: Activity?) {
 
     }
 
