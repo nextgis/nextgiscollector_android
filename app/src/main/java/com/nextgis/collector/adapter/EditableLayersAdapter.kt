@@ -74,6 +74,9 @@ class EditableLayersAdapter(private var items: List<Resource>,
         override fun bind(repo: Resource, listener: OnItemClickListener?, layers : List<NGWVectorLayerUI>) {
             binding.layer = repo
             var layType = 0
+            if (repo == null){
+                return
+            }
             layType = layerByPath(repo.id, layers)?.geometryType!!
             if (layType == GTPoint ||layType == GTMultiPoint ||  layType == GTPolygon
                 || layType == GTLineString || layType == GTMultiPolygon || layType == GTMultiLineString) {
