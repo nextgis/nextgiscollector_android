@@ -386,7 +386,7 @@ abstract class ProjectActivity : BaseActivity() {
                     if (list.size == 1 &&  tracksList.size == 0 ) {
                         HyperLog.v(Constants.TAG, "Execute ExportGeoJSONTask")
                         val exportTask = ExportGeoJSONTask(this, list.first(), true,
-                            false, false, null)
+                            false, false, null, false)
                         exportTask.execute()
                         return@setPositiveButton
                     }

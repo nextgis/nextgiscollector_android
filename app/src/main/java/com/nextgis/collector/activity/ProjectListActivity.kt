@@ -21,23 +21,26 @@
 
 package com.nextgis.collector.activity
 
-import androidx.lifecycle.ViewModelProviders
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import androidx.databinding.DataBindingUtil
-import androidx.databinding.Observable
 import android.net.Uri
 import android.os.Bundle
-import androidx.core.content.ContextCompat
-import androidx.appcompat.app.AlertDialog
-import androidx.recyclerview.widget.LinearLayoutManager
+import android.text.SpannableString
 import android.text.method.LinkMovementMethod
+import android.text.util.Linkify
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.Observable
+import androidx.lifecycle.ViewModelProviders
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
@@ -62,6 +65,7 @@ import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
+import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.*
@@ -72,6 +76,9 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     private lateinit var binding: ActivityProjectListBinding
     private var projectAdapter = ProjectAdapter(arrayListOf(), this)
     private lateinit var receiver: BroadcastReceiver
+
+    private lateinit var receiverPointz: BroadcastReceiver
+
     @Volatile
     private var total = 0
     private val queue = arrayListOf<Intent>()
@@ -139,8 +146,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         if (!success) {
                             if (canceled)
                                 toast(R.string.canceled)
-                            else if (intent.hasExtra(LayerFillService.KEY_MESSAGE))
-                                longToast(intent.getStringExtra(LayerFillService.KEY_MESSAGE) ?: getString(R.string.sync_error))
+                            else if (intent.hasExtra(LayerFillService.KEY_MESSAGE)) {
+                                val message = intent.getStringExtra(LayerFillService.KEY_MESSAGE)
+                                if (!"POINTZ".equals(message))
+                                    longToast(message?: getString(R.string.sync_error))
+                            }
                             error()
                             return
                         }
@@ -186,9 +196,31 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             }
         }
 
+            receiverPointz = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    val message = intent.extras!!.getString(Constants.MESSAGE_EXTRA)
+                    val title = intent.extras!!.getString(Constants.MESSAGE_TITLE_EXTRA)
+                    val s = SpannableString(message) // msg should have url to enable clicking
+                    Linkify.addLinks(s, Linkify.ALL)
+                    val builder = android.app.AlertDialog.Builder(this@ProjectListActivity)
+                    builder.setMessage(s)
+                        .setPositiveButton("ok", null)
+                        .setTitle(title)
+                    val alertDialog = builder.create()
+                    alertDialog.show()
+                    return
+                }
+            }
+
+
         val intentFilter = IntentFilter(LayerFillService.ACTION_UPDATE)
         intentFilter.addAction(LayerFillService.ACTION_STOP)
         registerReceiver(receiver, intentFilter)
+
+        val intentFilterPointsz = IntentFilter()
+        intentFilterPointsz.addAction(Constants.MESSAGE_ALERT_INTENT)
+        registerReceiver(receiverPointz, intentFilterPointsz)
+
 
         val extras = intent.extras
         val id = extras?.getInt("project", -1) ?: -1
@@ -232,6 +264,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         super.onDestroy()
         try {
             unregisterReceiver(receiver)
+            unregisterReceiver(receiverPointz)
         } catch (e: Exception) {
         }
     }
