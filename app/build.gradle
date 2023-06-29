@@ -21,15 +21,15 @@ android {
             keyPassword ANDROID_STORE_PASSWORD
         }
     }
-    compileSdkVersion 33
+    compileSdkVersion 32
     dataBinding.enabled = true
     defaultConfig {
         applicationId "com.nextgis.collector"
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 16
-        targetSdkVersion 33
-        versionCode 68
-        versionName "1.5.36"
+        targetSdkVersion 32
+        versionCode 69
+        versionName "1.5.37"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
         signingConfig signingConfigs.debug
