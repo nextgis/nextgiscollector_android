@@ -30,10 +30,10 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -51,6 +51,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
+import com.nextgis.collector.service.OfflineIntentService
 import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.maplib.api.IGISApplication
 import com.nextgis.maplib.api.INGWLayer
@@ -73,6 +74,7 @@ import com.nextgis.maplibui.util.NGIDUtils.get
 import com.pawegio.kandroid.*
 import org.json.JSONObject
 import java.io.*
+import java.security.AccessController.getContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -577,12 +579,22 @@ abstract class ProjectActivity : BaseActivity() {
 
 //            for (account in accounts) {
             accounts.firstOrNull()?.let {
-                val settings = Bundle()
-                settings.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
-                settings.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
-                ContentResolver.requestSync(accounts.first(),
-                    app.authority,
-                    settings)
+
+                val mPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+                val base = mPreferences.getString("ngid_url", NGIDUtils.NGID_MY)
+
+                if (!NGIDUtils.NGID_MY.equals(base)) {
+                    OfflineIntentService.startActionSync(this)
+                } else {
+                    val settings = Bundle()
+                    settings.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
+                    settings.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
+                    ContentResolver.requestSync(
+                        accounts.first(),
+                        app.authority,
+                        settings
+                    )
+                }
             }
 //            }
         }

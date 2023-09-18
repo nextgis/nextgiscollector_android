@@ -1,27 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-  ~ Project:  NextGIS Collector
-  ~ Purpose:  Light mobile GIS for collecting data
-  ~ Author:   Stanislav Petriakov, becomeglory@gmail.com
-  ~ *********************************************************************
-  ~ Copyright (c) 2018-2021 NextGIS, info@nextgis.com
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  -->
-
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.nextgis.collector">
+    package="com.nextgis.collector" >
 
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
@@ -51,34 +31,54 @@
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning"
         tools:replace="android:allowBackup,android:label"
-        tools:targetApi="m">
+        tools:targetApi="m" >
+        <service
+            android:name=".service.OfflineIntentService"
+            android:exported="false" >
+        </service>
+
+        <meta-data
+            android:name="io.sentry.dsn"
+            android:value="@string/SENTRY_DSN" /> <!-- enable automatic breadcrumbs for user interactions (clicks, swipes, scrolls) -->
+        <meta-data
+            android:name="io.sentry.traces.user-interaction.enable"
+            android:value="true" /> <!-- enable screenshot for crashes -->
+        <meta-data
+            android:name="io.sentry.attach-screenshot"
+            android:value="true" /> <!-- enable view hierarchy for crashes -->
+        <meta-data
+            android:name="io.sentry.attach-view-hierarchy"
+            android:value="true" /> <!-- enable the performance API by setting a sample-rate, adjust in production env -->
+        <meta-data
+            android:name="io.sentry.traces.sample-rate"
+            android:value="1.0" /> <!-- enable profiling when starting transactions, adjust in production env -->
+        <meta-data
+            android:name="io.sentry.traces.profiling.sample-rate"
+            android:value="1.0" />
+
         <activity
             android:name=".activity.ProjectListActivity"
-            android:label="@string/APP_NAME"
             android:exported="true"
-            >
+            android:label="@string/APP_NAME" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".activity.IntroActivity"
             android:label="@string/intro"
             android:theme="@style/AppTheme.TranslucentStatusBar" />
-
         <activity
             android:name=".activity.MapActivity"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar" />
-
         <activity
             android:name=".activity.AddFeatureActivity"
             android:label="@string/add_feature"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar" />
-
         <activity
             android:name=".activity.PreferenceActivity"
             android:label="@string/action_settings"
@@ -87,41 +87,42 @@
         <service
             android:name="com.nextgis.maplibui.account.NGWAuthenticatorService"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
+
             <meta-data
                 android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
         </service>
-
         <service
             android:name=".SyncService"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>
+
             <meta-data
                 android:name="android.content.SyncAdapter"
                 android:resource="@xml/syncadapter" />
         </service>
+        <service android:name=".service.OfflineSyncIntentService" />
 
         <provider
             android:name="com.nextgis.maplib.datasource.LayerContentProvider"
             android:authorities="@string/provider_auth"
             android:exported="false"
             android:syncable="true" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.easypicker.provider"
             android:exported="false"
-            android:grantUriPermissions="true">
+            android:grantUriPermissions="true" >
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
-
     </application>
+
 </manifest>

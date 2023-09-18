@@ -22,7 +22,6 @@
 package com.nextgis.collector
 
 import android.app.Activity
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import com.nextgis.collector.util.Logger
@@ -36,7 +35,6 @@ import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.mapui.TrackLayerUI
 import com.nextgis.maplibui.service.TrackerService
 import io.sentry.Sentry
-import io.sentry.android.AndroidSentryClientFactory
 import kotlin.system.exitProcess
 
 class CollectorApplication : GISApplication() {
@@ -46,8 +44,8 @@ class CollectorApplication : GISApplication() {
     }
 
     override fun onCreate() {
-        if (!BuildConfig.DEBUG)
-            Sentry.init(AndroidSentryClientFactory(applicationContext))
+//        if (!BuildConfig.DEBUG)
+//            Sentry.init(AndroidSentryClientFactory(applicationContext)) // work if disable init
         super.onCreate()
         if (mSharedPreferences.getBoolean("save_log", false)) {
             Logger.initialize(this)

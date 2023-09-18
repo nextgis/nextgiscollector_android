@@ -30,7 +30,7 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
-import android.util.Log
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -65,7 +65,6 @@ import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
-import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.*
@@ -201,11 +200,18 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     val message = intent.extras!!.getString(Constants.MESSAGE_EXTRA)
                     val title = intent.extras!!.getString(Constants.MESSAGE_TITLE_EXTRA)
                     val s = SpannableString(message) // msg should have url to enable clicking
-                    Linkify.addLinks(s, Linkify.ALL)
+                    Linkify.addLinks(s, Linkify.WEB_URLS)
+
+                    val inflater: LayoutInflater = LayoutInflater.from(context)
+                    val layout: View = inflater.inflate(R.layout.custom_dialog, null)
+                    val text = layout.findViewById(R.id.body) as TextView
+                    text.setText(s)
+                    text.movementMethod = LinkMovementMethod.getInstance()
                     val builder = android.app.AlertDialog.Builder(this@ProjectListActivity)
-                    builder.setMessage(s)
+                    builder
                         .setPositiveButton("ok", null)
                         .setTitle(title)
+                        .setView(layout)
                     val alertDialog = builder.create()
                     alertDialog.show()
                     return

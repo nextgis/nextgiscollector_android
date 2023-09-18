@@ -83,3 +83,5 @@ proguard/
 
 # Log Files
 *.log
+
+sentry.properties

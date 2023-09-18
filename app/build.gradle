@@ -4,7 +4,16 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'io.sentry.android.gradle'
 
+
 android {
+
+    File sentryPropFile = rootProject.file('sentry.properties')
+    String sentryDsn = ""
+    if (sentryPropFile.exists()) {
+        Properties sentryProp = new Properties()
+        sentryProp.load(sentryPropFile.newDataInputStream())
+        sentryDsn = sentryProp.get("sentry.dsn")
+    }
 
     signingConfigs {
         debug {
@@ -21,15 +30,17 @@ android {
             keyPassword ANDROID_STORE_PASSWORD
         }
     }
-    compileSdkVersion 32
+    compileSdkVersion 33
     dataBinding.enabled = true
+
     defaultConfig {
         applicationId "com.nextgis.collector"
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 16
-        targetSdkVersion 32
-        versionCode 69
-        versionName "1.5.37"
+        targetSdkVersion 33
+        versionCode 71
+        versionName "1.5.39"
+        buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
         signingConfig signingConfigs.debug
@@ -45,6 +56,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             resValue 'string', 'APP_NAME', '"NextGIS Collector"'
+            resValue 'string', 'SENTRY_DSN', sentryDsn
             resValue 'string', 'provider_auth', '"com.nextgis.collector"'
             resValue 'string', 'collector_accounts_auth', '"com.nextgiscollector.account"'
             resValue 'string', 'nextgis_accounts_auth', '"com.nextgis.account"'
@@ -59,6 +71,7 @@ android {
             applicationIdSuffix '.debug'
             versionNameSuffix '-DEBUG'
             resValue 'string', 'APP_NAME', '"DEV NextGIS Collector"'
+            resValue 'string', 'SENTRY_DSN', sentryDsn
             resValue 'string', 'provider_auth', '"com.nextgis.collector.debug"'
             resValue 'string', 'collector_accounts_auth', '"com.nextgiscollector.account.debug"'
             resValue 'string', 'nextgis_accounts_auth', '"com.nextgis.account.debug"'
@@ -102,7 +115,7 @@ dependencies {
 //    androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
 
-    implementation 'io.sentry:sentry-android:1.7.30'
+    implementation 'io.sentry:sentry-android:6.18.1'
     implementation 'org.slf4j:slf4j-nop:1.7.30'
 
     implementation 'com.github.apl-devs:appintro:v4.2.3'
