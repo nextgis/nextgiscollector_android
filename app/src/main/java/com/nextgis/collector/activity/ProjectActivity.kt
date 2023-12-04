@@ -648,7 +648,14 @@ abstract class ProjectActivity : BaseActivity() {
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
             } else if (intent.action == SyncAdapter.SYNC_FINISH || intent.action == SyncAdapter.SYNC_CANCELED) {
                 if (intent.hasExtra(SyncAdapter.EXCEPTION))
-                    toast(intent.getStringExtra(SyncAdapter.EXCEPTION) ?: getString(R.string.sync_error))
+
+                    AlertDialog.Builder(context).setTitle(R.string.alert_sync_error_title)
+                        //.setMessage(intent.getStringExtra(SyncAdapter.EXCEPTION) ?: getString(R.string.sync_error))
+                        .setMessage(R.string.alert_sync_error_message)
+                        .setPositiveButton(R.string.ok,null)
+                        .show()
+
+                   // toast(intent.getStringExtra(SyncAdapter.EXCEPTION) ?: getString(R.string.sync_error))
 
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.GONE
                 if (update)

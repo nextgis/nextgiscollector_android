@@ -65,4 +65,11 @@
     <string name="refresh_projects">Обновить</string>
     <string name="alert_sync_turned_off">Синхронизация данных невозможна, так как она отключена на уровне операционной системы. Включить обратно?</string>
     <string name="alert_sync_title">Синхронизация:</string>
+    <string name="alert_sync_error_title">Ошибка синхронизации!</string>
+    <string name="alert_sync_error_message">Мы попробуем синхронизировать данные позже. Вы можете продолжать сбор.\n\nЕсли ошибка повторяется многократно. Сделайте архив. Не выходите из проекта и не удаляйте приложение, иначе данные будут потеряны. Сообщите администратору.
+</string>
+
+    <string name="alert_no_trackerid_onserver_title">Отправка трека</string>
+    <string name="alert_no_trackerid_onserver">Айди трекера на сервере не обнаружен, обратитесь к администратору проекта, чтобы отправлять треки в облако.\nПосле исправления, заново включите синхронизацию</string>
+
 </resources>

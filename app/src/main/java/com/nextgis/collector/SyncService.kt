@@ -24,16 +24,20 @@ package com.nextgis.collector
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import androidx.core.content.ContextCompat
 import android.util.Log
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.MapBase
 import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.service.NGWSyncService
 import com.nextgis.maplib.util.Constants
-import com.nextgis.maplibui.service.RebuildCacheService
-import com.nextgis.maplibui.util.ConstantsUI
+import com.nextgis.maplibui.service.RebuildCacheWorker
+import java.util.concurrent.TimeUnit
 
 class SyncService: NGWSyncService() {
 
@@ -68,10 +72,33 @@ class SyncService: NGWSyncService() {
         val mapContentProviderHelper = MapBase.getInstance() as MapContentProviderHelper
         for (i in 0 until mapContentProviderHelper.layerCount) {
             (mapContentProviderHelper.getLayer(i) as? VectorLayer)?.let {
-                val intent = Intent(context, RebuildCacheService::class.java)
-                intent.putExtra(ConstantsUI.KEY_LAYER_ID, it.id)
-                intent.action = RebuildCacheService.ACTION_ADD_TASK
-                ContextCompat.startForegroundService(context, intent)
+
+
+//                val intent = Intent(context, RebuildCacheService::class.java)
+//                intent.putExtra(ConstantsUI.KEY_LAYER_ID, it.id)
+//                intent.action = RebuildCacheService.ACTION_ADD_TASK
+//                //ContextCompat.startForegroundService(context, intent)
+//                context.startService(intent)
+
+//                val constraints: Constraints = Constraints.Builder()
+//                    .build()
+//                val myData = Data.Builder()
+//                    .putInt("layerid", it.id)
+//                    .build()
+//                val workManager = WorkManager.getInstance(application)
+//                val syncWorkRequest: WorkRequest = OneTimeWorkRequestBuilder<RebuildCacheWorkerRT>()
+//                    .setConstraints(constraints)
+//                    .setInputData(myData)
+//                    .setInitialDelay(1, TimeUnit.SECONDS)
+//                    .build()
+//                WorkManager
+//                    .getInstance(context!!)
+//                    .enqueue(syncWorkRequest)
+
+                RebuildCacheWorker.schedule(context, it.id)
+
+                //RebuildCacheWorkerKT.schedule(context, it.id)
+
             }
         }
     }

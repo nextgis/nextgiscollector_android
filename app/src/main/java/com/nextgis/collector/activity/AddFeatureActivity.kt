@@ -21,13 +21,18 @@
 
 package com.nextgis.collector.activity
 
-import androidx.databinding.DataBindingUtil
+import android.content.Intent
+import android.database.Cursor
+import android.net.Uri
 import android.os.Bundle
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.LinearLayoutManager
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.core.content.FileProvider
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.EditableLayersAdapter
@@ -44,6 +49,9 @@ import com.pawegio.kandroid.toast
 import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.FileWriter
+import java.io.IOException
+import java.util.Date
 
 class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener {
     companion object {

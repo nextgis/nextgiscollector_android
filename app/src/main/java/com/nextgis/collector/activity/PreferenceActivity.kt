@@ -24,23 +24,32 @@ package com.nextgis.collector.activity
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ProgressDialog
-import androidx.lifecycle.ViewModelProviders
 import android.content.Intent
-import androidx.databinding.DataBindingUtil
+import android.content.SharedPreferences
+import android.os.AsyncTask
 import android.os.Bundle
-import androidx.appcompat.app.AlertDialog
-import androidx.preference.*
-import androidx.recyclerview.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuItem
+import androidx.appcompat.app.AlertDialog
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.ViewModelProviders
+import androidx.preference.*
+import androidx.recyclerview.widget.RecyclerView
 import com.nextgis.collector.BuildConfig
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ActivityPreferenceBinding
 import com.nextgis.collector.util.Logger
 import com.nextgis.collector.viewmodel.SettingsViewModel
+import com.nextgis.maplib.util.AccountUtil
+import com.nextgis.maplib.util.NetworkUtil
+import com.nextgis.maplib.util.SettingsConstants
+import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.util.NGIDUtils
 import com.pawegio.kandroid.runDelayedOnUiThread
 import kotlinx.android.synthetic.main.toolbar.*
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.IOException
 import java.text.DateFormat
 import java.util.*
 
@@ -99,6 +108,8 @@ class PreferenceActivity : BaseActivity() {
                 (activity as? PreferenceActivity)?.let { activity -> ask(activity) }
                 true
             }
+            val uid = findPreference(SettingsConstants.KEY_PREF_TRACK_SEND) as CheckBoxPreference
+            initializeUid(uid)
         }
 
         private fun ask(activity: PreferenceActivity) {
@@ -154,5 +165,81 @@ class PreferenceActivity : BaseActivity() {
                         super.onPreferenceHierarchyChange(preference)
                     }
                 }
+
+        fun initializeUid(preference: CheckBoxPreference) {
+            // async check
+            // registered = true - enabled = true; keep state
+            // registered = false - enabled = false; checked = false
+            // no network - enabled = false; keep state; no network info
+            val context = preference.context
+            val uid = TrackerService.getUid(context)
+            //preference.summary = context.getString(R.string.track_uid, uid)
+            CheckRegistration(
+                preference,
+                AccountUtil.isProUser(preference.context)
+            ).execute()
+        }
+
+        public class CheckRegistration constructor(
+            private val mPreference: CheckBoxPreference,
+            private val isProFinal: Boolean) :   AsyncTask<Void?, Void?, Boolean?>() {
+
+            override fun doInBackground(vararg params: Void?): Boolean? {
+                return try {
+                    //if (isProFinal) {
+                        val base = mPreference.sharedPreferences.getString(
+                            "tracker_hub_url",
+                            TrackerService.HOST)
+                        val url = String.format(
+                            "%s/%s/registered",
+                            base + TrackerService.URL,
+                            TrackerService.getUid(mPreference.context))
+                        val response = NetworkUtil.get(url, null, null, false)
+                        val body = response.responseBody
+                        val json = JSONObject(body ?: "")
+                        json.optBoolean("registered")
+                    //} else false
+                } catch (e: IOException) {
+                    null
+                } catch (e: JSONException) {
+                    null
+                }
+            }
+
+            override fun onPostExecute(result: Boolean?) {
+                super.onPostExecute(result)
+
+                if (result == null) {
+                    mPreference.setSummary(R.string.error_connect_failed)
+                    return
+                }
+
+                //val uid = TrackerService.getUid(context)
+                //mPreference.summary = context.getString(R.string.track_uid, uid)
+                // save String name = getPackageName() + "_preferences";
+
+                if (result) {
+                    mPreference.isEnabled = true
+                } else {
+                    val context = mPreference.context
+                    val name: String = context.getPackageName() + "_preferences"
+                    val mSharedPreferences: SharedPreferences = context.getSharedPreferences(name, MODE_MULTI_PROCESS)
+                    val syncen = mSharedPreferences.getBoolean(SettingsConstants.KEY_PREF_TRACK_SEND, false)
+
+                    mPreference.isEnabled = false
+
+                    if(syncen){
+                        // off send and warning about it
+                        val builder = android.app.AlertDialog.Builder(context)
+                            .setTitle(R.string.alert_no_trackerid_onserver_title)
+                            .setMessage(R.string.alert_no_trackerid_onserver)
+                            .setPositiveButton(R.string.ok, null)
+                            .create()
+                        builder.show()
+                    }
+                    mPreference.isChecked = false
+                }
+            }
+        }
     }
 }

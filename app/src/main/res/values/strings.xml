@@ -65,4 +65,9 @@
     <string name="refresh_projects">refresh</string>
     <string name="alert_sync_turned_off">Syncing is turned off in your system settings and currently not possible. Turn back on?</string>
     <string name="alert_sync_title">Sync:</string>
+    <string name="alert_sync_error_title">Synchronization error.</string>
+    <string name="alert_sync_error_message">We will try to sync again later. You can continue collecting data.\n\nIf the problem persists, create a backup. Don’t exit the project or remove the app - you will lose the data. Contact your administrator.</string>
+    <string name="alert_no_trackerid_onserver_title">Send track</string>
+    <string name="alert_no_trackerid_onserver">The ID tracker was not found on the server, contact the project administrator to send tracks to the cloud.\nYou will have to re-enable synchronization after repair</string>
+
 </resources>
