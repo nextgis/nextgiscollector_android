@@ -22,10 +22,20 @@
 package com.nextgis.collector
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.util.Log
+import android.view.View
+import android.widget.FrameLayout
 import android.widget.Toast
+import com.hypertrack.hyperlog.HyperLog
+import com.nextgis.collector.activity.ProjectActivity
 import com.nextgis.collector.util.Logger
 import com.nextgis.maplib.api.ILayer
+import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.LayerGroup
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.NGWUtil
@@ -38,9 +48,23 @@ import io.sentry.Sentry
 import kotlin.system.exitProcess
 
 class CollectorApplication : GISApplication() {
+
+    private var syncReceiver: SyncReceiver = SyncReceiver()
     companion object {
         const val BASE_URL = "https://collector.nextgis.com/api/project"
         const val TREE = "resource.tree"
+        public var isSyncProgress = false
+    }
+
+    protected inner class SyncReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            HyperLog.v(Constants.TAG, "Got: ${intent.action}")
+            if (intent.action == SyncAdapter.SYNC_START) {
+                isSyncProgress = true
+            } else if (intent.action == SyncAdapter.SYNC_FINISH || intent.action == SyncAdapter.SYNC_CANCELED) {
+                isSyncProgress = false
+            }
+        }
     }
 
     override fun onCreate() {
@@ -71,14 +95,21 @@ class CollectorApplication : GISApplication() {
         updateFromPreviousVersion()
         NGWUtil.UUID = TrackerService.getUid(this)
         NGWUtil.NGUA = "ng_collector"
+
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(SyncAdapter.SYNC_START)
+        intentFilter.addAction(SyncAdapter.SYNC_FINISH)
+        intentFilter.addAction(SyncAdapter.SYNC_CANCELED)
+        registerReceiver(syncReceiver, intentFilter)
+
     }
 
     private fun updateFromPreviousVersion() {
         val currentVersionCode = BuildConfig.VERSION_CODE
         val savedVersionCode = mSharedPreferences.getInt("last", 0)
 
-        if (savedVersionCode == 0)
-            mSharedPreferences.edit().putBoolean(KEY_PREF_TRACK_SEND, true).apply()
+//        if (savedVersionCode == 0)
+//            mSharedPreferences.edit().putBoolean(KEY_PREF_TRACK_SEND, true).apply()
 
         if (savedVersionCode < currentVersionCode) {
             mSharedPreferences.edit().putInt("last", currentVersionCode).apply()
@@ -122,5 +153,7 @@ class CollectorApplication : GISApplication() {
         } else
             mMap.moveLayer(map.layerCount - 1, tracks.first())
     }
+
+
 
 }

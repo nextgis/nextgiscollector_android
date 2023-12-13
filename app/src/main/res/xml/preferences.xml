@@ -26,6 +26,11 @@
 
     <CheckBoxPreference
         android:defaultValue="false"
+        android:key="show_sync"
+        android:title="@string/pref_sync_notification"/>
+
+    <CheckBoxPreference
+        android:defaultValue="false"
         android:key="track_send"
         android:enabled="false"
         android:title="@string/track_cloud" />

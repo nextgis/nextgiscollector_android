@@ -23,6 +23,7 @@ package com.nextgis.collector.activity
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import androidx.core.app.ActivityCompat
@@ -32,6 +33,7 @@ import com.github.paolorotolo.appintro.AppIntro
 import com.github.paolorotolo.appintro.AppIntroFragment
 import com.nextgis.collector.R
 import com.nextgis.maplib.util.PermissionUtil
+import com.nextgis.maplibui.util.SettingsConstantsUI
 import com.pawegio.kandroid.longToast
 import com.pawegio.kandroid.startActivity
 
@@ -60,7 +62,10 @@ class IntroActivity : AppIntro() {
         super.onDonePressed(currentFragment)
         if (!PermissionUtil.hasPermission(this, Manifest.permission.WRITE_SYNC_SETTINGS)
                 || !PermissionUtil.hasPermission(this, Manifest.permission.GET_ACCOUNTS)) {
-            val permissions = arrayOf(Manifest.permission.GET_ACCOUNTS, Manifest.permission.WRITE_SYNC_SETTINGS)
+            var permissions = arrayOf(Manifest.permission.GET_ACCOUNTS,
+                Manifest.permission.WRITE_SYNC_SETTINGS)
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2)
+                permissions = permissions.plus(Manifest.permission.POST_NOTIFICATIONS)
             ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_CODE)
         } else
             openProjectList()
@@ -69,6 +74,14 @@ class IntroActivity : AppIntro() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
+
+        for (i in permissions.indices) {
+            if (permissions[i] == Manifest.permission.POST_NOTIFICATIONS && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()
+                    .putBoolean(SettingsConstantsUI.KEY_PREF_SHOW_SYNC, true)
+                    .apply()
+            }
+        }
         var granted = requestCode == PERMISSIONS_CODE
         for (result in grantResults)
             if (result != PackageManager.PERMISSION_GRANTED)

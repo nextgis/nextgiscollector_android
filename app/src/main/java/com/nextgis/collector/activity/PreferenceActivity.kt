@@ -21,17 +21,21 @@
 
 package com.nextgis.collector.activity
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ProgressDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.os.AsyncTask
+import android.os.Build
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
-import androidx.databinding.DataBindingUtil
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProviders
 import androidx.preference.*
 import androidx.recyclerview.widget.RecyclerView
@@ -45,21 +49,45 @@ import com.nextgis.maplib.util.NetworkUtil
 import com.nextgis.maplib.util.SettingsConstants
 import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.util.NGIDUtils
+import com.nextgis.maplibui.util.SettingsConstantsUI
+import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_SHOW_SYNC
 import com.pawegio.kandroid.runDelayedOnUiThread
-import kotlinx.android.synthetic.main.toolbar.*
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import java.security.Permission
 import java.text.DateFormat
 import java.util.*
 
 class PreferenceActivity : BaseActivity() {
     private lateinit var binding: ActivityPreferenceBinding
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        for (fragment in supportFragmentManager.fragments) {
+            if (fragment is PreferencesFragment) (fragment as PreferencesFragment).processPermission(
+                requestCode, resultCode, data  )
+        }
+    }
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        for (fragment in supportFragmentManager.fragments) {
+            if (fragment is PreferencesFragment) (fragment as PreferencesFragment).processPermission(
+                requestCode, permissions, grantResults  )
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_preference)
-        setSupportActionBar(toolbar)
+        binding = ActivityPreferenceBinding.inflate(layoutInflater) // DataBindingUtil.setContentView(this, R.layout.activity_preference)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setHomeButtonEnabled(true)
 
@@ -101,15 +129,130 @@ class PreferenceActivity : BaseActivity() {
     }
 
     class PreferencesFragment : PreferenceFragmentCompat() {
+        val REQUEST_NOTIFICATION_PERMISSION = 741
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, screen: String?) {
             addPreferencesFromResource(R.xml.preferences)
-            val signOut = findPreference("sign_out")
-            signOut.setOnPreferenceClickListener {
+            val signOut = findPreference("sign_out") as Preference?
+            signOut?.setOnPreferenceClickListener {
                 (activity as? PreferenceActivity)?.let { activity -> ask(activity) }
                 true
             }
-            val uid = findPreference(SettingsConstants.KEY_PREF_TRACK_SEND) as CheckBoxPreference
+            val uid = findPreference(SettingsConstants.KEY_PREF_TRACK_SEND) as CheckBoxPreference?
             initializeUid(uid)
+
+            val notify = findPreference<Preference>(SettingsConstantsUI.KEY_PREF_SHOW_SYNC)
+            if (activity != null)
+                initializeNotification(requireActivity(), notify)
+
+
+        }
+
+        fun initializeNotification( activity: Activity,
+            preference: Preference?
+        ) {
+            if (null != preference) {
+                preference.onPreferenceClickListener =
+                    Preference.OnPreferenceClickListener { preference ->
+                        if ((preference as CheckBoxPreference).isChecked) {
+                            // check notify perm
+                            processNotifyPerm(activity,
+                                preference
+                            )
+                        }
+                        false
+                    }
+            }
+        }
+
+        fun processNotifyPerm(activity: Activity, preference: Preference): Boolean {
+            if (ContextCompat.checkSelfPermission(activity, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
+                return true
+            } else if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    activity, "android.permission.POST_NOTIFICATIONS" )) {
+                val confirm = AlertDialog.Builder(activity)
+                confirm.setTitle(R.string.push_perm_title)
+                    .setMessage(R.string.push_perm_why_text)
+                    .setNegativeButton(
+                        android.R.string.cancel,
+                        DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
+                            PreferenceManager.getDefaultSharedPreferences(activity).edit()
+                                .putBoolean(KEY_PREF_SHOW_SYNC, false)
+                                .commit()
+                            (preference as CheckBoxPreference).isChecked = false
+                        })
+                    .setPositiveButton(android.R.string.ok,
+                        DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
+                            if (which == -1) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    activity?.requestPermissions(
+                                        arrayOf<String>("android.permission.POST_NOTIFICATIONS"),
+                                        REQUEST_NOTIFICATION_PERMISSION
+                                    )
+                                } else {
+                                }
+                            }
+                        })
+                    .show()
+            } else {
+                // You can directly ask for the permission.
+                // The registered ActivityResultCallback gets the result of this request.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) activity.requestPermissions(
+                    arrayOf<String>("android.permission.POST_NOTIFICATIONS"),
+                    REQUEST_NOTIFICATION_PERMISSION
+                )
+            }
+            return true
+        }
+
+        public fun processPermission(
+            requestCode: Int,
+            permissions: Array<out String>,
+            grantResults: IntArray  ) {
+
+            if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+                if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // nothing
+                } else if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                    val notify = findPreference<Preference>(SettingsConstantsUI.KEY_PREF_SHOW_SYNC)
+                    (notify as CheckBoxPreference?)!!.isChecked = false
+                    PreferenceManager.getDefaultSharedPreferences(this.context).edit()
+                        .putBoolean(KEY_PREF_SHOW_SYNC, false)
+                        .commit()
+
+
+                    // alert perm off
+                    val confirm = AlertDialog.Builder(requireActivity())
+                    confirm.setTitle(R.string.push_perm_title)
+                        .setMessage(R.string.push_perm_text)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show()
+                }
+            }
+        }
+
+
+        public fun processPermission(
+            requestCode: Int, resultCode: Int, data: Intent?  ) {
+
+            if (requestCode == REQUEST_NOTIFICATION_PERMISSION &&
+                 resultCode == RESULT_OK) {
+                // nothing
+            } else {
+                val notify = findPreference<Preference>(SettingsConstantsUI.KEY_PREF_SHOW_SYNC)
+                (notify as CheckBoxPreference?)!!.isChecked = false
+                PreferenceManager.getDefaultSharedPreferences(this.context).edit()
+                    .putBoolean(KEY_PREF_SHOW_SYNC, false)
+                    .commit()
+
+
+                // alert perm off
+                val confirm = AlertDialog.Builder(requireActivity())
+                confirm.setTitle(R.string.push_perm_title)
+                    .setMessage(R.string.push_perm_text)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            }
         }
 
         private fun ask(activity: PreferenceActivity) {
@@ -156,44 +299,48 @@ class PreferenceActivity : BaseActivity() {
             super.setPreferenceScreen(preferenceScreen)
         }
 
-        override fun onCreateAdapter(preferenceScreen: PreferenceScreen?): RecyclerView.Adapter<*> =
-                object : PreferenceGroupAdapter(preferenceScreen) {
-                    @SuppressLint("RestrictedApi")
-                    override fun onPreferenceHierarchyChange(preference: Preference?) {
-                        if (preference != null)
-                            setAllPreferencesToAvoidHavingExtraSpace(preference)
-                        super.onPreferenceHierarchyChange(preference)
-                    }
-                }
+        override fun onCreateAdapter(preferenceScreen: PreferenceScreen): RecyclerView.Adapter<*> {
+            return super.onCreateAdapter(preferenceScreen)
+        }
 
-        fun initializeUid(preference: CheckBoxPreference) {
+//        override fun onCreateAdapter(preferenceScreen: PreferenceScreen?): RecyclerView.Adapter<*> =
+//                object : PreferenceGroupAdapter(preferenceScreen) {
+//                    @SuppressLint("RestrictedApi")
+//                    override fun onPreferenceHierarchyChange(preference: Preference?) {
+//                        if (preference != null)
+//                            setAllPreferencesToAvoidHavingExtraSpace(preference)
+//                        super.onPreferenceHierarchyChange(preference)
+//                    }
+//                }
+
+        fun initializeUid(preference: CheckBoxPreference?) {
             // async check
             // registered = true - enabled = true; keep state
             // registered = false - enabled = false; checked = false
             // no network - enabled = false; keep state; no network info
-            val context = preference.context
+            val context = preference?.context
             val uid = TrackerService.getUid(context)
             //preference.summary = context.getString(R.string.track_uid, uid)
             CheckRegistration(
                 preference,
-                AccountUtil.isProUser(preference.context)
+                AccountUtil.isProUser(preference?.context)
             ).execute()
         }
 
         public class CheckRegistration constructor(
-            private val mPreference: CheckBoxPreference,
+            private val mPreference: CheckBoxPreference?,
             private val isProFinal: Boolean) :   AsyncTask<Void?, Void?, Boolean?>() {
 
             override fun doInBackground(vararg params: Void?): Boolean? {
                 return try {
                     //if (isProFinal) {
-                        val base = mPreference.sharedPreferences.getString(
+                        val base = mPreference?.sharedPreferences?.getString(
                             "tracker_hub_url",
                             TrackerService.HOST)
                         val url = String.format(
                             "%s/%s/registered",
                             base + TrackerService.URL,
-                            TrackerService.getUid(mPreference.context))
+                            TrackerService.getUid(mPreference?.context))
                         val response = NetworkUtil.get(url, null, null, false)
                         val body = response.responseBody
                         val json = JSONObject(body ?: "")
@@ -210,7 +357,7 @@ class PreferenceActivity : BaseActivity() {
                 super.onPostExecute(result)
 
                 if (result == null) {
-                    mPreference.setSummary(R.string.error_connect_failed)
+                    mPreference?.setSummary(R.string.error_connect_failed)
                     return
                 }
 
@@ -219,14 +366,14 @@ class PreferenceActivity : BaseActivity() {
                 // save String name = getPackageName() + "_preferences";
 
                 if (result) {
-                    mPreference.isEnabled = true
+                    mPreference?.isEnabled = true
                 } else {
-                    val context = mPreference.context
-                    val name: String = context.getPackageName() + "_preferences"
-                    val mSharedPreferences: SharedPreferences = context.getSharedPreferences(name, MODE_MULTI_PROCESS)
+                    val context = mPreference?.context
+                    val name: String = context?.getPackageName() + "_preferences"
+                    val mSharedPreferences: SharedPreferences = context!!.getSharedPreferences(name, MODE_MULTI_PROCESS)
                     val syncen = mSharedPreferences.getBoolean(SettingsConstants.KEY_PREF_TRACK_SEND, false)
 
-                    mPreference.isEnabled = false
+                    mPreference?.isEnabled = false
 
                     if(syncen){
                         // off send and warning about it
@@ -237,7 +384,7 @@ class PreferenceActivity : BaseActivity() {
                             .create()
                         builder.show()
                     }
-                    mPreference.isChecked = false
+                    mPreference?.isChecked = false
                 }
             }
         }

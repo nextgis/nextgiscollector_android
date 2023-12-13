@@ -43,7 +43,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <include layout="@layout/toolbar"/>
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:background="?attr/colorPrimary"
+                    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                    app:subtitleTextAppearance="@style/TextAppearance.AppCompat.Caption"/>
 
                 <FrameLayout
                     android:id="@+id/map_container"
@@ -172,6 +180,36 @@
 
 
     </androidx.drawerlayout.widget.DrawerLayout>
-    <include layout="@layout/sync_overlay"/>
-</RelativeLayout>
+    <FrameLayout
+        android:id="@+id/overlay"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.5"
+        android:background="@color/actionBarColor"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="64dp"
+            android:src="@drawable/ic_cloud_sync"
+            app:tint="@color/color_black"
+            tools:ignore="ContentDescription"/>
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Large"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="64dp"
+            android:gravity="center"
+            android:padding="64dp"
+            android:text="@string/sync_progress"/>
+    </FrameLayout></RelativeLayout>
 </layout>

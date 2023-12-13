@@ -71,10 +71,10 @@ import com.nextgis.maplibui.service.TrackerService.*
 import com.nextgis.maplibui.util.*
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.get
+import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_SHOW_SYNC
 import com.pawegio.kandroid.*
 import org.json.JSONObject
 import java.io.*
-import java.security.AccessController.getContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -494,6 +494,7 @@ abstract class ProjectActivity : BaseActivity() {
     protected fun requestForPermissions(onPermissionCallback: OnPermissionCallback, memory: Boolean, geo: Boolean = true) {
         this.onPermissionCallback = onPermissionCallback
         val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
+        val push = Manifest.permission.POST_NOTIFICATIONS
         val fine = Manifest.permission.ACCESS_FINE_LOCATION
         val photo = Manifest.permission.WRITE_EXTERNAL_STORAGE
         val geoStatus = ActivityCompat.checkSelfPermission(this, fine)
@@ -504,6 +505,7 @@ abstract class ProjectActivity : BaseActivity() {
         if (!geoAllowed && geo) {
             permissions.add(coarse)
             permissions.add(fine)
+            permissions.add(push)
         }
         if (!memAllowed && memory)
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R)
@@ -514,8 +516,19 @@ abstract class ProjectActivity : BaseActivity() {
             onPermissionCallback.onPermissionGranted()
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int,
+                                            permissions: Array<out String>,
+                                            grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+
+        for (i in permissions.indices) {
+            if (permissions[i] == Manifest.permission.POST_NOTIFICATIONS && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()
+                    .putBoolean(KEY_PREF_SHOW_SYNC, true)
+                    .apply()
+            }
+        }
 
         var granted = true
         for (result in grantResults)
@@ -698,6 +711,9 @@ abstract class ProjectActivity : BaseActivity() {
         val intentFilter = IntentFilter()
         intentFilter.addAction(ConstantsUI.MESSAGE_INTENT_TRACK)
         registerReceiver(mMessageReceiver, intentFilter)
+
+
+
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)

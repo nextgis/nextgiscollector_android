@@ -68,7 +68,6 @@ import com.nextgis.maplibui.service.LayerFillService
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.pawegio.kandroid.*
-import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 
 class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
@@ -105,12 +104,14 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             return
         }
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_project_list)
+        binding = ActivityProjectListBinding.inflate(layoutInflater) // DataBindingUtil.setContentView(this, R.layout.activity_project_list)
+        setContentView(binding.root)
+
         val projectModel = ViewModelProviders.of(this).get(ProjectViewModel::class.java)
         projectModel.email = NetworkUtil.getEmailOrUsername(preferences)
         binding.projectModel = projectModel
         binding.executePendingBindings()
-        setSupportActionBar(toolbar)
+        setSupportActionBar(binding.toolbar)
 
         binding.projects.adapter = projectAdapter
         binding.projects.layoutManager =

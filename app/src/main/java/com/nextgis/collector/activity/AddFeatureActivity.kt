@@ -46,7 +46,6 @@ import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.pawegio.kandroid.IntentFor
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
-import kotlinx.android.synthetic.main.toolbar.*
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileWriter
@@ -66,8 +65,10 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_add_feature)
-        setup(with = toolbar)
+        binding =  ActivityAddFeatureBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        setup(with = binding.toolbar)
 
         val manager = LinearLayoutManager(this)
         binding.layers.layoutManager = manager
@@ -201,5 +202,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     override fun onResume() {
         super.onResume()
         Toast.makeText(this,"ON_RESUME", -1)
+        if ( !(application as CollectorApplication).isTrackInProgress)
+            binding.overlay.visibility = View.GONE;
     }
 }

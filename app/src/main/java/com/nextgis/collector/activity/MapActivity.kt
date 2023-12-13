@@ -40,6 +40,7 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.LayersAdapter
 import com.nextgis.collector.databinding.ActivityMainBinding
@@ -69,8 +70,6 @@ import com.nextgis.maplibui.util.SettingsConstantsUI
 import com.pawegio.kandroid.locationManager
 import com.pawegio.kandroid.startActivity
 import com.pawegio.kandroid.toast
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.toolbar.*
 import java.io.IOException
 
 
@@ -101,9 +100,11 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         super.onCreate(savedInstanceState)
         newIntent = intent
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater) //DataBindingUtil.setContentView(this, R.layout.activity_main)
+        setContentView(binding.root)
+
         overlay = EditLayerOverlay(this, mapView)
-        setup(with = toolbar, skipUpdateCheck = newIntent?.hasExtra(NEW_FEATURE))
+        setup(with = binding.toolbar, skipUpdateCheck = newIntent?.hasExtra(NEW_FEATURE))
 
         binding.apply {
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
@@ -111,10 +112,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         }
         setCenter()
 
-        overlay.setTopToolbar(toolbar)
+        overlay.setTopToolbar(binding.toolbar)
         overlay.setBottomToolbar(binding.bottomToolbar)
         historyOverlay = UndoRedoOverlay(this, mapView)
-        historyOverlay.setTopToolbar(toolbar)
+        historyOverlay.setTopToolbar(binding.toolbar)
 
         locationOverlay = CurrentLocationOverlay(this, mapView)
         locationOverlay.setStandingMarker(R.mipmap.ic_location_standing)
@@ -160,6 +161,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     override fun onResume() {
         super.onResume()
         overlay.onResume()
+        if ( !(application as CollectorApplication).isTrackInProgress)
+            binding.overlay.visibility = View.GONE;
     }
 
     override fun onPause() {
@@ -192,7 +195,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         if (overlay.mode == EditLayerOverlay.MODE_EDIT || overlay.mode == EditLayerOverlay.MODE_EDIT_BY_WALK) {
             menu?.clear()
-            toolbar.inflateMenu(R.menu.edit_geometry)
+            binding.toolbar.inflateMenu(R.menu.edit_geometry)
         }
         return super.onPrepareOptionsMenu(menu)
     }
@@ -260,7 +263,13 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     private fun setUpToolbar(hasChanges: Boolean? = null) {
         title = project.title
-        val toggle = ActionBarDrawerToggle(this, binding.drawer, toolbar, R.string.layers_drawer_open, R.string.layers_drawer_close)
+        val toggle = ActionBarDrawerToggle(
+            this,
+            binding.drawer,
+            binding.toolbar,
+            R.string.layers_drawer_open,
+            R.string.layers_drawer_close
+        )
         binding.apply {
             drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
             drawer.refreshDrawableState()
@@ -290,12 +299,19 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         toggle.syncState()
 
         clearData()
-        if (returnToList)
-            finish()
+        if (returnToList) {
+            if (overlay != null && overlay is EditLayerOverlay)
+
+                (overlay as EditLayerOverlay).stopGeometryByWalk()
+            (overlay as EditLayerOverlay).mode
+            finish ()
+
+        }
+
     }
 
     private fun clearData() {
-        bottom_toolbar.visibility = View.GONE
+        binding.bottomToolbar.visibility = View.GONE
         overlay.mode = EditLayerOverlay.MODE_NONE
         setMenu()
         selectedLayer = null
@@ -303,19 +319,19 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     private fun setHighlight() {
-        add_feature.visibility = View.VISIBLE
-        edit_attributes.visibility = View.VISIBLE
-        edit_geometry.visibility = View.VISIBLE
+        binding.addFeature.visibility = View.VISIBLE
+        binding.editAttributes.visibility = View.VISIBLE
+        binding.editGeometry.visibility = View.VISIBLE
         overlay.mode = EditLayerOverlay.MODE_HIGHLIGHT
-        bottom_toolbar.visibility = View.GONE
+        binding.bottomToolbar.visibility = View.GONE
         setMenu()
         if (returnToList)
             finish()
     }
 
     private fun setMenu() {
-        toolbar.menu.clear()
-        toolbar.inflateMenu(R.menu.main)
+        binding.toolbar.menu.clear()
+        binding.toolbar.inflateMenu(R.menu.main)
     }
 
     private fun cancelEdits() {
@@ -406,15 +422,15 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
         // set editing mode (may be not from draft )
         if (mode == MODE_EDIT){
-            add_feature.visibility = View.GONE
-            edit_attributes.visibility = View.GONE
-            edit_geometry.visibility = View.GONE
-            bottom_toolbar.visibility = View.VISIBLE
-            toolbar.menu.clear()
-            toolbar.inflateMenu(R.menu.edit_geometry)
+            binding.addFeature.visibility = View.GONE
+            binding.editAttributes.visibility = View.GONE
+            binding.editGeometry.visibility = View.GONE
+            binding.bottomToolbar.visibility = View.VISIBLE
+            binding.toolbar.menu.clear()
+            binding.toolbar.inflateMenu(R.menu.edit_geometry)
 
             overlay.mode = mode
-            bottom_toolbar.setOnMenuItemClickListener {
+            binding.bottomToolbar.setOnMenuItemClickListener {
                 val result = overlay.onOptionsItemSelected(it.itemId)
                 if (result)
                     historyOverlay.saveToHistory(overlay.selectedFeature)
@@ -430,17 +446,17 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         }
 
         if (mode == MODE_EDIT_BY_WALK){
-            add_feature.visibility = View.GONE
-            edit_attributes.visibility = View.GONE
-            edit_geometry.visibility = View.GONE
-            bottom_toolbar.visibility = View.VISIBLE
-            toolbar.menu.clear()
-            toolbar.inflateMenu(R.menu.edit_geometry)
+            binding.addFeature.visibility = View.GONE
+            binding.editAttributes.visibility = View.GONE
+            binding.editGeometry.visibility = View.GONE
+            binding.bottomToolbar.visibility = View.VISIBLE
+            binding.toolbar.menu.clear()
+            binding.toolbar.inflateMenu(R.menu.edit_geometry)
 
             overlay.mode = MODE_EDIT
             overlay.mode = MODE_EDIT_BY_WALK
 
-            bottom_toolbar.setOnMenuItemClickListener {
+            binding.bottomToolbar.setOnMenuItemClickListener {
                 val result = overlay.onOptionsItemSelected(it.itemId)
                 if (result)
                     historyOverlay.saveToHistory(overlay.selectedFeature)
@@ -458,15 +474,15 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     }
 
     private fun startEdit(mode:Int) {
-        add_feature.visibility = View.GONE
-        edit_attributes.visibility = View.GONE
-        edit_geometry.visibility = View.GONE
-        bottom_toolbar.visibility = View.VISIBLE
-        toolbar.menu.clear()
-        toolbar.inflateMenu(R.menu.edit_geometry)
+        binding.addFeature.visibility = View.GONE
+        binding.editAttributes.visibility = View.GONE
+        binding.editGeometry.visibility = View.GONE
+        binding.bottomToolbar.visibility = View.VISIBLE
+        binding.toolbar.menu.clear()
+        binding.toolbar.inflateMenu(R.menu.edit_geometry)
 
         overlay.mode = mode
-        bottom_toolbar.setOnMenuItemClickListener {
+        binding.bottomToolbar.setOnMenuItemClickListener {
             val result = overlay.onOptionsItemSelected(it.itemId)
             if (result)
                 historyOverlay.saveToHistory(overlay.selectedFeature)
@@ -629,8 +645,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
     private fun setToolbar() {
         binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-        toolbar.setNavigationIcon(R.drawable.ic_action_cancel_dark)
-        toolbar.setNavigationOnClickListener {
+        binding.toolbar.setNavigationIcon(R.drawable.ic_action_cancel_dark)
+        binding.toolbar.setNavigationOnClickListener {
             if (overlay.mode == EditLayerOverlay.MODE_EDIT)
                 cancelEdits()
             else
@@ -686,8 +702,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             }
 
             overlay.selectedFeature?.let {
-                edit_attributes.visibility = View.VISIBLE
-                edit_geometry.visibility = View.VISIBLE
+                binding.editAttributes.visibility = View.VISIBLE
+                binding.editGeometry.visibility = View.VISIBLE
 
                 setTitle(getString(R.string.feature_n, it.id), selectedLayer?.name)
                 setToolbar()

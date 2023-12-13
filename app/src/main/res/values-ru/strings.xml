@@ -72,4 +72,10 @@
     <string name="alert_no_trackerid_onserver_title">Отправка трека</string>
     <string name="alert_no_trackerid_onserver">Айди трекера на сервере не обнаружен, обратитесь к администратору проекта, чтобы отправлять треки в облако.\nПосле исправления, заново включите синхронизацию</string>
 
+    <string name="pref_sync_notification">Уведомления</string>
+    <string name="push_perm_title">Уведомления</string>
+    <string name="push_perm_text">Уведомления отключены системой, для их включения зайдите в настройки, найдите приложение и включите уведомления</string>
+    <string name="push_perm_why_text">Для получения уведомлений нужно дать разрешения</string>
+
+
 </resources>
