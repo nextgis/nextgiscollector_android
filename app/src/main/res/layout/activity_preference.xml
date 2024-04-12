@@ -25,7 +25,7 @@
 
     <data>
         <variable
-            name="activity"
+            name="pactivity"
             type="com.nextgis.collector.activity.PreferenceActivity" />
 
         <variable
@@ -63,6 +63,7 @@
             android:text="@string/device_id"
             android:textColor="#8018262c"
             android:textSize="12sp"
+            android:onClick="@{()->pactivity.onUUIDclick()}"
             app:layout_constraintBottom_toTopOf="@id/uuid" />
 
         <TextView
@@ -74,7 +75,8 @@
             android:text="@{settings.uuid}"
             android:textColor="#000"
             android:textSize="16sp"
+            android:onClick="@{()->pactivity.onUUIDclick()}"
             app:layout_constraintBottom_toBottomOf="parent"
-            tools:text="0055AAFF" />
+            tools:text="" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

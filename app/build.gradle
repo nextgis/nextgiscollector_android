@@ -38,8 +38,8 @@ android {
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 76
-        versionName "1.5.41"
+        versionCode 77
+        versionName "1.5.42"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
@@ -53,7 +53,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+//            minifyEnabled true
+//            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             resValue 'string', 'APP_NAME', '"NextGIS Collector"'
             resValue 'string', 'SENTRY_DSN', sentryDsn

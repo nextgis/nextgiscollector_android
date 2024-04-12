@@ -27,9 +27,12 @@ import android.app.AlertDialog
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.net.ConnectivityManager
 import android.net.Uri
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.preference.PreferenceManager
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
@@ -64,6 +67,7 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.MapUtil
 import com.nextgis.maplib.util.PermissionUtil
+import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.service.TrackerService
@@ -71,6 +75,7 @@ import com.nextgis.maplibui.service.TrackerService.*
 import com.nextgis.maplibui.util.*
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.get
+import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_OFFLINE_SYNC_ON
 import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_SHOW_SYNC
 import com.pawegio.kandroid.*
 import org.json.JSONObject
@@ -576,6 +581,12 @@ abstract class ProjectActivity : BaseActivity() {
         }
     }
 
+
+
+
+
+
+
     protected fun sync() {
         val accounts = ArrayList<Account>()
         val layers = ArrayList<INGWLayer>()
@@ -596,9 +607,21 @@ abstract class ProjectActivity : BaseActivity() {
                 val mPreferences = PreferenceManager.getDefaultSharedPreferences(this)
                 val base = mPreferences.getString("ngid_url", NGIDUtils.NGID_MY)
 
-                if (!NGIDUtils.NGID_MY.equals(base)) {
+                val offlineSync = mPreferences.getBoolean(KEY_PREF_OFFLINE_SYNC_ON, false)
+                // offline sync condition
+                if (offlineSync || !NGIDUtils.NGID_MY.equals(base)) {
                     OfflineIntentService.startActionSync(this)
                 } else {
+
+                    // startCheck
+                    GISApplication.getInstance().startRunnable( Runnable{
+                        val mPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+                        val offlineSync = mPreferences.getBoolean(KEY_PREF_OFFLINE_SYNC_ON, false)
+                        if (!offlineSync)
+                            mPreferences.edit().putBoolean(KEY_PREF_OFFLINE_SYNC_ON, true).apply()
+
+                        OfflineIntentService.startActionSync(applicationContext) }
+                    );
                     val settings = Bundle()
                     settings.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
                     settings.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
@@ -635,6 +658,7 @@ abstract class ProjectActivity : BaseActivity() {
             val base = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
             val url = ProjectModel.getBaseUrl(base ?: COLLECTOR_HUB_URL, private)
             val email = NetworkUtil.getEmailOrUsername(preferences)
+            //com.nextgis.maplib.util.NetworkUtil.configureSSLdefault()
             val response = ProjectModel.getResponse("$url/$id", email)
             response?.let {
                 try {

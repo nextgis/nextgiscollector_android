@@ -23,13 +23,17 @@ package com.nextgis.collector.activity
 
 import android.app.Activity
 import android.app.ProgressDialog
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.os.AsyncTask
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.preference.PreferenceManager
 import android.view.Menu
 import android.view.MenuItem
@@ -60,6 +64,10 @@ import java.text.DateFormat
 import java.util.*
 
 class PreferenceActivity : BaseActivity() {
+
+    companion object {
+        var timesClick = 0;
+    }
     private lateinit var binding: ActivityPreferenceBinding
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -71,6 +79,49 @@ class PreferenceActivity : BaseActivity() {
         }
     }
 
+    fun onUUIDclick(){
+        timesClick ++
+        if (timesClick > 6){
+            timesClick = 0
+            showDeviceInfo()
+        }
+    }
+
+    protected fun showDeviceInfo() {
+        val cm = application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val netInfo = cm.activeNetworkInfo
+        val isOnline =  netInfo != null && netInfo.isConnectedOrConnecting
+        // online
+
+        val batLevel = application.getSystemService(BATTERY_SERVICE) as BatteryManager
+        val bl = batLevel.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        // bat level
+
+        var resultString= "network: " + (if (isOnline) "online" else "offline") +
+                "\n" + "battery level: " + bl
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+            &&
+            (application.getSystemService(POWER_SERVICE) as PowerManager).isPowerSaveMode){
+
+            resultString = resultString + "\npower save mode: " + "true"
+        } else
+            resultString = resultString + "\npower save mode: " + "false"
+
+
+        resultString = resultString + "\ndevice battery optimization is: " +
+                isBatteryOptimizationEnabled(applicationContext)
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setCancelable(true)
+            .setMessage(resultString)
+            .create().show()
+    }
+
+    open fun isBatteryOptimizationEnabled(context: Context): Boolean {
+        val powerManager = context.getSystemService(POWER_SERVICE) as PowerManager
+        return powerManager?.isPowerSaveMode ?: false
+    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -90,6 +141,8 @@ class PreferenceActivity : BaseActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setHomeButtonEnabled(true)
+
+        binding.pactivity = this@PreferenceActivity
 
         val settingsModel = ViewModelProviders.of(this).get(SettingsViewModel::class.java)
         settingsModel.init(this)

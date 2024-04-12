@@ -37,7 +37,6 @@ import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import androidx.databinding.DataBindingUtil
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -438,7 +437,13 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             app.getAccount(authority)?.let { app.removeAccount(it) }
             val success = app.addAccount(authority, fullUrl, project.user, project.password, "ngw")
             if (!success) {
-                toast(R.string.error_auth)
+
+                val dialog = AlertDialog.Builder(this)
+                dialog.setTitle(com.nextgis.maplibui.R.string.error_account_create)
+                    .setMessage(R.string.error_account_add_error)
+                    .setPositiveButton(com.nextgis.maplibui.R.string.ok, null)
+                    .show()
+//                toast(R.string.error_auth)
                 reset()
                 return
             }

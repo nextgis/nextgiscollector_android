@@ -27,4 +27,5 @@
     android:contentAuthority="@string/provider_auth"
     android:isAlwaysSyncable="true"
     android:supportsUploading="true"
-    android:userVisible="true"/>
+    android:userVisible="true"
+    />

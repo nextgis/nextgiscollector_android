@@ -61,6 +61,7 @@ class ProjectModel {
         runAsync {
             val namespace = "?namespace=" + if (private) "private" else "public"
             val path = getBaseUrl(url, private) + "/$namespace"
+            //com.nextgis.maplib.util.NetworkUtil.configureSSLdefault()
             val response = getResponse(path, email)
             var list = ArrayList<Project>()
             response?.let {
@@ -75,6 +76,7 @@ class ProjectModel {
         runAsync {
             var project: Project? = null
             val path = getBaseUrl(url, private) + "/$id"
+            //com.nextgis.maplib.util.NetworkUtil.configureSSLdefault()
             val response = getResponse(path, email)
             response?.let {
                 val json = try {
