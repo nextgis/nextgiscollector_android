@@ -33,7 +33,7 @@
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning"
         tools:replace="android:allowBackup,android:label"
-        tools:targetApi="m" >
+        >
         <service
             android:name=".service.OfflineIntentService"
             android:exported="false" >

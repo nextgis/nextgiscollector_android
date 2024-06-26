@@ -17,4 +17,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "nextgiscollector_android"
-include ':app', ':maplib', ':maplibui'
+include ':app', ':maplib', ':maplibui', "easypicker"

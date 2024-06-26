@@ -684,14 +684,20 @@ abstract class ProjectActivity : BaseActivity() {
             if (intent.action == SyncAdapter.SYNC_START) {
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.VISIBLE
             } else if (intent.action == SyncAdapter.SYNC_FINISH || intent.action == SyncAdapter.SYNC_CANCELED) {
-                if (intent.hasExtra(SyncAdapter.EXCEPTION))
+                if (intent.hasExtra(SyncAdapter.EXCEPTION)) {
+                    var errorText = context.resources.getText(R.string.alert_sync_error_message)
+                    if( (application as GISApplication).accountError != null &&
+                        (application as GISApplication).errorCode == 403) {
+                        errorText = context.resources.getText(R.string.error_no_access_403)
+                        (application as GISApplication).setError(null, null, 0)
+                    }
 
                     AlertDialog.Builder(context).setTitle(R.string.alert_sync_error_title)
                         //.setMessage(intent.getStringExtra(SyncAdapter.EXCEPTION) ?: getString(R.string.sync_error))
-                        .setMessage(R.string.alert_sync_error_message)
-                        .setPositiveButton(R.string.ok,null)
+                        .setMessage(errorText)
+                        .setPositiveButton(R.string.ok, null)
                         .show()
-
+                }
                    // toast(intent.getStringExtra(SyncAdapter.EXCEPTION) ?: getString(R.string.sync_error))
 
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.GONE
