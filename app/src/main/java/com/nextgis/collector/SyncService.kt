@@ -65,7 +65,7 @@ class SyncService: NGWSyncService() {
         intentFilter.addAction(SyncAdapter.SYNC_FINISH)
         intentFilter.addAction(SyncAdapter.SYNC_CANCELED)
         intentFilter.addAction(SyncAdapter.SYNC_CHANGES)
-        registerReceiver(mSyncReceiver, intentFilter)
+        registerReceiver(mSyncReceiver, intentFilter, RECEIVER_EXPORTED)
     }
 
     private fun rebuildLayersCaches(context: Context) {

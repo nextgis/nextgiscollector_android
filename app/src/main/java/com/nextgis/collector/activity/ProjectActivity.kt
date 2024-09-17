@@ -27,12 +27,9 @@ import android.app.AlertDialog
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
-import android.net.ConnectivityManager
 import android.net.Uri
-import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.preference.PreferenceManager
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
@@ -113,7 +110,7 @@ abstract class ProjectActivity : BaseActivity() {
         intentFilter.addAction(SyncAdapter.SYNC_START)
         intentFilter.addAction(SyncAdapter.SYNC_FINISH)
         intentFilter.addAction(SyncAdapter.SYNC_CANCELED)
-        registerReceiver(syncReceiver, intentFilter)
+        registerReceiver(syncReceiver, intentFilter, RECEIVER_EXPORTED)
 
         get(this) { response ->
             if (response.isOk) {
@@ -424,7 +421,7 @@ abstract class ProjectActivity : BaseActivity() {
                     trackItem = item
                     mMessageReceiver?.updateTrackItem(item)
                     val permission = Manifest.permission.ACCESS_FINE_LOCATION
-                    requestPermissions(R.string.no_permission_granted, R.string.requested_permissions, LOCATION_REQUEST, permission)
+                    requestPermissions(this@ProjectActivity, R.string.no_permission_granted, R.string.requested_permissions, LOCATION_REQUEST, permission)
                 } else {
                     controlTrack(item)
                 }
@@ -740,7 +737,7 @@ abstract class ProjectActivity : BaseActivity() {
         super.onResume()
         val intentFilter = IntentFilter()
         intentFilter.addAction(ConstantsUI.MESSAGE_INTENT_TRACK)
-        registerReceiver(mMessageReceiver, intentFilter)
+        registerReceiver(mMessageReceiver, intentFilter, RECEIVER_EXPORTED)
 
 
 

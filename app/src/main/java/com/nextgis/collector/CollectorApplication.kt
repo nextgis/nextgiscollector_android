@@ -100,7 +100,8 @@ class CollectorApplication : GISApplication() {
         intentFilter.addAction(SyncAdapter.SYNC_START)
         intentFilter.addAction(SyncAdapter.SYNC_FINISH)
         intentFilter.addAction(SyncAdapter.SYNC_CANCELED)
-        registerReceiver(syncReceiver, intentFilter)
+        registerReceiver(syncReceiver, intentFilter, RECEIVER_EXPORTED)
+
 
     }
 

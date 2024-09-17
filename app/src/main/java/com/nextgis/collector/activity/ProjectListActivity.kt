@@ -60,6 +60,7 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplib.util.NGWUtil
+import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
@@ -221,11 +222,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         val intentFilter = IntentFilter(LayerFillService.ACTION_UPDATE)
         intentFilter.addAction(LayerFillService.ACTION_STOP)
-        registerReceiver(receiver, intentFilter)
+        registerReceiver(receiver, intentFilter, RECEIVER_EXPORTED)
 
         val intentFilterPointsz = IntentFilter()
         intentFilterPointsz.addAction(Constants.MESSAGE_ALERT_INTENT)
-        registerReceiver(receiverPointz, intentFilterPointsz)
+        registerReceiver(receiverPointz, intentFilterPointsz, RECEIVER_EXPORTED )
 
 
         val extras = intent.extras
