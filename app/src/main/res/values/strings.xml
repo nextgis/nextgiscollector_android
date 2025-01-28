@@ -50,6 +50,7 @@
     <string name="details">More</string>
     <string name="write_us">Want to start your own data collection project with NextGIS Collector? Get <a href='https://nextgis.com/pricing-base'>Premium</a></string>
     <string name="device_id">Your device ID</string>
+    <string name="account_id">Your account ID</string>
     <string name="sign_out_ngid">Sign out from NextGIS</string>
     <string name="sign_out_ngid_message">>Are you sure to sign out from NextGIS? Current map and data will be deleted.</string>
     <string name="track_cloud">Tracks cloud sync</string>
@@ -75,6 +76,9 @@
     <string name="push_perm_title">Notifications</string>
     <string name="push_perm_text">Notifications are disabled by the system, to enable them go to settings, find the application and enable notifications</string>
     <string name="push_perm_why_text">To receive notifications you need to give permissions</string>
+
+    <string name="user_name">Username</string>
+    <string name="account_email">E-mail</string>
 
 
 </resources>

@@ -17,4 +17,6 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "nextgiscollector_android"
-include ':app', ':maplib', ':maplibui', "easypicker"
+include ':app', ':maplib', ':maplibui'
+include ':easypicker-module'
+project(':easypicker-module').projectDir = new File(rootDir, 'easypicker/easypicker')

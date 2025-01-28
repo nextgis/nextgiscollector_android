@@ -54,6 +54,31 @@
             app:layout_constraintBottom_toTopOf="@id/device_id"
             app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
+
+        <TextView
+            android:id="@+id/text_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@{settings.userName}"
+            android:textColor="#000"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toTopOf="@id/account_id"
+            />
+
+        <TextView
+            android:id="@+id/account_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@{settings.email}"
+            android:textColor="#000"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toTopOf="@id/device_id"
+            />
+
         <TextView
             android:id="@+id/device_id"
             android:layout_width="match_parent"
@@ -63,8 +88,8 @@
             android:text="@string/device_id"
             android:textColor="#8018262c"
             android:textSize="12sp"
-            android:onClick="@{()->pactivity.onUUIDclick()}"
-            app:layout_constraintBottom_toTopOf="@id/uuid" />
+            app:layout_constraintBottom_toTopOf="@id/uuid"
+            />
 
         <TextView
             android:id="@+id/uuid"
@@ -75,7 +100,7 @@
             android:text="@{settings.uuid}"
             android:textColor="#000"
             android:textSize="16sp"
-            android:onClick="@{()->pactivity.onUUIDclick()}"
+
             app:layout_constraintBottom_toBottomOf="parent"
             tools:text="" />
     </androidx.constraintlayout.widget.ConstraintLayout>

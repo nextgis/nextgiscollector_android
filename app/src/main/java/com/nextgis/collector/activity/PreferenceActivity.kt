@@ -79,13 +79,13 @@ class PreferenceActivity : BaseActivity() {
         }
     }
 
-    fun onUUIDclick(){
-        timesClick ++
-        if (timesClick > 6){
-            timesClick = 0
-            showDeviceInfo()
-        }
-    }
+//    fun onUUIDclick(){
+//        timesClick ++
+//        if (timesClick > 6){
+//            timesClick = 0
+//            showDeviceInfo()
+//        }
+//    }
 
     protected fun showDeviceInfo() {
         val cm = application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

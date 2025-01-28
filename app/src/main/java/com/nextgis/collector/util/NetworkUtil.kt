@@ -119,5 +119,15 @@ class NetworkUtil {
             val username = preferences.getString(NGIDUtils.PREF_USERNAME, "")
             return if (email.isNullOrBlank() || email == "null") username ?: "" else email
         }
+
+        fun getEmail(preferences: SharedPreferences): String {
+            val email = preferences.getString(NGIDUtils.PREF_EMAIL, "")
+            return if (email.isNullOrBlank() ) "null" else email
+        }
+
+        fun getUserName(preferences: SharedPreferences): String {
+            val username = preferences.getString(NGIDUtils.PREF_USERNAME, "")
+            return if (username.isNullOrBlank() ) "null" else username
+        }
     }
 }

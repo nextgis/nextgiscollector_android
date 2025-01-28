@@ -21,6 +21,7 @@
 
 package com.nextgis.collector.data
 
+import android.os.Build
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import android.os.Parcel
@@ -35,7 +36,8 @@ class Project(val id: Int, val ngwId: Int, val title: String, val description: S
 
     private constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readInt(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readInt(), readArrayList(parcel), readStringFrom(parcel), parcel.readBoolean(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel))
 
-    constructor(json: JSONObject) : this(json.optInt("id"), json.optInt("ngwId"), json.optString("title"), json.optString("description", ""),
+    constructor(json: JSONObject) : this(json.optInt("id"), json.optInt("ngwId"), json.optString("title"),
+        json.optString("description", ""),
             json.optString("screen"), json.optInt("version"), ArrayList(), "",
             json.optBoolean("private"), json.optString("url"), "", "")
 
@@ -48,7 +50,11 @@ class Project(val id: Int, val ngwId: Int, val title: String, val description: S
         dest.writeInt(version)
         dest.writeArray(layers.toArray())
         dest.writeString(tree)
-        dest.writeBoolean(private)
+        try {
+            dest.writeBoolean(private)
+        } catch (ex : Exception){
+
+        }
         dest.writeString(url)
         dest.writeString(user)
         dest.writeString(hash)

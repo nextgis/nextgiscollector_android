@@ -21,6 +21,7 @@
 
 package com.nextgis.collector.model
 
+import android.text.Html
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.data.*
 import com.nextgis.collector.data.ResourceTree.Companion.parseResources
@@ -109,7 +110,7 @@ class ProjectModel {
         val id = jsonProject.optInt("id")
         val ngwId = jsonProject.optInt("ngw_project_id")
         val version = jsonProject.optInt("version")
-        val description = if (jsonProject.isNull("description")) "" else jsonProject.optString("description")
+        val description =   Html.fromHtml(if (jsonProject.isNull("description")) "" else jsonProject.optString("description")).toString()
 
         var url = jsonProject.optString("url")
         var user = jsonProject.optString("username")

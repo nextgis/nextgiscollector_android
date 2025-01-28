@@ -23,11 +23,24 @@ package com.nextgis.collector.model
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.preference.PreferenceManager
+import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.maplibui.service.TrackerService
+import com.nextgis.maplibui.util.NGIDUtils
 
 class SettingsModel {
     @SuppressLint("HardwareIds")
     fun getUid(context: Context): String {
         return TrackerService.getUid(context)
+    }
+
+    fun getEmail(context: Context): String {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        return NetworkUtil.getEmail(preferences)
+    }
+
+    fun getUserName(context: Context): String {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        return NetworkUtil.getUserName(preferences)
     }
 }

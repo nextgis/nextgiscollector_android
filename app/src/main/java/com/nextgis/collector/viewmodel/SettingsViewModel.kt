@@ -24,13 +24,18 @@ package com.nextgis.collector.viewmodel
 import androidx.lifecycle.ViewModel
 import android.content.Context
 import androidx.databinding.ObservableField
+import com.nextgis.collector.R
 import com.nextgis.collector.model.SettingsModel
 
 class SettingsViewModel : ViewModel() {
     private var settingsModel: SettingsModel = SettingsModel()
     var uuid = ObservableField("0055AAFF")
+    var userName = ObservableField("")
+    var email = ObservableField("")
 
     fun init(context: Context) {
         uuid.set(settingsModel.getUid(context))
+        userName.set(context.getString(R.string.user_name) + ": " + settingsModel.getUserName(context))
+        email.set(context.getString(R.string.account_email) + ": " +settingsModel.getEmail(context))
     }
 }
