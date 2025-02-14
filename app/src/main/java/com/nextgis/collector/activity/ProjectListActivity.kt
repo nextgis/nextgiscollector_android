@@ -50,6 +50,10 @@ import com.nextgis.collector.data.RemoteLayerNGW
 import com.nextgis.collector.data.RemoteLayerTMS
 import com.nextgis.collector.databinding.ActivityProjectListBinding
 import com.nextgis.collector.util.NetworkUtil
+import com.nextgis.collector.util.longToast
+import com.nextgis.collector.util.runDelayed
+import com.nextgis.collector.util.startActivity
+import com.nextgis.collector.util.toast
 import com.nextgis.collector.viewmodel.ProjectViewModel
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.datasource.ngw.LayerWithStyles
@@ -67,8 +71,8 @@ import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
-import com.pawegio.kandroid.*
 import java.io.File
+import java.util.concurrent.CompletableFuture.runAsync
 
 class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
     private lateinit var binding: ActivityProjectListBinding

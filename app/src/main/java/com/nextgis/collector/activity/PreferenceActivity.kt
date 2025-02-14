@@ -47,6 +47,7 @@ import com.nextgis.collector.BuildConfig
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ActivityPreferenceBinding
 import com.nextgis.collector.util.Logger
+import com.nextgis.collector.util.runDelayedOnUiThread
 import com.nextgis.collector.viewmodel.SettingsViewModel
 import com.nextgis.maplib.util.AccountUtil
 import com.nextgis.maplib.util.NetworkUtil
@@ -55,7 +56,6 @@ import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.util.NGIDUtils
 import com.nextgis.maplibui.util.SettingsConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_SHOW_SYNC
-import com.pawegio.kandroid.runDelayedOnUiThread
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException

@@ -29,9 +29,9 @@ import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.maplib.util.HttpResponse
 import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_PROJECTS_URL
-import com.pawegio.kandroid.runAsync
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.concurrent.CompletableFuture.runAsync
 
 
 class ProjectModel {
@@ -79,7 +79,7 @@ class ProjectModel {
             val path = getBaseUrl(url, private) + "/$id"
             //com.nextgis.maplib.util.NetworkUtil.configureSSLdefault()
             val response = getResponse(path, email)
-            response?.let {
+            response?.let { 
                 val json = try {
                     JSONObject(response.responseBody)
                 } catch (e: Exception) {

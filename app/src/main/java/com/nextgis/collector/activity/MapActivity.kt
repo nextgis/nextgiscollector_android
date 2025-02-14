@@ -44,6 +44,9 @@ import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.LayersAdapter
 import com.nextgis.collector.databinding.ActivityMainBinding
+import com.nextgis.collector.util.locationManager
+import com.nextgis.collector.util.startActivity
+import com.nextgis.collector.util.toast
 import com.nextgis.maplib.api.GpsEventListener
 import com.nextgis.maplib.api.ILayerView
 import com.nextgis.maplib.datasource.Feature
@@ -67,9 +70,6 @@ import com.nextgis.maplibui.overlay.EditLayerOverlay.MODE_EDIT_BY_WALK
 import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI
-import com.pawegio.kandroid.locationManager
-import com.pawegio.kandroid.startActivity
-import com.pawegio.kandroid.toast
 import java.io.IOException
 
 

@@ -52,7 +52,13 @@ import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.R
 import com.nextgis.collector.model.ProjectModel
 import com.nextgis.collector.service.OfflineIntentService
+import com.nextgis.collector.util.IntentFor
 import com.nextgis.collector.util.NetworkUtil
+import com.nextgis.collector.util.accountManager
+import com.nextgis.collector.util.longToast
+import com.nextgis.collector.util.runDelayedOnUiThread
+import com.nextgis.collector.util.startActivity
+import com.nextgis.collector.util.toast
 import com.nextgis.maplib.api.IGISApplication
 import com.nextgis.maplib.api.INGWLayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
@@ -74,9 +80,9 @@ import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.get
 import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_OFFLINE_SYNC_ON
 import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_SHOW_SYNC
-import com.pawegio.kandroid.*
 import org.json.JSONObject
 import java.io.*
+import java.util.concurrent.CompletableFuture.runAsync
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 

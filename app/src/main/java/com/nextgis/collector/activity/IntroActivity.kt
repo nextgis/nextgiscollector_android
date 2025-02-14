@@ -32,10 +32,10 @@ import androidx.core.content.ContextCompat
 import com.github.paolorotolo.appintro.AppIntro
 import com.github.paolorotolo.appintro.AppIntroFragment
 import com.nextgis.collector.R
+import com.nextgis.collector.util.longToast
+import com.nextgis.collector.util.startActivity
 import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.util.SettingsConstantsUI
-import com.pawegio.kandroid.longToast
-import com.pawegio.kandroid.startActivity
 
 class IntroActivity : AppIntro() {
     companion object {

@@ -29,6 +29,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.data.Project
+import com.nextgis.collector.util.IntentFor
 import com.nextgis.maplib.map.MapDrawable
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.TrackLayer
@@ -36,7 +37,6 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplibui.activity.NGActivity
 import com.nextgis.maplibui.mapui.MapViewOverlays
-import com.pawegio.kandroid.IntentFor
 import org.json.JSONObject
 
 abstract class BaseActivity : NGActivity() {

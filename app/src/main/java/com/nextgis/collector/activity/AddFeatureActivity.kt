@@ -38,14 +38,14 @@ import com.nextgis.collector.R
 import com.nextgis.collector.adapter.EditableLayersAdapter
 import com.nextgis.collector.data.ResourceTree
 import com.nextgis.collector.databinding.ActivityAddFeatureBinding
+import com.nextgis.collector.util.IntentFor
+import com.nextgis.collector.util.startActivity
+import com.nextgis.collector.util.toast
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
-import com.pawegio.kandroid.IntentFor
-import com.pawegio.kandroid.startActivity
-import com.pawegio.kandroid.toast
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileWriter
