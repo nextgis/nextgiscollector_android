@@ -39,8 +39,8 @@ android {
         compileSdk 34
         targetSdkVersion 34
 
-        versionCode 86
-        versionName "1.9.0"
+        versionCode 87
+        versionName "1.10.0"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
@@ -111,6 +111,7 @@ dependencies {
 
     implementation 'androidx.lifecycle:lifecycle-runtime:2.0.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
+    //implementation 'androidx.activity:activity:1.9.0'
     kapt 'androidx.lifecycle:lifecycle-compiler:2.0.0'
 
     implementation('com.google.android.material:material:1.0.0') {

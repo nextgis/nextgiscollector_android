@@ -160,7 +160,7 @@ class PreferenceActivity : BaseActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.about, menu)
+        //menuInflater.inflate(R.menu.about, menu)
         return true
     }
 

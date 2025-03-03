@@ -230,6 +230,7 @@ abstract class ProjectActivity : BaseActivity() {
             }
             R.id.menu_track_list -> startActivity<TracksActivity>()
             R.id.menu_settings -> startActivity<PreferenceActivity>()
+            R.id.action_about -> startActivity<AboutActivity>()
             else -> return super.onOptionsItemSelected(item)
         }
         return true

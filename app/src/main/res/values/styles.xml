@@ -37,4 +37,20 @@
 
     <style name="AppTheme.TranslucentStatusBar" parent="AppTheme.NoActionBar">
     </style>
+
+
+
+    <style name="AppTheme.AppBarOverlay" parent="AppTheme">
+        <item name="colorPrimary">@color/colorPrimary</item>
+<!--        <item name="colorAccent">@color/colorAccent</item>-->
+<!--        <item name="colorSecondary">@color/colorAccent</item>-->
+    </style>>
+
+    <style name="AppTheme.PopupOverlay" parent="AppTheme">
+        <item name="colorPrimary">@color/colorPrimary</item>
+<!--        <item name="colorAccent">@color/colorAccent</item>-->
+<!--        <item name="colorSecondary">@color/colorAccent</item>-->
+
+    </style>>
+
 </resources>

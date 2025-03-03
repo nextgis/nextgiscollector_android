@@ -19,8 +19,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
-
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name=".CollectorApplication"
@@ -32,12 +31,15 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning"
-        tools:replace="android:allowBackup,android:label"
-        >
+        tools:replace="android:allowBackup,android:label">
+        <activity
+            android:name=".activity.AboutActivity"
+            android:exported="false"
+            />
+
         <service
             android:name=".service.OfflineIntentService"
-            android:exported="false" >
-        </service>
+            android:exported="false"/>
 
         <meta-data
             android:name="io.sentry.dsn"
@@ -61,7 +63,7 @@
         <activity
             android:name=".activity.ProjectListActivity"
             android:exported="true"
-            android:label="@string/APP_NAME" >
+            android:label="@string/APP_NAME">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -75,7 +77,8 @@
         <activity
             android:name=".activity.MapActivity"
             android:launchMode="singleTask"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            />
         <activity
             android:name=".activity.AddFeatureActivity"
             android:label="@string/add_feature"
@@ -89,7 +92,7 @@
         <service
             android:name="com.nextgis.maplibui.account.NGWAuthenticatorService"
             android:enabled="true"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
@@ -100,7 +103,7 @@
         </service>
         <service
             android:name=".SyncService"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>
@@ -115,12 +118,11 @@
             android:authorities="@string/provider_auth"
             android:exported="false"
             android:syncable="true" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.easypicker.provider"
             android:exported="false"
-            android:grantUriPermissions="true" >
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />

@@ -576,6 +576,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_settings -> startActivity<PreferenceActivity>()
+            R.id.action_about -> startActivity<AboutActivity>()
             else -> return super.onOptionsItemSelected(item)
         }
         return true

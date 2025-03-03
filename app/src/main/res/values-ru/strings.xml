@@ -78,4 +78,30 @@
     <string name="push_perm_why_text">Для получения уведомлений нужно дать разрешения</string>
     <string name="user_name">Имя пользователя</string>
 
+    <string name="contacts"><a href="https://nextgis.ru/contact/">Связаться с нами</a></string>
+    <string name="copyright" translatable="false"><![CDATA[© <a href=\"https://nextgis.ru\">NextGIS</a>, 2012–%s]]></string>
+    <string name="telegram_prompt">nextgis_chat</string>
+    <string name="credits_intro">Лицензии</string>
+    <string name="credits">Некоторые иконки использованные в приложении с <a href="http://icons8.com/android-icons">Icons8.com</a> под лицензией <a
+        href="http://creativecommons.org/licenses/by-nd/3.0/">CC BY-ND 3.0</a>, <a href="http://materialdesignicons.com/">materialdesignicons.com</a> и <a href="http://romannurik.github.io/AndroidAssetStudio/icons-launcher.html">romannurik.github.io</a> под лицензией <a href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a></string>
+
+    <string name="action_about">О программе</string>
+    <string name="action_support">Поддержка</string>
+    <string name="app_support">Задавайте вопросы, сообщайте об ошибках или предлагайте новые функции используя любой удобный для вас способ. Доступна коммерческая поддержка.</string>
+
+    <string name="action_help">Помощь</string>
+    <string name="not_installed">Приложение не установлено</string>
+    <string name="tracker_details_newngw"><![CDATA[Если у вас нет Веб ГИС её можно завести <a href=\"https://my.nextgis.com/signup/?next=/webgis/\">тут</a>]]></string>
+    <string name="tracker_details">NextGIS Collector помогает осуществить сбор данных в поле с настраиваемыми формами</string>
+
+    <string name="tracker_details_techsupport">Техническая поддержка</string>
+    <string name="tracker_details_techsupport_url">support@nextgis.ru</string>
+
+    <string name="tracker_details_telegram">Телеграм</string>
+    <string name="tracker_details_telegram_url">"@nextgis_chat"</string>
+    <string name="tracker_details_telegram_url_bin">"nextgis_chat"</string>
+    <string name="tracker_details_allcontacts">Все контакты</string>
+    <string name="tracker_details_allcontacts_url">https://nextgis.ru/contact</string>
+
+
 </resources>
