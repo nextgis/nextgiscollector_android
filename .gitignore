@@ -2,8 +2,7 @@
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion
 
 *.iml
-maplib/
-maplibui/
+
 
 ## Directory-based project format:
 .idea/
