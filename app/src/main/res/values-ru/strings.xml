@@ -103,5 +103,12 @@
     <string name="tracker_details_allcontacts">Все контакты</string>
     <string name="tracker_details_allcontacts_url">https://nextgis.ru/contact</string>
 
+    <string name="documentation_title">Документация</string>
+
+    <string name="web">Сайт</string>
+    <string name="web_src">https://nextgis.ru/nextgis-collector/</string>
+    <string name="manual_url">https://docs.nextgis.ru/docs_collector/source</string>
+
+
 
 </resources>

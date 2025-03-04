@@ -102,6 +102,12 @@
     <string name="tracker_details_telegram_url_bin">"nextgis_talks"</string>
     <string name="tracker_details_allcontacts">All contacts</string>
     <string name="tracker_details_allcontacts_url">https://nextgis.com/contact</string>
+    <string name="documentation">ss</string>
 
+    <string name="documentation_title">Documentation</string>
+
+    <string name="web">Website</string>
+    <string name="web_src">https://nextgis.com/nextgis-collector/</string>
+    <string name="manual_url">https://docs.nextgis.com/docs_collector/source</string>
 
 </resources>
