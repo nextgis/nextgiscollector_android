@@ -32,10 +32,10 @@ import com.nextgis.maplib.util.Constants
 
 
 open class RemoteLayer(val title: String, val type: String, val description: String, val url: String,
-                       val visible: Boolean, val minZoom: Float, val maxZoom: Float) : BaseObservable(), KParcelable {
+                       val visible: Boolean, val minZoom: Float, val maxZoom: Float, val defaultFormId:Long) : BaseObservable(), KParcelable {
 
     private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
-            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat())
+            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
@@ -45,6 +45,7 @@ open class RemoteLayer(val title: String, val type: String, val description: Str
         dest.writeBoolean(visible)
         dest.writeFloat(minZoom)
         dest.writeFloat(maxZoom)
+        dest.writeLong(defaultFormId)
     }
 
     companion object {

@@ -108,6 +108,6 @@
 
     <string name="web">Website</string>
     <string name="web_src">https://nextgis.com/nextgis-collector/</string>
-    <string name="manual_url">https://docs.nextgis.com/docs_collector/source</string>
+    <string name="manual_url">https://docs.nextgis.com/docs_collector/source/toc.html</string>
 
 </resources>

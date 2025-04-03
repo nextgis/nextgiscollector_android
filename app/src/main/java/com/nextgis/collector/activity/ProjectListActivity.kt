@@ -386,7 +386,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     val layer = map.getLayer(i)
                     val name = layer.path.name
                     val id = paths.indexOf(name)
-                    if (id != i && id.coerceIn(0 until map.layerCount) == id) {
+                    if (id != i && id.coerceIn(0 until map.layerCount) == id &&
+                        !name.equals(paths.get(id)) ) {
                         map.moveLayer(id, layer)
                         i = 0
                     } else
@@ -550,7 +551,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             id?.let {
                 val forms = arrayListOf<Long>()
                 LayerWithStyles.fillStyles(url, user, pass, it, null, forms)
-                forms.firstOrNull()?.let { form -> formUrl = NGWUtil.getFormUrl(url, form) }
+                val selectedForm = forms.find { it == layer.defaultFormId } ?: forms.firstOrNull()
+                selectedForm?.let {
+                    form -> formUrl = NGWUtil.getFormUrl(url, form)
+                }
+
             }
         queue(intent, layer, formUrl)
     }

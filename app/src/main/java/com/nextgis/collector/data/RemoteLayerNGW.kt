@@ -29,13 +29,14 @@ import com.nextgis.collector.writeBoolean
 import org.json.JSONObject
 
 
-class RemoteLayerNGW(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float,
-                     var login: String, var password: String?, val editable: Boolean, val syncable: Boolean, var style: String = "")
-    : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom) {
+class RemoteLayerNGW(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, defaultFormId: Long,
+                     var login: String, var password: String?, val editable: Boolean, val syncable: Boolean,
+                     var style: String = "")
+    : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom, defaultFormId) {
 
     private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
-            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), readStringFrom(parcel),
-            readStringFrom(parcel), parcel.readBoolean(), parcel.readBoolean(), readStringFrom(parcel))
+            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong(), readStringFrom(parcel),
+            readStringFrom(parcel), parcel.readBoolean(), parcel.readBoolean(), readStringFrom(parcel) )
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         super.writeToParcel(dest, flags)

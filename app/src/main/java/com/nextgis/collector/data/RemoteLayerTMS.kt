@@ -27,10 +27,14 @@ import com.nextgis.collector.parcelableCreator
 import com.nextgis.collector.readBoolean
 
 
-class RemoteLayerTMS(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, val lifetime: Long, val 
-tmsType: Int) : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom) {
+class RemoteLayerTMS(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float,
+                     defaultFormId: Long,  val lifetime: Long, val
+tmsType: Int) : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom, defaultFormId) {
 
-    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong(), parcel.readInt())
+    private constructor(parcel: Parcel) : this(
+        readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
+        parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong(),
+        parcel.readLong(), parcel.readInt())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         super.writeToParcel(dest, flags)

@@ -39,8 +39,8 @@ android {
         compileSdk 34
         targetSdkVersion 34
 
-        versionCode 87
-        versionName "1.10.0"
+        versionCode 90
+        versionName "1.11.0"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
@@ -91,8 +91,8 @@ android {
         viewBinding = true
     }
     compileOptions {
-        sourceCompatibility "17"
-        targetCompatibility "17"
+        sourceCompatibility "21"
+        targetCompatibility "21"
     }
 
     namespace 'com.nextgis.collector'
@@ -106,7 +106,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21"
     implementation "androidx.core:core-ktx:1.10.1"
 
     implementation 'androidx.lifecycle:lifecycle-runtime:2.0.0'

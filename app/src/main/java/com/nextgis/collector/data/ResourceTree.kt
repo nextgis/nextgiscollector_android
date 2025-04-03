@@ -36,7 +36,7 @@ open class ResourceTree(val resources: ArrayList<Resource>) {
                     val title = jsonResource.optString("title")
                     val description = jsonResource.optString("description")
                     val url = jsonResource.optString("url", System.currentTimeMillis().toString())
-                    val layer = RemoteLayer(title, type, description, url, true, 0f, 0f)
+                    val layer = RemoteLayer(title, type, description, url, true, 0f, 0f, -1)
                     val id = if (skipId) layer.path else jsonResource.optString("id")
                     val resource = Resource(title, type, description, id, arrayListOf())
                     when (type) {

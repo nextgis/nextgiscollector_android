@@ -32,7 +32,9 @@ import org.json.JSONObject
 import java.util.*
 
 
-class Project(val id: Int, val ngwId: Int, val title: String, val description: String, val screen: String, version: Int, val layers: ArrayList<RemoteLayer>, val tree: String, val private: Boolean, val url: String, val user: String, val hash: String) : BaseObservable(), KParcelable {
+class Project(val id: Int, val ngwId: Int, val title: String, val description: String, val screen: String, version: Int,
+              val layers: ArrayList<RemoteLayer>, val tree: String, val private: Boolean, val url: String, val user: String, val hash: String)
+    : BaseObservable(), KParcelable {
 
     private constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readInt(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readInt(), readArrayList(parcel), readStringFrom(parcel), parcel.readBoolean(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel))
 

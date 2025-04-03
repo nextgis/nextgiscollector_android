@@ -201,7 +201,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 
     override fun onResume() {
         super.onResume()
-        Toast.makeText(this,"ON_RESUME", -1)
+        //Toast.makeText(this,"ON_RESUME", -1)
         if ( !(application as CollectorApplication).isTrackInProgress)
             binding.overlay.visibility = View.GONE;
     }
