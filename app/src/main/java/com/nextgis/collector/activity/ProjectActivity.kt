@@ -101,7 +101,7 @@ abstract class ProjectActivity : BaseActivity() {
         get() {
             return findViewById<FrameLayout>(R.id.overlay).visibility == View.VISIBLE
         }
-    protected var trackItem: MenuItem? = null
+    public var trackItem: MenuItem? = null
 
     protected var mMessageReceiver: MessageReceiver? = null
 
@@ -201,6 +201,10 @@ abstract class ProjectActivity : BaseActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main, menu)
+        if (trackItem == null)
+            menu?.findItem(R.id.menu_track).let {
+                trackItem = menu?.findItem(R.id.menu_track)
+            }
         setTracksTitle(menu?.findItem(R.id.menu_track))
         //updateTracksMenuItems(menu)
         return super.onCreateOptionsMenu(menu)
@@ -208,12 +212,22 @@ abstract class ProjectActivity : BaseActivity() {
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         //updateTracksMenuItems(menu)
+        if (trackItem == null)
+            menu?.findItem(R.id.menu_track).let {
+                trackItem = menu?.findItem(R.id.menu_track)
+            }
         setTracksTitle(menu?.findItem(R.id.menu_track))
         menu?.findItem(R.id.menu_share_log)?.isVisible = preferences.getBoolean("save_log", false)
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        val trackInProgress = TrackerService.hasUnfinishedTracks(this) && TrackerService.isTrackerServiceRunning(this)
+        val itemName = getString(if (trackInProgress) R.string.tracks_stop else R.string.start)
+        trackItem?.setTitle(itemName)
+
+
         when (item.itemId) {
             R.id.menu_sync -> sync()
             R.id.menu_change_project -> ask()

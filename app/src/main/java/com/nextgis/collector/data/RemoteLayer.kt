@@ -26,16 +26,16 @@ import android.os.Parcel
 import com.nextgis.collector.KParcelable
 import com.nextgis.collector.KParcelable.Companion.readStringFrom
 import com.nextgis.collector.parcelableCreator
-import com.nextgis.collector.readBoolean
-import com.nextgis.collector.writeBoolean
 import com.nextgis.maplib.util.Constants
 
 
 open class RemoteLayer(val title: String, val type: String, val description: String, val url: String,
-                       val visible: Boolean, val minZoom: Float, val maxZoom: Float, val defaultFormId:Long) : BaseObservable(), KParcelable {
+                       val visible: Boolean, val minZoom: Float, val maxZoom: Float, val defaultFormId:Long,
+    val resourceId:Int) : BaseObservable(), KParcelable {
 
     private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
-            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong())
+            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(),
+        parcel.readLong(), parcel.readInt())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
@@ -46,6 +46,8 @@ open class RemoteLayer(val title: String, val type: String, val description: Str
         dest.writeFloat(minZoom)
         dest.writeFloat(maxZoom)
         dest.writeLong(defaultFormId)
+        dest.writeInt(resourceId)
+
     }
 
     companion object {

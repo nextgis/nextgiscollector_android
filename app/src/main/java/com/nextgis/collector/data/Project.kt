@@ -33,15 +33,24 @@ import java.util.*
 
 
 class Project(val id: Int, val ngwId: Int, val title: String, val description: String, val screen: String, version: Int,
-              val layers: ArrayList<RemoteLayer>, val tree: String, val private: Boolean, val url: String, val user: String, val hash: String)
+              val layers: ArrayList<RemoteLayer>, val tree: String, val private: Boolean, val url: String, val user: String, val hash: String,
+    val one :Double, val two :Double,val three :Double,val four :Double)
     : BaseObservable(), KParcelable {
 
-    private constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readInt(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), parcel.readInt(), readArrayList(parcel), readStringFrom(parcel), parcel.readBoolean(), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel))
+    private constructor(parcel: Parcel) : this(parcel.readInt(), parcel.readInt(), readStringFrom(parcel),
+        readStringFrom(parcel), readStringFrom(parcel), parcel.readInt(), readArrayList(parcel), readStringFrom(parcel),
+        parcel.readBoolean(),
+        readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
+        parcel.readDouble(), parcel.readDouble(),parcel.readDouble(),parcel.readDouble()
+        )
 
     constructor(json: JSONObject) : this(json.optInt("id"), json.optInt("ngwId"), json.optString("title"),
         json.optString("description", ""),
             json.optString("screen"), json.optInt("version"), ArrayList(), "",
-            json.optBoolean("private"), json.optString("url"), "", "")
+            json.optBoolean("private"), json.optString("url"), "", "",
+        json.optDouble("one"), json.optDouble("two"),json.optDouble("three"),json.optDouble("four")
+
+        )
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeInt(id)
@@ -60,6 +69,11 @@ class Project(val id: Int, val ngwId: Int, val title: String, val description: S
         dest.writeString(url)
         dest.writeString(user)
         dest.writeString(hash)
+
+        dest.writeDouble(one)
+        dest.writeDouble(two)
+        dest.writeDouble(three)
+        dest.writeDouble(four)
     }
 
     companion object {
@@ -85,6 +99,13 @@ class Project(val id: Int, val ngwId: Int, val title: String, val description: S
             json.put("version", version)
             json.put("description", description)
             json.put("url", url)
+            json.put("one", one)
+            json.put("two", two)
+            json.put("three", three)
+            json.put("four", four)
+            json.put("layers", layers)
+
+
             return json.toString()
         }
 

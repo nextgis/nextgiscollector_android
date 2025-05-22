@@ -30,6 +30,7 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -64,15 +65,16 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplib.util.NGWUtil
-import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
+import com.nextgis.maplibui.util.SettingsConstantsUI.DEFAUL_BORDERS_WAS_APPLY
 import java.io.File
 import java.util.concurrent.CompletableFuture.runAsync
+
 
 class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter.OnItemClickListener {
     private lateinit var binding: ActivityProjectListBinding
@@ -137,7 +139,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 HyperLog.v(Constants.TAG, "BroadcastReceiver got action from LayerFillService: ${intent.action}")
                 if (intent.action?.equals(LayerFillService.ACTION_STOP) == true) {
                     toast(R.string.canceled)
-                    reset()
+                    reset(true)
                     return
                 }
                 val serviceStatus = intent.getShortExtra(LayerFillService.KEY_STATUS, 0)
@@ -248,11 +250,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         val intent = Intent(this, LayerFillService::class.java)
         intent.action = LayerFillService.ACTION_STOP
         ContextCompat.startForegroundService(this, intent)
-        reset()
+        reset(true)
     }
 
-    private fun reset() {
-        runDelayed(2000) { deleteAll() }
+    private fun reset(keepTrack:Boolean) {
+        runDelayed(2000) { deleteAll(keepTrack) }
         binding.apply {
             projectModel?.let {
                 it.info.set(true)
@@ -366,9 +368,35 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     private fun load(id: Int, private: Boolean) {
         val url = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
         binding.projectModel?.load(id, private, url ?: COLLECTOR_HUB_URL)
+        preferences.edit().remove (DEFAUL_BORDERS_WAS_APPLY).apply();
     }
 
     private fun open() {
+        // re-sort layers
+
+        // todo 1st fix for layers order
+        if (project.layers.size > 0) {
+            val newList: ArrayList<ILayer> = ArrayList()
+
+            val copy: ArrayList<ILayer> = ArrayList()
+            for (layer in map.layers) {
+                copy.add(layer)
+            }
+
+            if (project.layers.size > 0) {
+                for (layer in project.layers.reversed()) {
+                    for (mapLayer in copy) {
+                        if (layer.title.equals(mapLayer.name) ) {
+                            newList.add(mapLayer)
+                            break
+                        }
+                    }
+                }
+            }
+            map.replaceAllLayers(newList)
+            map.save()
+        }
+
         if (!project.isMapMain)
             startActivity<AddFeatureActivity>()
         else
@@ -382,6 +410,16 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             binding.projectModel?.selectedProject?.get()?.let { project ->
                 val paths = project.layers.map { it.path }.reversed()
                 var i = 0
+
+                for (vectorLayer in map.layers){
+                    Log.e("LLAAYYEERR", "MAP "  + vectorLayer.id + " " + vectorLayer.name)
+                }
+
+                for (jsonlayer in project.layers){
+                    Log.e("LLAAYYEERR", "MAP "  + jsonlayer.resourceId + " " + jsonlayer.title)
+                }
+
+
                 while (i < map.layerCount) {
                     val layer = map.getLayer(i)
                     val name = layer.path.name
@@ -445,12 +483,12 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             if (!success) {
 
                 val dialog = AlertDialog.Builder(this)
-                dialog.setTitle(com.nextgis.maplibui.R.string.error_account_create)
-                    .setMessage(R.string.error_account_add_error)
+                dialog.setTitle(R.string.error_header)
+                    .setMessage(R.string.error_account_create)
                     .setPositiveButton(com.nextgis.maplibui.R.string.ok, null)
                     .show()
 //                toast(R.string.error_auth)
-                reset()
+                reset(true)
                 return
             }
         }

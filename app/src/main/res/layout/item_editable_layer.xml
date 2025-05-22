@@ -48,7 +48,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:ignore="ContentDescription,RtlSymmetry"
-            tools:src="@drawable/ic_vector"/>
+            tools:src="@drawable/ic_vector"
+            />
 
         <TextView
             android:id="@+id/title"
@@ -56,10 +57,13 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:maxLines="1"
             android:text="@{layer.title}"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toEndOf="@id/icon"
-            tools:text="Layer name"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="Layer name"
+            app:layout_constraintLeft_toLeftOf="@+id/icon"
+            />
 
         <TextView
             android:id="@+id/description"

@@ -21,15 +21,18 @@
 
 package com.nextgis.collector.activity
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
-import androidx.appcompat.app.AppCompatActivity
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.data.Project
 import com.nextgis.collector.util.IntentFor
+import com.nextgis.maplib.datasource.Geo
+import com.nextgis.maplib.datasource.GeoEnvelope
+import com.nextgis.maplib.datasource.GeoPoint
 import com.nextgis.maplib.map.MapDrawable
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.TrackLayer
@@ -37,6 +40,7 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplibui.activity.NGActivity
 import com.nextgis.maplibui.mapui.MapViewOverlays
+import com.nextgis.maplibui.util.ConstantsUI
 import org.json.JSONObject
 
 abstract class BaseActivity : NGActivity() {
@@ -45,6 +49,8 @@ abstract class BaseActivity : NGActivity() {
     protected lateinit var map: MapDrawable
     protected lateinit var preferences: SharedPreferences
     protected lateinit var project: Project
+    var projectBorders : GeoEnvelope? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,9 +65,22 @@ abstract class BaseActivity : NGActivity() {
     protected fun loadProject() {
         val json = preferences.getString("project", null)
         project = Project(JSONObject(json ?: "{}"))
+
+        if (project.one != -1.0 ) {
+            // need zoom to projects area
+            val xMin = Geo.wgs84ToMercatorSphereX(project.one)
+            val yMin = Geo.wgs84ToMercatorSphereY(project.two + 0.01)
+            val xMax = Geo.wgs84ToMercatorSphereX(project.three)
+            val yMax = Geo.wgs84ToMercatorSphereY(project.four)
+            val hasInfinity = xMin.isInfinite() || xMax.isInfinite() || yMin.isInfinite() || yMax.isInfinite()
+            if (hasInfinity)
+                return
+            else
+                projectBorders = GeoEnvelope(xMin, xMax, yMin, yMax)
+        }
     }
 
-    protected fun deleteAll() {
+    protected fun deleteAll(keepTrack : Boolean) {
         for (i in 0 until map.layerCount) {
             val layer = map.getLayer(i)
             if (layer is NGWVectorLayer) {
@@ -69,13 +88,16 @@ abstract class BaseActivity : NGActivity() {
             }
         }
 
-        val tracks = mapView.getLayersByType(Constants.LAYERTYPE_TRACKS)
-        if (tracks.size > 0) {
-            map.removeLayer(tracks[0])
-            val uri = Uri.parse("content://" + app.authority + "/" + TrackLayer.TABLE_TRACKS)
-            contentResolver.delete(uri, null, null)
+        if (!keepTrack) {
+            val tracks = mapView.getLayersByType(Constants.LAYERTYPE_TRACKS)
+            if (tracks.size > 0) {
+                map.removeLayer(tracks[0])
+                val uri = Uri.parse("content://" + app.authority + "/" + TrackLayer.TABLE_TRACKS)
+                contentResolver.delete(uri, null, null)
+            }
         }
-        map.delete()
+
+        map.delete(keepTrack)
         preferences.edit().remove("project").apply()
     }
 
@@ -93,7 +115,7 @@ abstract class BaseActivity : NGActivity() {
     }
 
     protected fun change(project: Project? = null) {
-        deleteAll()
+        deleteAll(true)
         val intent = IntentFor<ProjectListActivity>(this)
         project?.let {
             intent.putExtra("project", it.id)
@@ -101,6 +123,34 @@ abstract class BaseActivity : NGActivity() {
         }
         finish()
         startActivity(intent)
+    }
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (projectBorders != null && resultCode == RESULT_OK && data!= null){
+            if (data.hasExtra(ConstantsUI.KEY_ADDED_POINT)){
+                val pointArray :DoubleArray? = data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT);
+                if (pointArray != null && pointArray.size>=2){
+                    val geoPoint = GeoPoint(pointArray[0],  pointArray[1])
+                    projectBorders.let {
+                        if (!projectBorders!!.contains(geoPoint)){
+                            val builder = android.app.AlertDialog.Builder(this@BaseActivity)
+                            builder
+                                .setPositiveButton("ok", null)
+                                .setTitle(R.string.out_of_area_header)
+                                .setMessage(R.string.out_of_area_text)
+                            val alertDialog = builder.create()
+                            alertDialog.show()
+                        }
+                    }
+
+                }
+            }
+        }
+
+
     }
 
 }

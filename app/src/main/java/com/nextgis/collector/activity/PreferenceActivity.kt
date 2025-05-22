@@ -325,7 +325,7 @@ class PreferenceActivity : BaseActivity() {
             dialog.show()
 
             NGIDUtils.signOut(activity.preferences, activity)
-            activity.deleteAll()
+            activity.deleteAll(true)
             runDelayedOnUiThread(2500) { rebirth(activity) }
         }
 

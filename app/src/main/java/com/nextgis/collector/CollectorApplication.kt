@@ -137,6 +137,10 @@ class CollectorApplication : GISApplication() {
         return BuildConfig.collector_accounts_auth //Constants.NGW_ACCOUNT_TYPE
     }
 
+    override fun isCollectorApplication(): Boolean {
+        return true
+    }
+
     private fun checkTracksLayerExistence() {
         val tracks = ArrayList<ILayer>()
         LayerGroup.getLayersByType(mMap, Constants.LAYERTYPE_TRACKS, tracks)
@@ -151,8 +155,12 @@ class CollectorApplication : GISApplication() {
                 Toast.makeText(this, R.string.restart_app, Toast.LENGTH_SHORT).show()
                 exitProcess(0)
             }
-        } else
+        } else {
+            //mMap.moveLayer(, tracks.first())
             mMap.moveLayer(map.layerCount - 1, tracks.first())
+            //mMap.moveLayer(0, tracks.first())
+            mMap.save()
+        }
     }
 
 

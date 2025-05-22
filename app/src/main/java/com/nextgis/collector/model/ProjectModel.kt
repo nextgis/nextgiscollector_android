@@ -22,6 +22,7 @@
 package com.nextgis.collector.model
 
 import android.text.Html
+import android.util.Log
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.data.*
 import com.nextgis.collector.data.ResourceTree.Companion.parseResources
@@ -30,6 +31,7 @@ import com.nextgis.maplib.util.HttpResponse
 import com.nextgis.maplib.util.NGException
 import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_PROJECTS_URL
+import io.sentry.Sentry
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.CompletableFuture.runAsync
@@ -191,7 +193,27 @@ class ProjectModel {
         val layers = parseLayers(jsonLayers, url)
         val tree = parseTree(jsonLayers)
 
-        return Project(id, ngwId, title, description, screen, version, layers, tree.json, private, url, user, hash)
+        var one = -1.0
+        var two = -1.0
+        var three = -1.0
+        var four = -1.0
+
+        var borders : DoubleArray = DoubleArray(0)
+        try {
+            if (jsonProject.has("initial_extent") && !jsonProject.isNull("initial_extent") ){
+                val jsonBorders = jsonProject.getJSONArray("initial_extent")
+                borders = DoubleArray(jsonBorders.length()) { i -> jsonBorders.getDouble(i) }
+                one = borders[0]
+                two = borders[1]
+                three = borders[2]
+                four = borders[3]
+            }
+        } catch (exeption:Exception){
+            Log.e("project", "exception "  + exeption.message)
+        }
+
+
+        return Project(id, ngwId, title, description, screen, version, layers, tree.json, private, url, user, hash, one, two, three, four)
     }
 
     private fun parseTree(json: JSONArray?): ResourceTree {
@@ -211,6 +233,8 @@ class ProjectModel {
                 val description = jsonLayer.optString("description")
                 var url = jsonLayer.optString("url")
                 val visible = jsonLayer.optBoolean("visible")
+                val resourceId = jsonLayer.optInt("resource_id")
+
                 val minZoom = jsonLayer.optDouble("min_zoom").toFloat()
                 val maxZoom = jsonLayer.optDouble("max_zoom").toFloat()
                 val defaultFormId =  jsonLayer.optLong("default_form_id", -1).toLong()
@@ -220,14 +244,14 @@ class ProjectModel {
                         jsonLayer.put("type", type)
                         url = NGWUtil.getTMSUrl(base, arrayOf(jsonLayer.getLong("resource_id")))
                         jsonLayer.put("url", url)
-                        layer = tmsLayer(jsonLayer, layerTitle, type, description, url, visible, minZoom, maxZoom, defaultFormId)
+                        layer = tmsLayer(jsonLayer, layerTitle, type, description, url, visible, minZoom, maxZoom, defaultFormId, resourceId)
                     }
                     "tms", "ngrc", "basemap_layer" -> {
                         type = "tms"
                         jsonLayer.put("type", type)
-                        layer = tmsLayer(jsonLayer, layerTitle, type, description, url, visible, minZoom, maxZoom, defaultFormId)
+                        layer = tmsLayer(jsonLayer, layerTitle, type, description, url, visible, minZoom, maxZoom, defaultFormId, resourceId)
                     }
-                    "ngw", "ngfp", "vector_layer" , "formbuilder_form"-> {
+                    "ngw", "ngfp", "vector_layer" , "postgis_layer",  "formbuilder_form"-> {
                         if (jsonLayer.has("item_type") || type == "vector_layer") {
                             type = if (jsonLayer.optBoolean("form")) "ngfp" else "ngw"
                             jsonLayer.put("type", type)
@@ -240,7 +264,7 @@ class ProjectModel {
                         val syncable = jsonLayer.optBoolean("syncable")
                         val style = jsonLayer.optJSONObject("style")
                         val jsonStyle = style?.toString() ?: ""
-                        layer = RemoteLayerNGW(layerTitle, type, description, url, visible, minZoom, maxZoom, defaultFormId, login, password, editable, syncable, jsonStyle)
+                        layer = RemoteLayerNGW(layerTitle, type, description, url, visible, minZoom, maxZoom, defaultFormId, login, password, editable, syncable, jsonStyle, resourceId)
                     }
                     else -> { // "dir", "group"
                         jsonLayer.put("type", "dir")
@@ -258,10 +282,10 @@ class ProjectModel {
     }
 
     private fun tmsLayer(jsonLayer: JSONObject, layerTitle: String, type: String, description: String,
-                         url: String, visible: Boolean, minZoom: Float, maxZoom: Float, defaultFormId : Long ): RemoteLayerTMS {
+                         url: String, visible: Boolean, minZoom: Float, maxZoom: Float, defaultFormId : Long , resourceId:Int): RemoteLayerTMS {
         val lifetime = jsonLayer.optLong("lifetime")
         val tmsType = jsonLayer.optInt("tms_type")
-        return RemoteLayerTMS(layerTitle, type, description, url, visible, minZoom, maxZoom, defaultFormId, lifetime, tmsType)
+        return RemoteLayerTMS(layerTitle, type, description, url, visible, minZoom, maxZoom, defaultFormId, lifetime, tmsType, resourceId)
     }
 
     interface OnDataReadyCallback {

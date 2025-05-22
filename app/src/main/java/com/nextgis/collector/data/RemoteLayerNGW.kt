@@ -24,19 +24,29 @@ package com.nextgis.collector.data
 import android.os.Parcel
 import com.nextgis.collector.KParcelable.Companion.readStringFrom
 import com.nextgis.collector.parcelableCreator
-import com.nextgis.collector.readBoolean
-import com.nextgis.collector.writeBoolean
 import org.json.JSONObject
 
 
 class RemoteLayerNGW(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float, defaultFormId: Long,
                      var login: String, var password: String?, val editable: Boolean, val syncable: Boolean,
-                     var style: String = "")
-    : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom, defaultFormId) {
+                     var style: String = "", resourceId:Int)
+    : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom, defaultFormId, resourceId) {
 
-    private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
-            readStringFrom(parcel), parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong(), readStringFrom(parcel),
-            readStringFrom(parcel), parcel.readBoolean(), parcel.readBoolean(), readStringFrom(parcel) )
+    private constructor(parcel: Parcel) :
+            this(readStringFrom(parcel),
+                readStringFrom(parcel),
+                readStringFrom(parcel),
+            readStringFrom(parcel),
+                parcel.readBoolean(),
+                parcel.readFloat(),
+                parcel.readFloat(),
+                parcel.readLong(),
+                readStringFrom(parcel),
+            readStringFrom(parcel),
+                parcel.readBoolean(),
+                parcel.readBoolean(),
+                readStringFrom(parcel),
+                parcel.readInt() )
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         super.writeToParcel(dest, flags)

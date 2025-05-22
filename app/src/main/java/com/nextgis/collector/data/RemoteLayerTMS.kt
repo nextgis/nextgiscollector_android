@@ -28,13 +28,13 @@ import com.nextgis.collector.readBoolean
 
 
 class RemoteLayerTMS(title: String, type: String, description: String, url: String, visible: Boolean, minZoom: Float, maxZoom: Float,
-                     defaultFormId: Long,  val lifetime: Long, val
-tmsType: Int) : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom, defaultFormId) {
+                     defaultFormId: Long,  val lifetime: Long, val tmsType: Int, resourceId:Int)
+    : RemoteLayer(title, type, description, url, visible, minZoom, maxZoom, defaultFormId, resourceId) {
 
     private constructor(parcel: Parcel) : this(
         readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
         parcel.readBoolean(), parcel.readFloat(), parcel.readFloat(), parcel.readLong(),
-        parcel.readLong(), parcel.readInt())
+        parcel.readLong(), parcel.readInt(), parcel.readInt())
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         super.writeToParcel(dest, flags)

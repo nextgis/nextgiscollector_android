@@ -26,20 +26,19 @@ import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Intent
-import androidx.databinding.DataBindingUtil
 import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.LinearLayoutManager
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.adapter.LayersAdapter
@@ -70,6 +69,7 @@ import com.nextgis.maplibui.overlay.EditLayerOverlay.MODE_EDIT_BY_WALK
 import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI
+import com.nextgis.maplibui.util.SettingsConstantsUI.DEFAUL_BORDERS_WAS_APPLY
 import java.io.IOException
 
 
@@ -110,7 +110,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
             mapContainer.addView(mapView, FrameLayout.LayoutParams(matchParent, matchParent))
         }
-        setCenter()
+
+        val defBOrdersWasApply = preferences.getBoolean(DEFAUL_BORDERS_WAS_APPLY, false);
+        if (defBOrdersWasApply)
+            setCenter()
 
         overlay.setTopToolbar(binding.toolbar)
         overlay.setBottomToolbar(binding.bottomToolbar)
@@ -138,13 +141,20 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         binding.layers.addItemDecoration(dividerItemDecoration)
         binding.executePendingBindings()
 
+
+        if (projectBorders != null && !defBOrdersWasApply){
+            projectBorders.let {
+                preferences.edit().putBoolean(DEFAUL_BORDERS_WAS_APPLY, true).apply()
+                map.zoomToExtent(GeoEnvelope(projectBorders!!.minX, projectBorders!!.maxX, projectBorders!!.minY, projectBorders!!.maxY))
+            }
+        }
     }
 
     override fun init() {
         val layers = ArrayList<Layer>()
         var hasChanges = false
         for (i in 0 until map.layerCount) {
-            val layer = map.getLayer(i)
+            val layer = map.getLayer(map.layerCount -1 - i)
             if (layer is Layer)
                 layers.add(layer)
             if (layer is NGWVectorLayer && !hasChanges) {
@@ -153,7 +163,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             }
         }
 
-        val layersAdapter = LayersAdapter(layers.reversed(), this)
+        val layersAdapter = LayersAdapter(layers, this)
         binding.layers.adapter = layersAdapter
         setUpToolbar(hasChanges)
     }
@@ -161,8 +171,8 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     override fun onResume() {
         super.onResume()
         overlay.onResume()
-        if ( !(application as CollectorApplication).isTrackInProgress)
-            binding.overlay.visibility = View.GONE;
+//        if ( !(application as CollectorApplication).isTrackInProgress)
+//            binding.overlay.visibility = View.GONE;
     }
 
     override fun onPause() {
@@ -325,8 +335,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
         overlay.mode = EditLayerOverlay.MODE_HIGHLIGHT
         binding.bottomToolbar.visibility = View.GONE
         setMenu()
-        if (returnToList)
+        if (returnToList ){
             finish()
+        }
+
     }
 
     private fun setMenu() {
@@ -553,6 +565,33 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
+        if (projectBorders != null && resultCode == RESULT_OK && data!= null){
+            if (data.hasExtra(ConstantsUI.KEY_ADDED_POINT)){
+                if (returnToList){ // need pass result to next activity
+                    returnToList = true
+                    val dataNext = Intent()
+                    dataNext.putExtra(ConstantsUI.KEY_ADDED_POINT,data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT))
+                    setResult(RESULT_OK, dataNext)
+                } else {
+                    val pointArray :DoubleArray? = data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT);
+                    if (pointArray != null && pointArray.size>=2) {
+                        val geoPoint = GeoPoint(pointArray[0], pointArray[1])
+                        projectBorders.let {
+                            if (!projectBorders!!.contains(geoPoint)) {
+                                val builder = android.app.AlertDialog.Builder(this@MapActivity)
+                                builder
+                                    .setPositiveButton("ok", null)
+                                    .setTitle(R.string.out_of_area_header)
+                                    .setMessage(R.string.out_of_area_text)
+                                val alertDialog = builder.create()
+                                alertDialog.show()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (requestCode == IVectorLayerUI.MODIFY_REQUEST && data != null) {
             val id = data.getLongExtra(ConstantsUI.KEY_FEATURE_ID, -1)
             if (id != -1L) {
@@ -743,6 +782,10 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             needSave = false
             historyOverlay.saveToHistory(overlay.selectedFeature)
         }
+    }
+
+    fun isBordersExists(): Boolean{
+        return project.one != -1.0
     }
 
 }

@@ -29,7 +29,7 @@
     <string name="intro_title1">Collect data with ease</string>
     <string name="intro_title2">One last word</string>
     <string name="intro_description1">Just join preferred project and start collecting the data. NextGIS Collector will define all layers you need.</string>
-    <string name="intro_description2">We need following permissions to create cloud account and sync data with web smoothly.</string>
+    <string name="intro_description2">We need the following permissions to create cloud account and sync data with web smoothly.</string>
     <string name="permission_denied">Permissions denied</string>
     <string name="requested_permissions">Application needs location permission to work properly.</string>
     <string name="by_gps">Using GPS</string>
@@ -109,5 +109,8 @@
     <string name="web">Website</string>
     <string name="web_src">https://nextgis.com/nextgis-collector/</string>
     <string name="manual_url">https://docs.nextgis.com/docs_collector/source/toc.html</string>
+    <string name="out_of_area_header">Attention</string>
+    <string name="out_of_area_text">The received object is outside the boundaries of the data collection project. This may mean that there are problems with obtaining accurate coordinates.</string>
+    <string name="error_header">Error</string>
 
 </resources>

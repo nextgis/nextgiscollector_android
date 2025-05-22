@@ -22,15 +22,9 @@
 package com.nextgis.collector.activity
 
 import android.content.Intent
-import android.database.Cursor
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
-import androidx.core.content.FileProvider
-import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.nextgis.collector.CollectorApplication
@@ -45,12 +39,11 @@ import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.GeoConstants
+import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
+import com.nextgis.maplibui.service.TrackerService
 import java.io.File
 import java.io.FileNotFoundException
-import java.io.FileWriter
-import java.io.IOException
-import java.util.Date
 
 class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener {
     companion object {
@@ -162,6 +155,14 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        val trackInProgress = TrackerService.hasUnfinishedTracks(this) && TrackerService.isTrackerServiceRunning(this)
+        val itemName = getString(if (trackInProgress) R.string.tracks_stop else R.string.start)
+        trackItem?.setTitle(itemName)
+
+
+
+
         when (item.itemId) {
             android.R.id.home -> {
                 if (history.size > 0) {
@@ -186,7 +187,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
                         intent.putExtra(MapActivity.NEW_FEATURE_BY_WALK, layer?.id)
                     else
                         intent.putExtra(MapActivity.NEW_FEATURE, layer?.id)
-                    startActivity(intent)
+                    startActivityForResult(intent,IVectorLayerUI.MODIFY_REQUEST )
                 } else
                     layer?.showEditForm(this, -1, null)
             else
@@ -202,7 +203,17 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     override fun onResume() {
         super.onResume()
         //Toast.makeText(this,"ON_RESUME", -1)
-        if ( !(application as CollectorApplication).isTrackInProgress)
-            binding.overlay.visibility = View.GONE;
+//        if ( !(application as CollectorApplication).isSyncProgress)
+//            binding.overlay.visibility = View.GONE;
     }
+
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//
+//        if (resultCode == RESULT_OK && )
+//
+//
+//    }
+
+
 }
