@@ -21,12 +21,16 @@
 
 package com.nextgis.collector.activity
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
@@ -37,6 +41,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProviders
@@ -44,12 +49,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
+import com.nextgis.collector.activity.IntroActivity.Companion.PERMISSIONS_CODE
 import com.nextgis.collector.adapter.ProjectAdapter
 import com.nextgis.collector.data.Project
 import com.nextgis.collector.data.RemoteLayer
 import com.nextgis.collector.data.RemoteLayerNGW
 import com.nextgis.collector.data.RemoteLayerTMS
 import com.nextgis.collector.databinding.ActivityProjectListBinding
+import com.nextgis.collector.model.ProjectModel
 import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.collector.util.longToast
 import com.nextgis.collector.util.runDelayed
@@ -65,14 +72,18 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplib.util.NGWUtil
+import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.activity.NGIDLoginActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.service.LayerFillService
+import com.nextgis.maplibui.service.LayerFillService.KEY_START_LAYER_FILL
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
+import com.nextgis.maplibui.util.SettingsConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI.DEFAUL_BORDERS_WAS_APPLY
 import java.io.File
+import java.util.Objects
 import java.util.concurrent.CompletableFuture.runAsync
 
 
@@ -83,10 +94,20 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
     private lateinit var receiverPointz: BroadcastReceiver
 
+    var isOpenProjectFail = false // open project was fail
+    var id: Int = 0 // id project
+    var private: Boolean = false //
+
     @Volatile
     private var total = 0
     private val queue = arrayListOf<Intent>()
     private val layers = arrayListOf<NGWVectorLayer>()
+
+
+    private var savedid: Int = -1
+    private var privateSaved: Boolean = false
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,8 +157,14 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+
+//                Log.e("FFRRMM", "ProjListActivity recive broadcast " + intent.toString())
+//                Log.e("FFRRMM", "ProjListActivity total is  " + total)
+
+
                 HyperLog.v(Constants.TAG, "BroadcastReceiver got action from LayerFillService: ${intent.action}")
                 if (intent.action?.equals(LayerFillService.ACTION_STOP) == true) {
+                    //Log.e("FFRRMM", "ProjListActivity action?.equals(LayerFillService.ACTION_STOP) == true  " )
                     toast(R.string.canceled)
                     reset(true)
                     return
@@ -146,6 +173,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 HyperLog.v(Constants.TAG, "BroadcastReceiver got status from LayerFillService: $serviceStatus")
                 when (serviceStatus) {
                     LayerFillService.STATUS_STOP -> {
+                        //Log.e("FFRRMM", "ProjListActivity  LayerFillService.STATUS_STOP  " )
+
                         val canceled = intent.getBooleanExtra(LayerFillService.KEY_CANCELLED, false)
                         val success = intent.getBooleanExtra(LayerFillService.KEY_RESULT, false)
                         HyperLog.v(Constants.TAG, "BroadcastReceiver stop with success: $success (canceled: $canceled)")
@@ -160,8 +189,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             error()
                             return
                         }
-                        if (!intent.hasExtra(LayerFillService.KEY_MESSAGE))
+                        if (!intent.hasExtra(LayerFillService.KEY_MESSAGE)) {
+                            //Log.e("FFRRMM", "ProjListActivity  !intent.hasExtra(LayerFillService.KEY_MESSAGE) return " )
                             return
+                        }
 
                         val isNgw = intent.getBooleanExtra(LayerFillService.KEY_SYNC, false)
                         HyperLog.v(Constants.TAG, "BroadcastReceiver no error message found, isNgw: $isNgw")
@@ -188,14 +219,20 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             }
                         }
 
+
                         total--
+
+                        //Log.e("FFRRMM", "ProjListActivity  total--  :   is :" + total)
+
                         check()
                     }
                     LayerFillService.STATUS_START -> {
+                        //Log.e("FFRRMM", "ProjListActivity  LayerFillService.STATUS_START" )
                         binding.message.text = ""
                         intent.getStringExtra(LayerFillService.KEY_TITLE)?.let { binding.status.text = it }
                     }
                     LayerFillService.STATUS_UPDATE -> {
+                        // Log.e("FFRRMM", "ProjListActivity  LayerFillService.STATUS_UPDATE" )
                         intent.getStringExtra(LayerFillService.KEY_MESSAGE)?.let { binding.message.text = it }
                     }
                 }
@@ -239,7 +276,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         val id = extras?.getInt("project", -1) ?: -1
         val private = extras?.getBoolean("private", true) ?: true
         if (id >= 0) {
-            load(id, private)
+            load(id, private, this.app)
             setTitle()
         } else {
             loadProjects()
@@ -300,6 +337,16 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun retry() {
+
+        if (isOpenProjectFail){
+            val tId = id
+            val tPrivate = private
+            storeProject(false, -1, false)
+            load(tId, tPrivate, this.app )
+            return
+        }
+
+
         binding.apply {
             projectModel?.let {
                 it.info.set(false)
@@ -314,6 +361,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun cancel() {
+        storeProject(false, -1, false)
         binding.apply {
             projectModel?.let {
                 it.info.set(false)
@@ -353,7 +401,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         AlertDialog.Builder(this).setTitle(R.string.join_project)
                 .setMessage(getString(R.string.join_message, project.title))
                 .setNegativeButton(R.string.no, null)
-                .setPositiveButton(R.string.yes) { _, _ -> load(project.id, true) }
+                .setPositiveButton(R.string.yes) { _, _ -> load(project.id, true, this.app) }
                 .show()
     }
 
@@ -364,11 +412,64 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     private @Deprecated("Useless", replaceWith = ReplaceWith("supportActionBar?.title")) fun setTitle() {
         supportActionBar?.title = getString(R.string.app_name_private)
     }
+    private fun storeProject(isFailed: Boolean, id: Int, private: Boolean){
+        isOpenProjectFail = isFailed // open project was fail
+        this.id= id
+        this.private = private
+    }
 
-    private fun load(id: Int, private: Boolean) {
+    private fun load(id: Int, private: Boolean, context: Context) {
+        if (!PermissionUtil.hasPermission(this, Manifest.permission.WRITE_SYNC_SETTINGS)
+            || !PermissionUtil.hasPermission(this, Manifest.permission.GET_ACCOUNTS)) {
+            var permissions = arrayOf(
+                Manifest.permission.GET_ACCOUNTS,
+                Manifest.permission.WRITE_SYNC_SETTINGS)
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2)
+                permissions = permissions.plus(Manifest.permission.POST_NOTIFICATIONS)
+            ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_CODE)
+            savedid = id
+            privateSaved = private
+            return
+        }
+
+        val onResetLoadProjectCallback: ProjectModel.OnResetLoadProjectCallback =
+            object : ProjectModel.OnResetLoadProjectCallback {
+                override fun onReset() {
+                    storeProject(true, id, private)
+                    reset(true)
+                }
+            }
         val url = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
-        binding.projectModel?.load(id, private, url ?: COLLECTOR_HUB_URL)
+        binding.projectModel?.load(id, private, url ?: COLLECTOR_HUB_URL, context, onResetLoadProjectCallback)
         preferences.edit().remove (DEFAUL_BORDERS_WAS_APPLY).apply();
+    }
+
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        for (i in permissions.indices) {
+            if (permissions[i] == Manifest.permission.POST_NOTIFICATIONS && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()
+                    .putBoolean(SettingsConstantsUI.KEY_PREF_SHOW_SYNC, true)
+                    .apply()
+            }
+        }
+        var granted = requestCode == PERMISSIONS_CODE
+        for (result in grantResults)
+            if (result != PackageManager.PERMISSION_GRANTED)
+                granted = false
+
+        if (granted) {
+            load(savedid, privateSaved,  this)
+
+        } else {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.error)
+                .setMessage(getString(R.string.account_permissions))
+                .setPositiveButton(R.string.ok) { _, _ -> { } }
+                .show()
+        }
     }
 
     private fun open() {
@@ -411,16 +512,18 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 val paths = project.layers.map { it.path }.reversed()
                 var i = 0
 
-                for (vectorLayer in map.layers){
-                    Log.e("LLAAYYEERR", "MAP "  + vectorLayer.id + " " + vectorLayer.name)
-                }
+//                for (vectorLayer in map.layers){
+//                    Log.e("LLAAYYEERR", "MAP "  + vectorLayer.id + " " + vectorLayer.name)
+//                }
+//
+//                for (jsonlayer in project.layers){
+//                    Log.e("LLAAYYEERR", "MAP "  + jsonlayer.resourceId + " " + jsonlayer.title)
+//                }
 
-                for (jsonlayer in project.layers){
-                    Log.e("LLAAYYEERR", "MAP "  + jsonlayer.resourceId + " " + jsonlayer.title)
-                }
 
-
-                while (i < map.layerCount) {
+                var loopcounter = 0
+                while (i < map.layerCount && loopcounter < map.layerCount * map.layerCount) {
+                    loopcounter++
                     val layer = map.getLayer(i)
                     val name = layer.path.name
                     val id = paths.indexOf(name)
@@ -530,7 +633,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         resource.login = project.user
                         resource.password = project.password
                     }
-                    addVector(resource, authority, fullUrl, project.user, project.password)
+                    val result = addVector(resource, authority, fullUrl, project.user, project.password)
+                    if (!result)
+                        total--
+
                     HyperLog.v(Constants.TAG, "Vector layer found: ${layer.title}")
                 }
             }
@@ -542,7 +648,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         start()
     }
 
-    private fun queue(intent: Intent, layer: RemoteLayer, formUrl: String = "") {
+    private fun queue(intent: Intent, layer: RemoteLayer, formUrl: String = "", selectedForm : Long? = -1L) : Boolean {
         var type = LayerFillService.NGW_LAYER
         var url = layer.url
         when (layer.type) {
@@ -560,7 +666,32 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.putExtra(LayerFillService.KEY_MIN_ZOOM, layer.minZoom)
         intent.putExtra(LayerFillService.KEY_MAX_ZOOM, layer.maxZoom)
         intent.putExtra(LayerFillService.KEY_URI, Uri.parse(url))
-        queue.add(intent)
+
+        val idsArray = arrayListOf(selectedForm)
+
+
+        intent.putExtra(LayerFillService.KEY_DEFAULT_FORM_IDS, if (selectedForm == -1L) null else idsArray)
+
+        var exists = false
+        for (q in queue){
+            if (q.hasExtra(LayerFillService.KEY_LAYER_PATH) && intent.hasExtra(LayerFillService.KEY_LAYER_PATH) &&
+                q.getSerializableExtra(LayerFillService.KEY_LAYER_PATH) != null
+                && q.getSerializableExtra(LayerFillService.KEY_LAYER_PATH).toString().length >0
+                && Objects.equals( q.getSerializableExtra(LayerFillService.KEY_LAYER_PATH),
+                   intent.getSerializableExtra(LayerFillService.KEY_LAYER_PATH)))
+                exists = true
+        }
+        if (!exists) {
+            queue.add(intent)
+            return true
+        } else {
+            if (layer.type.equals("ngfp")){
+                intent.putExtra(KEY_START_LAYER_FILL, false ) // no create/fill layer - only form
+                queue.add(intent)
+                return true
+            }
+        }
+        return false
     }
 
     private fun start() {
@@ -575,7 +706,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         queue(intent, layer)
     }
 
-    private fun addVector(layer: RemoteLayerNGW, accountName: String, url: String, user: String, pass: String) {
+    private fun addVector(layer: RemoteLayerNGW, accountName: String, url: String, user: String, pass: String): Boolean {
+
+        Log.e("RML", "run addVector: " + url + " accountName: " + accountName)
+
+
         val intent = Intent(this, LayerFillService::class.java)
         intent.action = LayerFillService.ACTION_ADD_TASK
 
@@ -585,17 +720,18 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.putExtra(LayerFillService.KEY_ACCOUNT, accountName)
         intent.putExtra(LayerFillService.KEY_SYNC, layer.syncable)
         var formUrl = layer.url
+        var selectedForm :Long? = -1L;
         if (layer.type == "ngfp")
             id?.let {
                 val forms = arrayListOf<Long>()
                 LayerWithStyles.fillStyles(url, user, pass, it, null, forms)
-                val selectedForm = forms.find { it == layer.defaultFormId } ?: forms.firstOrNull()
+                selectedForm = forms.find { it == layer.defaultFormId } ?: forms.firstOrNull()
                 selectedForm?.let {
                     form -> formUrl = NGWUtil.getFormUrl(url, form)
                 }
 
             }
-        queue(intent, layer, formUrl)
+        return queue(intent, layer, formUrl, selectedForm)
     }
 
     private fun createTMS(layer: RemoteLayerTMS): ILayer {
@@ -611,6 +747,13 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         return tmsLayer
     }
 
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menu?.findItem(R.id.menu_share_log)?.isVisible = preferences.getBoolean("save_log", false)
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.list, menu)
         return true
@@ -620,6 +763,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         when (item.itemId) {
             R.id.menu_settings -> startActivity<PreferenceActivity>()
             R.id.action_about -> startActivity<AboutActivity>()
+            R.id.menu_share_log -> shareLog()
             else -> return super.onOptionsItemSelected(item)
         }
         return true

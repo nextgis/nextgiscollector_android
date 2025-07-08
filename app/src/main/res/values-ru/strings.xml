@@ -21,6 +21,7 @@
 
 <resources>
     <string name="app_name">NextGIS Collector</string>
+    <string name="error">Ошибка</string>
     <string name="join_project">Начать проект</string>
     <string name="join_message">Вы хотите присоединиться к проекту \"%1$s\"?</string>
     <string name="change_project">Сменить проект</string>
@@ -111,5 +112,7 @@
     <string name="out_of_area_header">Внимание</string>
     <string name="out_of_area_text">Полученный объект находится за границами проекта сбора данных. Это может означать, что есть проблемы с получением точных координат.</string>
     <string name="error_header">Error</string>
+
+    <string name="project_get_error">Ошибка при загрузке проекта</string>
 
 </resources>

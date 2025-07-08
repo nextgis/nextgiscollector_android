@@ -30,10 +30,12 @@ import com.nextgis.collector.parcelableCreator
 
 
 open class Resource(val title: String, val type: String, val description: String, val id: String,
-                    val resources: ArrayList<Resource>) : BaseObservable(), KParcelable {
+                    val resources: ArrayList<Resource>, val defaultFormId: Long = -1L
+                    ) : BaseObservable(), KParcelable {
 
     private constructor(parcel: Parcel) : this(readStringFrom(parcel), readStringFrom(parcel), readStringFrom(parcel),
-            readStringFrom(parcel), readArrayList(parcel))
+            readStringFrom(parcel), readArrayList(parcel), parcel.readLong()
+    )
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(title)
@@ -41,6 +43,7 @@ open class Resource(val title: String, val type: String, val description: String
         dest.writeString(description)
         dest.writeString(id)
         dest.writeArray(resources.toArray())
+        dest.writeLong(defaultFormId)
     }
 
     companion object {

@@ -21,6 +21,7 @@
 
 <resources>
     <string name="app_name">NextGIS Collector</string>
+    <string name="error">Error</string>
     <string name="join_project">Join project</string>
     <string name="join_message">Would you like to join to project \"%1$s\"?</string>
     <string name="change_project">Change project</string>
@@ -112,5 +113,6 @@
     <string name="out_of_area_header">Attention</string>
     <string name="out_of_area_text">The received object is outside the boundaries of the data collection project. This may mean that there are problems with obtaining accurate coordinates.</string>
     <string name="error_header">Error</string>
+    <string name="project_get_error">Error on project load</string>
 
 </resources>

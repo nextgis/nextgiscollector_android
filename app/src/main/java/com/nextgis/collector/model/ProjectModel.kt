@@ -21,17 +21,19 @@
 
 package com.nextgis.collector.model
 
+import android.content.Context
 import android.text.Html
 import android.util.Log
+import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.CollectorApplication
+import com.nextgis.collector.R
 import com.nextgis.collector.data.*
 import com.nextgis.collector.data.ResourceTree.Companion.parseResources
 import com.nextgis.collector.util.NetworkUtil
+import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.HttpResponse
-import com.nextgis.maplib.util.NGException
 import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_PROJECTS_URL
-import io.sentry.Sentry
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.CompletableFuture.runAsync
@@ -76,7 +78,8 @@ class ProjectModel {
         }
     }
 
-    fun getProject(url: String, id: Int, onDataReadyCallback: OnDataReadyCallback, email: String, private: Boolean) {
+    fun getProject(url: String, id: Int, onDataReadyCallback: OnDataReadyCallback, email: String, private: Boolean,
+                   context : Context, onResetLoadProjectCallback: OnResetLoadProjectCallback) {
         runAsync {
             var project: Project? = null
             val path = getBaseUrl(url, private) + "/$id"
@@ -87,63 +90,131 @@ class ProjectModel {
                     JSONObject(response.responseBody)
                 } catch (e: Exception) {
                     JSONObject()
+                    onDataReadyCallback.onProjectGetError("Error on get project: " + e.message )
+                    return@runAsync
                 }
 
-                // change single form to layer (with default form notation)
-                if (json != null && json.has("items")){
-                    val layers = json.getJSONArray("items")
-                    for (i in 0 until layers.length()){
-                        val layer = layers[i]
-                        if (layer is JSONObject && (layer as JSONObject)
-                                .getString("resource_cls")
-                                .equals("formbuilder_form")){
-                            val version = json.getInt("version")
-                            val user = json.getString("username")
-                            val hash = json.getString("password")
-                            val ngwUrl = json.getString("ngw_url")
 
-                            val array = arrayListOf<Int>()
-                            array.addAll(hash.chunked(4).map { it.toInt(16) - version })
-                            for (i in 0 until version)
-                                array.add(0, array.removeAt(array.size - 1))
-                            val length = array.removeAt(0)
-                            val pass =  array.dropLast(array.size - length).map { it.toChar() }.joinToString("")
+                try {
+                    // change single form to layer (with default form notation)
+                    if (json != null && json.has("items")) {
+                        val layers = json.getJSONArray("items")
+                        for (i in 0 until layers.length()) {
+                            val layer = layers[i]
+                            if (layer is JSONObject && (layer as JSONObject)
+                                    .getString("resource_cls")
+                                    .equals("formbuilder_form")
+                            ) {
+                                val version = json.getInt("version")
+                                val user = json.getString("username")
+                                val hash = json.getString("password")
+                                val ngwUrl = json.getString("ngw_url")
 
-                            //getDefaultFormId
-                            val sURL = NGWUtil.getResourceUrl(ngwUrl, layer.getLong("resource_id"))
-                            val response = com.nextgis.maplib.util.NetworkUtil.get(sURL, user, pass, false)
-                            val children = JSONObject(response.responseBody)
-                            val JSONResource = children.getJSONObject("resource")
-                            val parent = JSONResource.getJSONObject("parent")
-                            val parentId = parent.getLong("id")
+                                val array = arrayListOf<Int>()
+                                array.addAll(hash.chunked(4).map { it.toInt(16) - version })
+                                for (i in 0 until version)
+                                    array.add(0, array.removeAt(array.size - 1))
+                                val length = array.removeAt(0)
+                                val pass = array.dropLast(array.size - length).map { it.toChar() }
+                                    .joinToString("")
 
-                            // get layer description
-                            val response2 = com.nextgis.maplib.util.NetworkUtil.get(NGWUtil.getResourceUrl(ngwUrl, parentId), user,pass, false)
-                            if (!response2.isOk) {
-                                break
+                                //getDefaultFormId
+                                val sURL = NGWUtil.getResourceUrl(ngwUrl, layer.getLong("resource_id"))
+                                val response = com.nextgis.maplib.util.NetworkUtil.get(sURL, user, pass, false)
+
+                                HyperLog.v(Constants.TAG, "response on get " + sURL +" is " + response.toString())
+                                HyperLog.v(Constants.TAG, "response code is " + response.responseCode)
+
+                                val children = JSONObject(response.responseBody)
+                                val JSONResource = children.getJSONObject("resource")
+                                val parent = JSONResource.getJSONObject("parent")
+                                val parentId = parent.getLong("id")
+
+                                // get layer description
+                                val response2 = com.nextgis.maplib.util.NetworkUtil.get(
+                                    NGWUtil.getResourceUrl(ngwUrl,parentId), user, pass, false)
+
+                                HyperLog.v(Constants.TAG, "response on get " + ngwUrl +" is " + response2.toString())
+                                HyperLog.v(Constants.TAG, "response code is " + response2.responseCode)
+
+                                if (!response2.isOk) {
+                                    break
+                                }
+                                val parentLayer =
+                                    JSONObject(response.responseBody).getJSONObject("resource")
+
+                                val defaultFormId = layer.getInt("resource_id")
+                                val newItem = JSONObject()
+                                newItem.put("id", parentLayer.getInt("id"))
+                                newItem.put("item_type", "item")
+                                newItem.put("resource_id", parentId)
+                                newItem.put("resource_cls", "vector_layer")
+                                newItem.put("display_name", layer.getString("display_name"))
+                                newItem.put("editable", true)
+                                newItem.put("visible", layer.getBoolean("visible"))
+                                newItem.put("syncable", layer.getBoolean("syncable"))
+                                newItem.put("lifetime", layer.getLong("lifetime"))
+                                newItem.put("min_zoom", layer.getInt("min_zoom"))
+                                newItem.put("max_zoom", layer.getInt("max_zoom"))
+                                newItem.put("default_form_id", defaultFormId)
+                                newItem.put("form", true)
+                                layers.put(i, newItem)
                             }
-                            val parentLayer = JSONObject(response.responseBody).getJSONObject("resource")
-
-                            val defaultFormId = layer.getInt("resource_id")
-                            val newItem= JSONObject()
-                            newItem.put("id", parentLayer.getInt("id"))
-                            newItem.put("item_type", "item")
-                            newItem.put("resource_id", parentId)
-                            newItem.put("resource_cls", "vector_layer")
-                            newItem.put("display_name", layer.getString("display_name"))
-                            newItem.put("editable", true)
-                            newItem.put("visible", layer.getBoolean("visible"))
-                            newItem.put("syncable", layer.getBoolean("syncable"))
-                            newItem.put("lifetime", layer.getLong("lifetime"))
-                            newItem.put("min_zoom", layer.getInt("min_zoom"))
-                            newItem.put("max_zoom", layer.getInt("max_zoom"))
-                            newItem.put("default_form_id", defaultFormId)
-                            newItem.put("form", true)
-                            layers.put(i, newItem)
-
                         }
+
+
+//                        val retrievedValue = mutableMapOf<Long, MutableList<Long>>()
+//
+//
+//                        for (i in 0 until layers.length()) {
+//                            val layer = layers[i]
+//                            if (layer is JSONObject && (layer as JSONObject)
+//                                    .getString("resource_cls")
+//                                    .equals("vector_layer")) {
+//
+//                                if(layer.has("default_form_id")){
+//                                    val defFormId = layer.getLong("default_form_id")
+//                                    val resource_id = layer.getLong("resource_id")
+//
+//                                    val listForms = retrievedValue.getOrPut(resource_id) { mutableListOf() }
+//                                    listForms.add(defFormId)
+//                                }
+//
+//                            }
+//                        }
+//                        if(retrievedValue.size > 0 ){
+//                            for (i in 0 until layers.length()) {
+//                                val layer = layers[i]
+//                                if (layer is JSONObject && (layer as JSONObject)
+//                                        .getString("resource_cls")
+//                                        .equals("vector_layer")) {
+//
+//                                    if (!layer.has("default_form_id")){
+//                                        val resource_id = layer.getLong("resource_id")
+//                                        if(retrievedValue.containsKey(resource_id)){
+//                                            val listForms = retrievedValue[resource_id]
+//                                            if (listForms != null) {
+//
+//
+//                                                val jsonArray = JSONArray()
+//                                                listForms.forEach { jsonArray.put(it) }
+//                                                layer.put("default_set_forms", jsonArray)
+//                                            }
+//                                        }
+//                                }
+//                            }
+//
+//                        }
+                        //}
+
                     }
+                } catch (ex:Exception){
+                    HyperLog.v(Constants.TAG, "exception is  " + ex.message)
+                    onDataReadyCallback.onProjectGetError(context.getString(R.string.project_get_error) )
+                    onResetLoadProjectCallback.onReset()
+                    return@runAsync
                 }
+
                 project = parseProject(json, private)
             }
             onDataReadyCallback.onProjectReady(project)
@@ -291,5 +362,12 @@ class ProjectModel {
     interface OnDataReadyCallback {
         fun onDataReady(data: ArrayList<Project>)
         fun onProjectReady(project: Project?)
+        fun onProjectGetError(errorText: String)
     }
-}
+
+
+    interface OnResetLoadProjectCallback {
+        fun onReset()
+    }
+
+    }

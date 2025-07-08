@@ -26,10 +26,12 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
+import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.data.Project
 import com.nextgis.collector.util.IntentFor
+import com.nextgis.collector.util.toast
 import com.nextgis.maplib.datasource.Geo
 import com.nextgis.maplib.datasource.GeoEnvelope
 import com.nextgis.maplib.datasource.GeoPoint
@@ -38,10 +40,20 @@ import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.TrackLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FeatureChanges
+import com.nextgis.maplib.util.FileUtil
+import com.nextgis.maplib.util.MapUtil
 import com.nextgis.maplibui.activity.NGActivity
 import com.nextgis.maplibui.mapui.MapViewOverlays
 import com.nextgis.maplibui.util.ConstantsUI
+import com.nextgis.maplibui.util.UiUtil
 import org.json.JSONObject
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 abstract class BaseActivity : NGActivity() {
     protected lateinit var app: CollectorApplication
@@ -69,7 +81,7 @@ abstract class BaseActivity : NGActivity() {
         if (project.one != -1.0 ) {
             // need zoom to projects area
             val xMin = Geo.wgs84ToMercatorSphereX(project.one)
-            val yMin = Geo.wgs84ToMercatorSphereY(project.two + 0.01)
+            val yMin = Geo.wgs84ToMercatorSphereY(project.two )
             val xMax = Geo.wgs84ToMercatorSphereX(project.three)
             val yMax = Geo.wgs84ToMercatorSphereY(project.four)
             val hasInfinity = xMin.isInfinite() || xMax.isInfinite() || yMin.isInfinite() || yMax.isInfinite()
@@ -151,6 +163,62 @@ abstract class BaseActivity : NGActivity() {
         }
 
 
+    }
+
+
+    public fun shareLog() {
+        HyperLog.getDeviceLogsInFile(this)
+        val dir = File(getExternalFilesDir(null), "LogFiles")
+        val size = FileUtil.getDirectorySize(dir)
+        if (size == 0L) {
+            toast(R.string.error_empty_dataset)
+            return
+        }
+
+        val files = zipLogs(dir)
+        val type = "text/plain"
+        UiUtil.share(files, type, this, false)
+    }
+
+    private fun zipLogs(dir: File): File? {
+        var temp = MapUtil.prepareTempDir(this, "shared_layers", false)
+        val outdated = arrayListOf<File>()
+        try {
+            val fileName = "ng-logs.zip"
+            if (temp == null) {
+                toast(R.string.error_file_create)
+            }
+
+            temp = File(temp, fileName)
+            temp.createNewFile()
+            val fos = FileOutputStream(temp, false)
+            val zos = ZipOutputStream(BufferedOutputStream(fos))
+
+            val buffer = ByteArray(1024)
+            var length: Int
+
+            for (file in dir.listFiles()) {
+                if (System.currentTimeMillis() - file.lastModified() > 60 * 60 * 1000)
+                    outdated.add(file)
+                try {
+                    val fis = FileInputStream(file)
+                    zos.putNextEntry(ZipEntry(file.name))
+                    while (fis.read(buffer).also { length = it } > 0) zos.write(buffer, 0, length)
+                    zos.closeEntry()
+                    fis.close()
+                } catch (ex: Exception) {
+                }
+            }
+
+            zos.close()
+            fos.close()
+        } catch (e: IOException) {
+            temp = null
+        }
+        for (file in outdated) {
+            file.delete()
+        }
+        return temp
     }
 
 }

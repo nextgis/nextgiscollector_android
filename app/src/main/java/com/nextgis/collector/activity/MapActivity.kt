@@ -77,6 +77,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     companion object {
         const val NEW_FEATURE = "new_feature"
         const val NEW_FEATURE_BY_WALK = "new_feature_by_walk"
+        const val CLICKED_FORM_ID = "clicked_form_id"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -87,6 +88,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
     private var selectedLayer: NGWVectorLayerUI? = null
     private var selectedFeature: Feature? = null
     private var needSave = false
+    private var clickedFormId = -1L
     private var returnToList = false
     get() {
         val prev = field
@@ -140,6 +142,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
             )
         binding.layers.addItemDecoration(dividerItemDecoration)
         binding.executePendingBindings()
+        clickedFormId = intent.getLongExtra(MapActivity.CLICKED_FORM_ID, -1)
 
 
         if (projectBorders != null && !defBOrdersWasApply){
@@ -537,7 +540,7 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
 
         selectedLayer?.let {
             if (featureId == -1L) {
-                it.showEditForm(this, featureId, geometry)
+                it.showEditForm(this, featureId, geometry, clickedFormId )
             } else {
                 var uri = Uri.parse("content://" + app.authority + "/" + it.path.name)
                 uri = ContentUris.withAppendedId(uri, featureId)
@@ -642,7 +645,15 @@ class MapActivity : ProjectActivity(), View.OnClickListener, LayersAdapter.OnIte
                 startActivity<AddFeatureActivity>()
             }
             R.id.edit_geometry -> startEdit(MODE_EDIT)
-            R.id.edit_attributes -> selectedFeature?.let { selectedLayer?.showEditForm(this, it.id, it.geometry) }
+            R.id.edit_attributes -> selectedFeature?.let {
+
+                //val defidarray = selectedLayer?.defaultFormId
+                var defid = -1L
+//                if (defidarray != null && defidarray.size > 0)
+//                    defid = defidarray[0]
+
+                selectedLayer?.showEditForm(this, it.id, it.geometry, defid)
+            }
         }
     }
 

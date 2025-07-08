@@ -131,20 +131,20 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         return layers.firstOrNull { it.path.name == id }
     }
 
-    override fun onMapClick(id: String) {
+    override fun onMapClick(id: String, clickedFormId: Long) {
         this.layer = layerByPath(id)
         requestForPermissions(object : OnPermissionCallback {
             override fun onPermissionGranted() {
-                startEdit(true, false)
+                startEdit(true, false, clickedFormId)
             }
         }, true)
     }
 
-    override fun onGpsClick(id: String, useMap : Boolean) {
+    override fun onGpsClick(id: String, useMap : Boolean, clickedFormId : Long) {
         this.layer = layerByPath(id)
         requestForPermissions(object : OnPermissionCallback {
             override fun onPermissionGranted() {
-                startEdit(false, useMap)
+                startEdit(false, useMap, clickedFormId)
             }
         }, true)
     }
@@ -176,20 +176,25 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         return super.onOptionsItemSelected(item)
     }
 
-    private fun startEdit(map: Boolean, useMap : Boolean) {
+    private fun startEdit(map: Boolean, useMap : Boolean, clickedFormId: Long) {
         if (layer != null) {
             if (layer?.geometryType == GeoConstants.GTPoint || layer?.geometryType == GeoConstants.GTMultiPoint
                     || layer?.geometryType == GeoConstants.GTLineString || layer?.geometryType == GeoConstants.GTPolygon
                     || layer?.geometryType == GeoConstants.GTMultiLineString || layer?.geometryType == GeoConstants.GTMultiPolygon)
                 if (map || useMap) {
                     val intent = IntentFor<MapActivity>(this)
+                    intent.putExtra(MapActivity.CLICKED_FORM_ID, clickedFormId)
+
                     if (useMap)
                         intent.putExtra(MapActivity.NEW_FEATURE_BY_WALK, layer?.id)
                     else
                         intent.putExtra(MapActivity.NEW_FEATURE, layer?.id)
                     startActivityForResult(intent,IVectorLayerUI.MODIFY_REQUEST )
-                } else
-                    layer?.showEditForm(this, -1, null)
+                } else {
+                    val defaultFormId = -1;// (layer as NGWVectorLayer).getDefaultFormId() ?: -1
+
+                    layer?.showEditForm(this, -1, null,clickedFormId)
+                }
             else
                 toast(R.string.not_implemented)
         } else

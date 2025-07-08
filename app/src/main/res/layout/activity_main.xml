@@ -182,8 +182,6 @@
     </androidx.drawerlayout.widget.DrawerLayout>
     <FrameLayout
         android:id="@+id/overlay"
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:alpha="0.5"

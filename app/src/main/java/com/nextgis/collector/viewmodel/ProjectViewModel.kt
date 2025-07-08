@@ -21,11 +21,13 @@
 
 package com.nextgis.collector.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.databinding.ObservableField
 import com.nextgis.collector.data.Project
 import com.nextgis.collector.model.ProjectModel
+import com.nextgis.collector.model.ProjectModel.OnResetLoadProjectCallback
 
 
 class ProjectViewModel : ViewModel() {
@@ -49,6 +51,13 @@ class ProjectViewModel : ViewModel() {
             selectedProject.set(project)
         }
 
+        override fun onProjectGetError(errorText: String) {
+            info.set(true)
+            error.set(true)
+            isLoading.set(false)
+            isLoaded.set(false)
+        }
+
         override fun onDataReady(data: ArrayList<Project>) {
             isEmpty.set(data.size == 0)
             info.set(isEmpty.get())
@@ -68,12 +77,13 @@ class ProjectViewModel : ViewModel() {
         projectModel.getProjects(base, private, onDataReadyCallback, email)
     }
 
-    fun load(id: Int, private: Boolean, base: String) {
+    fun load(id: Int, private: Boolean, base: String, context: Context, onResetLoadProjectCallback: OnResetLoadProjectCallback) {
         info.set(false)
         error.set(false)
         isEmpty.set(false)
         isLoading.set(true)
         isLoaded.set(false)
-        projectModel.getProject(base, id, onDataReadyCallback, email, private)
+
+        projectModel.getProject(base, id, onDataReadyCallback, email, private, context, onResetLoadProjectCallback)
     }
 }

@@ -36,11 +36,21 @@ open class ResourceTree(val resources: ArrayList<Resource>) {
                     val title = jsonResource.optString("title")
                     val description = jsonResource.optString("description")
                     val resourseId = jsonResource.optInt("resource_id")
+                    val defaultFormId = jsonResource.optLong("default_form_id", -1)
+
+                    //val defaultFormsArray = jsonResource.optJSONArray("default_set_forms")
+
+//                    val defaultForms: List<Long> =
+//                        (0 until (defaultFormsArray?.length() ?: 0)).map { i ->
+//                            defaultFormsArray!!.getLong(i)
+//                        }
+
+
 
                     val url = jsonResource.optString("url", System.currentTimeMillis().toString())
                     val layer = RemoteLayer(title, type, description, url, true, 0f, 0f, -1, resourseId)
                     val id = if (skipId) layer.path else jsonResource.optString("id")
-                    val resource = Resource(title, type, description, id, arrayListOf())
+                    val resource = Resource(title, type, description, id, arrayListOf(), defaultFormId)
                     when (type) {
                         "dir" -> {
                             val childLayers = jsonResource.optJSONArray("layers")
@@ -91,6 +101,7 @@ open class ResourceTree(val resources: ArrayList<Resource>) {
         json.put("type", resource.type)
         json.put("title", resource.title)
         json.put("description", resource.description)
+        json.put("default_form_id", resource.defaultFormId)
         when (resource.type) {
             "dir" -> {
                 val children = JSONArray()

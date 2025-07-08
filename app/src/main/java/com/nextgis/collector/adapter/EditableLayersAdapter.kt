@@ -59,8 +59,8 @@ class EditableLayersAdapter(private var items: List<Resource>,
     override fun getItemCount(): Int = items.size
 
     interface OnItemClickListener {
-        fun onGpsClick(id: String, useMap : Boolean)
-        fun onMapClick(id: String)
+        fun onGpsClick(id: String, useMap : Boolean, clickedFormId : Long)
+        fun onMapClick(id: String, clickedFormId : Long)
         fun onDirClick(id: String)
     }
 
@@ -82,15 +82,18 @@ class EditableLayersAdapter(private var items: List<Resource>,
                 || layType == GTLineString || layType == GTMultiPolygon || layType == GTMultiLineString) {
                 binding.byGps.setEnabled(true)
 
-                binding.byGps.setOnClickListener { listener?.onGpsClick(repo.id,
-                    layType != GTPoint && layType != GTMultiPoint )
+                binding.byGps.setOnClickListener {
+                    listener?.onGpsClick(repo.id,
+                    layType != GTPoint && layType != GTMultiPoint ,repo.defaultFormId)
                 }
             } else {
                 binding.byGps.setTextColor(binding.byGps.context.resources.getColor(color.colorDisabled))
                 binding.byGps.setEnabled(false)
                 binding.byGps.setOnClickListener { null }
             }
-            binding.byHand.setOnClickListener { listener?.onMapClick(repo.id) }
+            binding.byHand.setOnClickListener {
+                listener?.onMapClick(repo.id, repo.defaultFormId)
+            }
 //            binding.icon.setImageDrawable(repo.getIcon(repo.context))
             binding.executePendingBindings()
         }

@@ -50,6 +50,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import com.google.android.material.snackbar.Snackbar
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.R
+import com.nextgis.collector.activity.IntroActivity.Companion.PERMISSIONS_CODE
 import com.nextgis.collector.model.ProjectModel
 import com.nextgis.collector.service.OfflineIntentService
 import com.nextgis.collector.util.IntentFor
@@ -248,61 +249,6 @@ abstract class ProjectActivity : BaseActivity() {
             else -> return super.onOptionsItemSelected(item)
         }
         return true
-    }
-
-    private fun shareLog() {
-        HyperLog.getDeviceLogsInFile(this)
-        val dir = File(getExternalFilesDir(null), "LogFiles")
-        val size = FileUtil.getDirectorySize(dir)
-        if (size == 0L) {
-            toast(R.string.error_empty_dataset)
-            return
-        }
-
-        val files = zipLogs(dir)
-        val type = "text/plain"
-        UiUtil.share(files, type, this, false)
-    }
-
-    private fun zipLogs(dir: File): File? {
-        var temp = MapUtil.prepareTempDir(this, "shared_layers", false)
-        val outdated = arrayListOf<File>()
-        try {
-            val fileName = "ng-logs.zip"
-            if (temp == null) {
-                toast(R.string.error_file_create)
-            }
-
-            temp = File(temp, fileName)
-            temp.createNewFile()
-            val fos = FileOutputStream(temp, false)
-            val zos = ZipOutputStream(BufferedOutputStream(fos))
-
-            val buffer = ByteArray(1024)
-            var length: Int
-
-            for (file in dir.listFiles()) {
-                if (System.currentTimeMillis() - file.lastModified() > 60 * 60 * 1000)
-                    outdated.add(file)
-                try {
-                    val fis = FileInputStream(file)
-                    zos.putNextEntry(ZipEntry(file.name))
-                    while (fis.read(buffer).also { length = it } > 0) zos.write(buffer, 0, length)
-                    zos.closeEntry()
-                    fis.close()
-                } catch (ex: Exception) {
-                }
-            }
-
-            zos.close()
-            fos.close()
-        } catch (e: IOException) {
-            temp = null
-        }
-        for (file in outdated) {
-            file.delete()
-        }
-        return temp
     }
 
     private fun about() {
@@ -598,11 +544,6 @@ abstract class ProjectActivity : BaseActivity() {
                 .show()
         }
     }
-
-
-
-
-
 
 
     protected fun sync() {
