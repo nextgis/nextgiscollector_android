@@ -39,7 +39,7 @@ class NetworkUtil {
     companion object {
         @Throws(NoSuchAlgorithmException::class)
         fun hash(str: String): String {
-            val rnd = str.toLowerCase() + str.reversed().toUpperCase()
+            val rnd = str.lowercase() + str.reversed().uppercase()
             return md5(rnd)
         }
 

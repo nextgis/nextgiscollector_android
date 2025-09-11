@@ -41,6 +41,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -132,7 +133,7 @@ abstract class ProjectActivity : BaseActivity() {
         mMessageReceiver = MessageReceiver()
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         loadProject()
         init()
@@ -618,20 +619,27 @@ abstract class ProjectActivity : BaseActivity() {
             val url = ProjectModel.getBaseUrl(base ?: COLLECTOR_HUB_URL, private)
             val email = NetworkUtil.getEmailOrUsername(preferences)
             //com.nextgis.maplib.util.NetworkUtil.configureSSLdefault()
-            val response = ProjectModel.getResponse("$url/$id", email)
-            response?.let {
-                try {
-                    json = JSONObject(response.responseBody)
-                } catch (e: Exception) {
+            try {
+                val response = ProjectModel.getResponse("$url/$id", email)
+                response?.let {
+                    try {
+                        json = JSONObject(response.responseBody)
+                    } catch (e: Exception) {
+                    }
                 }
+            } catch (e: Exception){
+                toast(R.string.error_on_check)
             }
 
             runOnUiThread {
+                try {
                 val version = json.optInt("version", -1)
                 when {
                     version > project.version -> showUpdateDialog(version)
                     version == -1 -> toast(R.string.error_network_unavailable)
                     else -> toast(R.string.no_updates)
+                }}  catch (e: Exception){
+                    toast(R.string.error_on_check)
                 }
             }
         }

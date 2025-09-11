@@ -114,5 +114,6 @@
     <string name="error_header">Error</string>
 
     <string name="project_get_error">Ошибка при загрузке проекта</string>
+    <string name="error_on_check">Ошибка при проверки обновления</string>
 
 </resources>

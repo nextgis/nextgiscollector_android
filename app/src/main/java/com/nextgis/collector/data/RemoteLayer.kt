@@ -59,7 +59,7 @@ open class RemoteLayer(val title: String, val type: String, val description: Str
         get() {
             //Log.e("RML", "get path: title:" + title  + " url:"+ url + " type:" + type)
             //return Constants.LAYER_PREFIX + String.format("%X", (title + type + url).hashCode()).toLowerCase()
-            val resullt = Constants.LAYER_PREFIX + String.format("%X", (url).hashCode()).toLowerCase()
+            val resullt = Constants.LAYER_PREFIX + String.format("%X", (url).hashCode()).lowercase()
             //Log.e("RML", "result " + resullt)
             return resullt
         }

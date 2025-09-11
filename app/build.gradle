@@ -39,8 +39,8 @@ android {
         compileSdk 34
         targetSdkVersion 34
 
-        versionCode 95
-        versionName "1.12.3"
+        versionCode 96
+        versionName "1.13.0"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
@@ -106,39 +106,46 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21"
-    implementation "androidx.core:core-ktx:1.10.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.10"
+    implementation "androidx.core:core-ktx:1.13.0"
 
-    implementation 'androidx.lifecycle:lifecycle-runtime:2.0.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime:2.9.3'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
-    //implementation 'androidx.activity:activity:1.9.0'
-    kapt 'androidx.lifecycle:lifecycle-compiler:2.0.0'
 
-    implementation('com.google.android.material:material:1.0.0') {
+    implementation "androidx.activity:activity-ktx:1.8.0"
+
+    //implementation 'androidx.activity:activity:1.9.0'
+
+    //kapt 'androidx.lifecycle:lifecycle-compiler:2.9.3'
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.9.3"
+
+    implementation('com.google.android.material:material:1.13.0') {
         //force = true
     }
     implementation('androidx.cardview:cardview:1.0.0') {
         //force = true
     }
-    implementation('androidx.appcompat:appcompat:1.0.0') {
+    implementation('androidx.appcompat:appcompat:1.7.1') {
         //force = true
     }
     implementation('androidx.legacy:legacy-support-v4:1.0.0') {
         //force = true
     }
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation project(':maplibui')
 
-    testImplementation 'junit:junit:4.13'
+    testImplementation 'junit:junit:4.13.2'
 //    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
 
-    implementation 'io.sentry:sentry-android:6.18.1'
-    implementation 'org.slf4j:slf4j-nop:1.7.30'
+    implementation ('io.sentry:sentry-android:8.21.0'){
+        exclude group: 'androidx.lifecycle', module: 'lifecycle-viewmodel-ktx'
+    }
+    implementation 'org.slf4j:slf4j-nop:2.0.17'
 
     implementation 'com.github.apl-devs:appintro:v4.2.3'
     implementation 'com.github.barsrb:hyperlog-android:master-SNAPSHOT'
-    implementation 'androidx.work:work-runtime:2.8.1'
+    implementation 'androidx.work:work-runtime:2.9.0'
 
 
 }

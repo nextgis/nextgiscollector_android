@@ -5,4 +5,7 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorDisabled">#888888</color>
     <color name="greytext">#ABFFFFFF</color>
+    <color name="colorSurface">#FF6200EE</color>
+
+
 </resources>

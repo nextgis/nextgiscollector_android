@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.text.Html
@@ -13,7 +14,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
@@ -26,6 +29,9 @@ import com.nextgis.maplibui.util.ControlHelper.highlightText
 import java.lang.String
 import java.util.Calendar
 import java.util.GregorianCalendar
+import kotlin.CharSequence
+import kotlin.Float
+import kotlin.Int
 
 class AboutActivity : BaseActivity(), OnPageChangeListener {
 
