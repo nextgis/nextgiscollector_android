@@ -36,8 +36,8 @@ android {
         applicationId "com.nextgis.collector"
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 26
-        compileSdk 34
-        targetSdkVersion 34
+        compileSdk 36
+        targetSdkVersion 36
 
         versionCode 96
         versionName "1.13.0"
@@ -107,12 +107,12 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.10"
-    implementation "androidx.core:core-ktx:1.13.0"
+    implementation "androidx.core:core-ktx:1.17.0"
 
     implementation 'androidx.lifecycle:lifecycle-runtime:2.9.3'
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 
-    implementation "androidx.activity:activity-ktx:1.8.0"
+    implementation "androidx.activity:activity-ktx:1.11.0"
 
     //implementation 'androidx.activity:activity:1.9.0'
 
@@ -145,7 +145,7 @@ dependencies {
 
     implementation 'com.github.apl-devs:appintro:v4.2.3'
     implementation 'com.github.barsrb:hyperlog-android:master-SNAPSHOT'
-    implementation 'androidx.work:work-runtime:2.9.0'
+    implementation 'androidx.work:work-runtime:2.10.4'
 
 
 }

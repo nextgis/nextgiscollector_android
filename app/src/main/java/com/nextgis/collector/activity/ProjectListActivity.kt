@@ -243,6 +243,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 override fun onReceive(context: Context, intent: Intent) {
                     val message = intent.extras!!.getString(Constants.MESSAGE_EXTRA)
                     val title = intent.extras!!.getString(Constants.MESSAGE_TITLE_EXTRA)
+
+                    val isParentFille = intent.extras!!.getBoolean( Constants.MESSAGE_EXTRA_IS_PARENTFILL, false)
                     val s = SpannableString(message) // msg should have url to enable clicking
                     Linkify.addLinks(s, Linkify.WEB_URLS)
 
@@ -258,6 +260,11 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                         .setView(layout)
                     val alertDialog = builder.create()
                     alertDialog.show()
+
+                    if (isParentFille) {
+                        reset(true)
+                        cancel()
+                    }
                     return
                 }
             }
@@ -724,7 +731,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         if (layer.type == "ngfp")
             id?.let {
                 val forms = arrayListOf<Long>()
-                LayerWithStyles.fillStyles(url, user, pass, it, null, forms)
+                val resultFill = LayerWithStyles.fillStyles(url, user, pass, it, null, forms)
                 selectedForm = forms.find { it == layer.defaultFormId } ?: forms.firstOrNull()
                 selectedForm?.let {
                     form -> formUrl = NGWUtil.getFormUrl(url, form)

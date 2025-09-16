@@ -33,6 +33,13 @@
             type="com.nextgis.collector.viewmodel.SettingsViewModel" />
     </data>
 
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        >
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -104,4 +111,6 @@
             app:layout_constraintBottom_toBottomOf="parent"
             tools:text="" />
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.drawerlayout.widget.DrawerLayout>
 </layout>
