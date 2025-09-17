@@ -27,8 +27,8 @@ import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import androidx.core.app.ActivityCompat
-import androidx.fragment.app.Fragment
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import com.github.paolorotolo.appintro.AppIntro
 import com.github.paolorotolo.appintro.AppIntroFragment
 import com.nextgis.collector.R
@@ -38,6 +38,13 @@ import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.util.SettingsConstantsUI
 
 class IntroActivity : AppIntro() {
+
+
+    override fun getLayoutId(): Int {
+        return  R.layout.appintro_intro_layout_copy
+    }
+    // override val layoutId = R.layout.appintro_intro_layout_copy
+
     companion object {
         const val INTRO_SHOWN = "intro_shown"
         const val PERMISSIONS_CODE = 17
