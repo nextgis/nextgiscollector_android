@@ -501,7 +501,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     }
                 }
             }
-            map.replaceAllLayers(newList)
+            //map.replaceAllLayers(newList)
             map.save()
         }
 

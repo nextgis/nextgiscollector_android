@@ -40,7 +40,7 @@ android {
         targetSdkVersion 36
 
         versionCode 98
-        versionName "1.13.0"
+        versionName "2.0.0-debug"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")
@@ -147,6 +147,7 @@ dependencies {
     //implementation 'com.github.AppIntro:AppIntro:6.3.1'
     implementation 'com.github.barsrb:hyperlog-android:master-SNAPSHOT'
     implementation 'androidx.work:work-runtime:2.10.4'
-
+    implementation 'org.maplibre.gl:android-sdk:13.0.2'
+    implementation 'com.squareup.okhttp3:okhttp:5.3.2'
 
 }

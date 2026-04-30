@@ -22,29 +22,24 @@
 package com.nextgis.collector
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.util.Log
-import android.view.View
-import android.widget.FrameLayout
 import android.widget.Toast
 import com.hypertrack.hyperlog.HyperLog
-import com.nextgis.collector.activity.ProjectActivity
 import com.nextgis.collector.util.Logger
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.LayerGroup
+import com.nextgis.maplib.map.MapBase
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplib.util.NetworkUtil
-import com.nextgis.maplib.util.SettingsConstants.KEY_PREF_TRACK_SEND
 import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.mapui.TrackLayerUI
 import com.nextgis.maplibui.service.TrackerService
-import io.sentry.Sentry
 import kotlin.system.exitProcess
 
 class CollectorApplication : GISApplication() {
@@ -163,6 +158,49 @@ class CollectorApplication : GISApplication() {
         }
     }
 
+    override fun getMapBase(): MapBase? {
+        return getMap()
+    }
+
+    override fun startCreateNGWLayerSync(lpath: String?) {
+        // no need here
+        // it's method  for mobile app
+    }
+
+    override fun checkTracksLayerExist() {
+        val LAYER_TRACKS = "tracks"
+        val tracks: MutableList<ILayer?> = java.util.ArrayList<ILayer?>()
+        LayerGroup.getLayersByType(mMap, Constants.LAYERTYPE_TRACKS, tracks)
+        if (tracks.isEmpty()) {
+            val trackLayerName: String? = getString(com.nextgis.maplib.R.string.tracks)
+            val trackLayer =
+                TrackLayerUI(
+                    getApplicationContext(),
+                    mMap.createLayerStorage(LAYER_TRACKS)
+                )
+            trackLayer.setName(trackLayerName)
+            trackLayer.setVisible(true)
+            mMap.addLayer(trackLayer)
+            mMap.save()
+        }
+    }
+
+//    override fun checkTracksLayerExist() {
+//        val tracks: MutableList<ILayer?> = java.util.ArrayList<ILayer?>()
+//        LayerGroup.getLayersByType(mMap, Constants.LAYERTYPE_TRACKS, tracks)
+//        if (tracks.isEmpty()) {
+//            val trackLayerName: String? = getString(com.nextgis.maplib.R.string.tracks)
+//            val trackLayer =
+//                TrackLayerUI(
+//                    getApplicationContext(),
+//                    mMap.createLayerStorage(LAYER_TRACKS)
+//                )
+//            trackLayer.setName(trackLayerName)
+//            trackLayer.setVisible(true)
+//            mMap.addLayer(trackLayer)
+//            mMap.save()
+//        }
+//    }
 
 
 }
