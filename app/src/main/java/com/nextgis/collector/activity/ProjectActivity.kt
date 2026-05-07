@@ -461,7 +461,7 @@ abstract class ProjectActivity : BaseActivity() {
         return unfinished
     }
 
-    protected fun requestForPermissions(onPermissionCallback: OnPermissionCallback, memory: Boolean, geo: Boolean = true) {
+    fun requestForPermissions(onPermissionCallback: OnPermissionCallback, memory: Boolean, geo: Boolean = true) {
         this.onPermissionCallback = onPermissionCallback
         val coarse = Manifest.permission.ACCESS_COARSE_LOCATION
         val push = Manifest.permission.POST_NOTIFICATIONS
@@ -521,7 +521,7 @@ abstract class ProjectActivity : BaseActivity() {
         setSubtitle(hasChanges())
     }
 
-    protected fun setSubtitle(hasChanges: Boolean) {
+    fun setSubtitle(hasChanges: Boolean) {
         supportActionBar?.setSubtitle(if (hasChanges) R.string.not_synced else R.string.all_synced)
     }
 

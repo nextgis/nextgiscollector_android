@@ -3,6 +3,7 @@
   ~ Project:  NextGIS Collector
   ~ Purpose:  Light mobile GIS for collecting data
   ~ Author:   Stanislav Petriakov, becomeglory@gmail.com
+  ~ Author:   Alexey Kovalenko, alexey.kovalenko.v@gmail.com
   ~ **********************************************************************
   ~ Copyright (c) 2018-2019 NextGIS, info@nextgis.com
   ~
@@ -20,10 +21,10 @@
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools">
 <RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -32,8 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        tools:context=".activity.MapActivity">
-
+        >
         <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:id="@+id/coordinator"
             android:layout_width="match_parent"
@@ -43,15 +43,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <androidx.appcompat.widget.Toolbar
-                    android:id="@+id/toolbar"
+                <View
+                    android:id="@+id/toolbarview"
                     android:layout_width="match_parent"
-                    android:layout_height="?attr/actionBarSize"
+                    android:layout_height="1dp"
                     android:background="?attr/colorPrimary"
-                    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                    app:subtitleTextAppearance="@style/TextAppearance.AppCompat.Caption"
                     />
 
                 <FrameLayout
@@ -59,23 +56,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/toolbar"
+                    app:layout_constraintTop_toBottomOf="@id/toolbarview"
                     tools:background="@drawable/bk_tile"
                     />
-
-<!--                <RelativeLayout-->
-<!--                    android:id="@+id/maprl"-->
-<!--                    xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--                    xmlns:fab="http://schemas.android.com/apk/res-auto"-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="match_parent">-->
-
                 <org.maplibre.android.maps.MapView
                     android:id="@+id/mapViewMaplibre"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/toolbar"
+                    app:layout_constraintTop_toBottomOf="@id/toolbarview"
                     android:visibility="visible"
                     />
 
@@ -145,30 +134,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/edit_geometry"/>
 
-                <com.nextgis.maplibui.fragment.BottomToolbar
-                    android:id="@+id/bottom_toolbar"
-                    android:layout_width="match_parent"
-                    android:layout_height="?attr/actionBarSize"
-                    android:background="?attr/colorPrimary"
-                    android:theme="@style/Theme.NextGIS.AppCompat.ActionBar"
-                    android:visibility="gone"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:popupTheme="@style/ThemeOverlay.NextGIS.AppCompat.Light"
-                    />
-
-<!--                </RelativeLayout>-->
             </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/add_feature"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end|bottom"
-                android:layout_margin="16dp"
-                android:onClick="onClick"
-                android:src="@drawable/ic_add_white_48dp"
-
-                />
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -270,4 +236,3 @@
     </RelativeLayout>
 
 </RelativeLayout>
-</layout>

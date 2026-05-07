@@ -77,11 +77,11 @@
             android:name=".activity.IntroActivity"
             android:label="@string/intro"
             android:theme="@style/AppTheme.TranslucentStatusBar" />
-        <activity
-            android:name=".activity.MapActivity"
-            android:launchMode="singleTask"
-            android:theme="@style/AppTheme.NoActionBar"
-            />
+<!--        <activity-->
+<!--            android:name=".activity.MapActivity"-->
+<!--            android:launchMode="singleTask"-->
+<!--            android:theme="@style/AppTheme.NoActionBar"-->
+<!--            />-->
         <activity
             android:name=".activity.AddFeatureActivity"
             android:label="@string/add_feature"

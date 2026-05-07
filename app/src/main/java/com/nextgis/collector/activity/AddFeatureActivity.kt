@@ -42,19 +42,52 @@ import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.nextgis.maplibui.service.TrackerService
+import io.sentry.IPerformanceContinuousCollector
 import java.io.File
 import java.io.FileNotFoundException
+import androidx.core.view.isVisible
+import com.nextgis.collector.activity.MapFragment.Companion.CLICKED_FORM_ID
+import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE
+import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE_BY_WALK
+import com.nextgis.maplib.datasource.GeoPoint
+import com.nextgis.maplib.util.Constants
+import com.nextgis.maplibui.util.ConstantsUI
 
-class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLayersAdapter.OnItemClickListener {
+class AddFeatureActivity :
+    ProjectActivity(),
+    View.OnClickListener,
+    EditableLayersAdapter.OnItemClickListener {
     companion object {
         const val PERMISSIONS_CODE = 625
+        const val IS_MAP_START = "is_map_start"
     }
 
-    private lateinit var binding: ActivityAddFeatureBinding
+    lateinit var binding: ActivityAddFeatureBinding
     private var layer: NGWVectorLayerUI? = null
     private val tree = ResourceTree(arrayListOf())
     private val layers = ArrayList<NGWVectorLayerUI>()
     private var history = ArrayList<String>()
+
+    var mapFragment: MapFragment? = null
+
+    var savedFormId : Long = -1L
+    var savedAction : String = ""
+    var savedLayerId : Int = -1
+    var postponedIntent : Intent? = null
+        get() {
+            val prev = field
+            postponedIntent = null
+            return prev
+        }
+
+    //  should after edit return to list or keep map displayed
+    // onetime read def -false
+    private var returnToList = false
+        get() {
+            val prev = field
+            returnToList = false
+            return prev
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +105,14 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
             )
         binding.layers.addItemDecoration(dividerItemDecoration)
         binding.executePendingBindings()
+
+        mapFragment = MapFragment()
+        supportFragmentManager.beginTransaction()
+                .replace(R.id.map_fragment_container,mapFragment!!)
+                .commit()
+
+        if (intent != null && intent.getBooleanExtra(IS_MAP_START, false))
+            showMap(true)
     }
 
     override fun init() {
@@ -120,10 +161,9 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.show_map ->  {
-                finish()
-                startActivity<MapActivity>()
-            }
-
+                showMap(! (binding.mapFragmentContainer.isVisible))
+            } else ->
+                mapFragment?.onClick(view)
         }
     }
 
@@ -135,6 +175,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         this.layer = layerByPath(id)
         requestForPermissions(object : OnPermissionCallback {
             override fun onPermissionGranted() {
+                returnToList = true
                 startEdit(true, false, clickedFormId)
             }
         }, true)
@@ -144,6 +185,7 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         this.layer = layerByPath(id)
         requestForPermissions(object : OnPermissionCallback {
             override fun onPermissionGranted() {
+                returnToList = true
                 startEdit(false, useMap, clickedFormId)
             }
         }, true)
@@ -160,9 +202,6 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
         val itemName = getString(if (trackInProgress) R.string.tracks_stop else R.string.start)
         trackItem?.setTitle(itemName)
 
-
-
-
         when (item.itemId) {
             android.R.id.home -> {
                 if (history.size > 0) {
@@ -172,6 +211,8 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
                 }
                 return true
             }
+            else  ->
+                mapFragment?.onOptionsItemSelected(item)
         }
         return super.onOptionsItemSelected(item)
     }
@@ -182,17 +223,26 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
                     || layer?.geometryType == GeoConstants.GTLineString || layer?.geometryType == GeoConstants.GTPolygon
                     || layer?.geometryType == GeoConstants.GTMultiLineString || layer?.geometryType == GeoConstants.GTMultiPolygon)
                 if (map || useMap) {
-                    val intent = IntentFor<MapActivity>(this)
-                    intent.putExtra(MapActivity.CLICKED_FORM_ID, clickedFormId)
+                    savedFormId = clickedFormId
+                    savedLayerId = layer!!.id
+                    savedAction = if (useMap) NEW_FEATURE_BY_WALK else NEW_FEATURE
+
+                    showMap(true)
+
+                    val intent = IntentFor<AddFeatureActivity>(this)
+                    intent.putExtra(CLICKED_FORM_ID, clickedFormId)
 
                     if (useMap)
-                        intent.putExtra(MapActivity.NEW_FEATURE_BY_WALK, layer?.id)
+                        intent.putExtra(NEW_FEATURE_BY_WALK, layer?.id)
                     else
-                        intent.putExtra(MapActivity.NEW_FEATURE, layer?.id)
-                    startActivityForResult(intent,IVectorLayerUI.MODIFY_REQUEST )
-                } else {
-                    val defaultFormId = -1;// (layer as NGWVectorLayer).getDefaultFormId() ?: -1
+                        intent.putExtra(NEW_FEATURE, layer?.id)
 
+                    if (mapFragment?.isMapReadyToWork == true)
+                        mapFragment?.startEditIfNeed(intent)
+                    else {
+                        postponedIntent = intent
+                    }
+                } else {
                     layer?.showEditForm(this, -1, null,clickedFormId)
                 }
             else
@@ -212,13 +262,70 @@ class AddFeatureActivity : ProjectActivity(), View.OnClickListener, EditableLaye
 //            binding.overlay.visibility = View.GONE;
     }
 
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//
-//        if (resultCode == RESULT_OK && )
-//
-//
-//    }
+    fun getFormId(): Long{
+        return savedFormId
+    }
 
+    fun showMap(visible : Boolean){
+        binding.mapFragmentContainer.visibility = if (visible) View.VISIBLE else View.GONE
+        binding.showMap.setImageResource(if (visible) R.drawable.ic_add_white_48dp else R.drawable.ic_map )
 
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (projectBorders != null && resultCode == RESULT_OK && data!= null){
+            if (data.hasExtra(ConstantsUI.KEY_ADDED_POINT)){
+                if (returnToList){
+                    // hideMap
+                    showMap(false)
+                } else {
+                    val pointArray :DoubleArray? = data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT);
+                    if (pointArray != null && pointArray.size>=2) {
+                        val geoPoint = GeoPoint(pointArray[0], pointArray[1])
+                        projectBorders.let {
+                            if (!projectBorders!!.contains(geoPoint)) {
+                                val builder = android.app.AlertDialog.Builder(this@AddFeatureActivity)
+                                builder
+                                    .setPositiveButton("ok", null)
+                                    .setTitle(R.string.out_of_area_header)
+                                    .setMessage(R.string.out_of_area_text)
+                                val alertDialog = builder.create()
+                                alertDialog.show()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (requestCode == IVectorLayerUI.MODIFY_REQUEST && data != null) {
+            val id = data.getLongExtra(ConstantsUI.KEY_FEATURE_ID, Constants.NOT_FOUND.toLong())
+
+            if (id != Constants.NOT_FOUND.toLong()) {
+                mapFragment?.overlay!!.setSelectedFeature(id)
+
+                map?.updateEditedId(id)
+                if (mapFragment?.mSelectedLayer != null)
+                    mapFragment?.mSelectedLayer!!.showFeature(id)
+
+                mapFragment?.setHighlight()
+                mapFragment?.overlay?.setHasEdits(false)
+                //mapFragment?.setMode(MODE_SELECT_ACTION)
+
+                if (map == null)
+                    return;
+
+                map.loadViewFeature(id,mapFragment?.selectedLayer!!.id)
+                map.finishCreateNewFeature(id,mapFragment?.selectedLayer!! )
+                map.loadViewFeature(id,mapFragment?.selectedLayer!!.id)
+                map.reloadFeatureToMaplibre(id, mapFragment?.selectedLayer)
+                map.updateSelectedMarker()
+                map.hideSelectedDotSource()
+                mapFragment?.setUpToolbar()
+            }
+        } else if  (mapFragment?.overlay!!.selectedFeatureGeometry != null)
+            mapFragment?.overlay!!.setHasEdits(true)
+    }
 }

@@ -49,6 +49,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
+import com.nextgis.collector.activity.AddFeatureActivity.Companion.IS_MAP_START
 import com.nextgis.collector.activity.IntroActivity.Companion.PERMISSIONS_CODE
 import com.nextgis.collector.adapter.ProjectAdapter
 import com.nextgis.collector.data.Project
@@ -57,6 +58,7 @@ import com.nextgis.collector.data.RemoteLayerNGW
 import com.nextgis.collector.data.RemoteLayerTMS
 import com.nextgis.collector.databinding.ActivityProjectListBinding
 import com.nextgis.collector.model.ProjectModel
+import com.nextgis.collector.util.IntentFor
 import com.nextgis.collector.util.NetworkUtil
 import com.nextgis.collector.util.longToast
 import com.nextgis.collector.util.runDelayed
@@ -158,13 +160,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
 
-//                Log.e("FFRRMM", "ProjListActivity recive broadcast " + intent.toString())
-//                Log.e("FFRRMM", "ProjListActivity total is  " + total)
-
-
                 HyperLog.v(Constants.TAG, "BroadcastReceiver got action from LayerFillService: ${intent.action}")
                 if (intent.action?.equals(LayerFillService.ACTION_STOP) == true) {
-                    //Log.e("FFRRMM", "ProjListActivity action?.equals(LayerFillService.ACTION_STOP) == true  " )
                     toast(R.string.canceled)
                     reset(true)
                     return
@@ -173,7 +170,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 HyperLog.v(Constants.TAG, "BroadcastReceiver got status from LayerFillService: $serviceStatus")
                 when (serviceStatus) {
                     LayerFillService.STATUS_STOP -> {
-                        //Log.e("FFRRMM", "ProjListActivity  LayerFillService.STATUS_STOP  " )
 
                         val canceled = intent.getBooleanExtra(LayerFillService.KEY_CANCELLED, false)
                         val success = intent.getBooleanExtra(LayerFillService.KEY_RESULT, false)
@@ -190,7 +186,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             return
                         }
                         if (!intent.hasExtra(LayerFillService.KEY_MESSAGE)) {
-                            //Log.e("FFRRMM", "ProjListActivity  !intent.hasExtra(LayerFillService.KEY_MESSAGE) return " )
                             return
                         }
 
@@ -214,25 +209,17 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                                     NGWSettingsFragment.setAccountSyncEnabled(account, app.authority, true)
                                     ngwLayer.syncType = Constants.SYNC_ALL
                                 }
-
                                 layers.add(ngwLayer)
                             }
                         }
-
-
                         total--
-
-                        //Log.e("FFRRMM", "ProjListActivity  total--  :   is :" + total)
-
                         check()
                     }
                     LayerFillService.STATUS_START -> {
-                        //Log.e("FFRRMM", "ProjListActivity  LayerFillService.STATUS_START" )
                         binding.message.text = ""
                         intent.getStringExtra(LayerFillService.KEY_TITLE)?.let { binding.status.text = it }
                     }
                     LayerFillService.STATUS_UPDATE -> {
-                        // Log.e("FFRRMM", "ProjListActivity  LayerFillService.STATUS_UPDATE" )
                         intent.getStringExtra(LayerFillService.KEY_MESSAGE)?.let { binding.message.text = it }
                     }
                 }
@@ -268,8 +255,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     return
                 }
             }
-
-
         val intentFilter = IntentFilter(LayerFillService.ACTION_UPDATE)
         intentFilter.addAction(LayerFillService.ACTION_STOP)
         registerReceiver(receiver, intentFilter, RECEIVER_EXPORTED)
@@ -277,7 +262,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         val intentFilterPointsz = IntentFilter()
         intentFilterPointsz.addAction(Constants.MESSAGE_ALERT_INTENT)
         registerReceiver(receiverPointz, intentFilterPointsz, RECEIVER_EXPORTED )
-
 
         val extras = intent.extras
         val id = extras?.getInt("project", -1) ?: -1
@@ -505,10 +489,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             map.save()
         }
 
-        if (!project.isMapMain)
-            startActivity<AddFeatureActivity>()
-        else
-            startActivity<MapActivity>()
+        val intent = IntentFor<AddFeatureActivity>(this)
+        intent.putExtra(IS_MAP_START, project.isMapMain)
+        startActivity(intent)
+
         finish()
     }
 
@@ -518,15 +502,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             binding.projectModel?.selectedProject?.get()?.let { project ->
                 val paths = project.layers.map { it.path }.reversed()
                 var i = 0
-
-//                for (vectorLayer in map.layers){
-//                    Log.e("LLAAYYEERR", "MAP "  + vectorLayer.id + " " + vectorLayer.name)
-//                }
-//
-//                for (jsonlayer in project.layers){
-//                    Log.e("LLAAYYEERR", "MAP "  + jsonlayer.resourceId + " " + jsonlayer.title)
-//                }
-
 
                 var loopcounter = 0
                 while (i < map.layerCount && loopcounter < map.layerCount * map.layerCount) {
@@ -597,7 +572,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     .setMessage(R.string.error_account_create)
                     .setPositiveButton(com.nextgis.maplibui.R.string.ok, null)
                     .show()
-//                toast(R.string.error_auth)
                 reset(true)
                 return
             }
@@ -715,9 +689,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
 
     private fun addVector(layer: RemoteLayerNGW, accountName: String, url: String, user: String, pass: String): Boolean {
 
-        Log.e("RML", "run addVector: " + url + " accountName: " + accountName)
-
-
         val intent = Intent(this, LayerFillService::class.java)
         intent.action = LayerFillService.ACTION_ADD_TASK
 
@@ -754,12 +725,10 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         return tmsLayer
     }
 
-
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         menu?.findItem(R.id.menu_share_log)?.isVisible = preferences.getBoolean("save_log", false)
         return super.onPrepareOptionsMenu(menu)
     }
-
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.list, menu)
@@ -775,5 +744,4 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         }
         return true
     }
-
 }

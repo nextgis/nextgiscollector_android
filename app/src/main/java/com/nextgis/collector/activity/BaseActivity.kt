@@ -20,7 +20,6 @@
  */
 
 package com.nextgis.collector.activity
-
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
@@ -57,10 +56,10 @@ import java.util.zip.ZipOutputStream
 
 abstract class BaseActivity : NGActivity() {
     protected lateinit var app: CollectorApplication
-    protected lateinit var mapView: MapViewOverlays
-    protected lateinit var map: MapDrawable
-    protected lateinit var preferences: SharedPreferences
-    protected lateinit var project: Project
+    lateinit var mapView: MapViewOverlays
+    lateinit var map: MapDrawable
+    lateinit var preferences: SharedPreferences
+    lateinit var project: Project
     var projectBorders : GeoEnvelope? = null
 
 
@@ -108,7 +107,6 @@ abstract class BaseActivity : NGActivity() {
                 contentResolver.delete(uri, null, null)
             }
         }
-
         map.delete(keepTrack)
         preferences.edit().remove("project").apply()
     }
@@ -137,7 +135,6 @@ abstract class BaseActivity : NGActivity() {
         startActivity(intent)
     }
 
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -157,16 +154,12 @@ abstract class BaseActivity : NGActivity() {
                             alertDialog.show()
                         }
                     }
-
                 }
             }
         }
-
-
     }
 
-
-    public fun shareLog() {
+    fun shareLog() {
         HyperLog.getDeviceLogsInFile(this)
         val dir = File(getExternalFilesDir(null), "LogFiles")
         val size = FileUtil.getDirectorySize(dir)
@@ -174,7 +167,6 @@ abstract class BaseActivity : NGActivity() {
             toast(R.string.error_empty_dataset)
             return
         }
-
         val files = zipLogs(dir)
         val type = "text/plain"
         UiUtil.share(files, type, this, false)
