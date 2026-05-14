@@ -23,6 +23,8 @@ package com.nextgis.collector.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -47,11 +49,20 @@ import java.io.File
 import java.io.FileNotFoundException
 import androidx.core.view.isVisible
 import com.nextgis.collector.activity.MapFragment.Companion.CLICKED_FORM_ID
+import com.nextgis.collector.activity.MapFragment.Companion.MOVE_MAP
 import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE
 import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE_BY_WALK
 import com.nextgis.maplib.datasource.GeoPoint
+import com.nextgis.maplib.map.MPLFeaturesUtils
+import com.nextgis.maplib.map.MapDrawable
+import com.nextgis.maplib.map.MapDrawable.MODE_EDIT
+import com.nextgis.maplib.map.MapDrawable.MODE_EDIT_BY_WALK
+import com.nextgis.maplib.map.MapDrawable.MODE_HIGHLIGHT
+import com.nextgis.maplib.map.MapDrawable.MODE_NONE
 import com.nextgis.maplib.util.Constants
+import com.nextgis.maplibui.service.WalkEditService
 import com.nextgis.maplibui.util.ConstantsUI
+import kotlin.concurrent.thread
 
 class AddFeatureActivity :
     ProjectActivity(),
@@ -82,7 +93,7 @@ class AddFeatureActivity :
 
     //  should after edit return to list or keep map displayed
     // onetime read def -false
-    private var returnToList = false
+    public var returnToList = false
         get() {
             val prev = field
             returnToList = false
@@ -94,7 +105,7 @@ class AddFeatureActivity :
         binding =  ActivityAddFeatureBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setup(with = binding.toolbar)
+         setup(with = binding.toolbar)
 
         val manager = LinearLayoutManager(this)
         binding.layers.layoutManager = manager
@@ -113,6 +124,23 @@ class AddFeatureActivity :
 
         if (intent != null && intent.getBooleanExtra(IS_MAP_START, false))
             showMap(true)
+        else if (WalkEditService.isServiceRunning(this))
+            showMap(true)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        var isEditMode = true
+        if (mapFragment != null && mapFragment!!.mode != MODE_NONE && mapFragment!!.mode != MODE_HIGHLIGHT)
+            isEditMode = false
+
+        menuInflater.inflate( if (isEditMode) R.menu.main else R.menu.edit_geometry, menu)
+        if (trackItem == null)
+            menu?.findItem(R.id.menu_track).let {
+                trackItem = menu?.findItem(R.id.menu_track)
+            }
+        setTracksTitle(menu?.findItem(R.id.menu_track))
+        //updateTracksMenuItems(menu)
+        return super.onCreateOptionsMenu(menu)
     }
 
     override fun init() {
@@ -186,6 +214,9 @@ class AddFeatureActivity :
         requestForPermissions(object : OnPermissionCallback {
             override fun onPermissionGranted() {
                 returnToList = true
+                mapFragment?.mSelectedLayer = layer
+                mapFragment?.overlay?.setSelectedLayer(layer)
+                mapFragment?.createPointFromOverlay(false)
                 startEdit(false, useMap, clickedFormId)
             }
         }, true)
@@ -219,6 +250,15 @@ class AddFeatureActivity :
 
     private fun startEdit(map: Boolean, useMap : Boolean, clickedFormId: Long) {
         if (layer != null) {
+            mapFragment?.mSelectedLayer = layer
+            if (layer?.isVisible == false){
+                mapView.map.reloadLayerByID(layer!!.id)
+                try {
+                    Thread.sleep(500)
+                } catch (ex: Exception){
+
+                }
+            }
             if (layer?.geometryType == GeoConstants.GTPoint || layer?.geometryType == GeoConstants.GTMultiPoint
                     || layer?.geometryType == GeoConstants.GTLineString || layer?.geometryType == GeoConstants.GTPolygon
                     || layer?.geometryType == GeoConstants.GTMultiLineString || layer?.geometryType == GeoConstants.GTMultiPolygon)
@@ -227,6 +267,7 @@ class AddFeatureActivity :
                     savedLayerId = layer!!.id
                     savedAction = if (useMap) NEW_FEATURE_BY_WALK else NEW_FEATURE
 
+                    returnToList = true
                     showMap(true)
 
                     val intent = IntentFor<AddFeatureActivity>(this)
@@ -237,6 +278,8 @@ class AddFeatureActivity :
                     else
                         intent.putExtra(NEW_FEATURE, layer?.id)
 
+                    if (map)
+                        intent.putExtra(MOVE_MAP, false)
                     if (mapFragment?.isMapReadyToWork == true)
                         mapFragment?.startEditIfNeed(intent)
                     else {
@@ -257,9 +300,19 @@ class AddFeatureActivity :
 
     override fun onResume() {
         super.onResume()
+
+        Log.d("WWALK", "AddFeatureActivity onResume")
         //Toast.makeText(this,"ON_RESUME", -1)
 //        if ( !(application as CollectorApplication).isSyncProgress)
 //            binding.overlay.visibility = View.GONE;
+        if (WalkEditService.isServiceRunning(this) && mapFragment!= null && mapFragment?.mode == MODE_EDIT_BY_WALK) {
+            Log.d("WWALK", "AddFeatureActivity onResume WalkEditService.isServiceRunning(this) && mapFragment!= null && mapFragment?.mode == MODE_EDIT_BY_WALK")
+            // need getFeature from old overlay and update in maplibre logic
+            if (mapFragment!!.isMapReadyToWork)
+                mapView.map!!.updateWalkingFeature(mapFragment!!.overlay!!.selectedFeature)
+            else
+                toast(R.string.not_implemented)
+        }
     }
 
     fun getFormId(): Long{
@@ -267,8 +320,23 @@ class AddFeatureActivity :
     }
 
     fun showMap(visible : Boolean){
+        Log.d("WWALK", "AddFeatureActivity showMap " + visible)
+
         binding.mapFragmentContainer.visibility = if (visible) View.VISIBLE else View.GONE
         binding.showMap.setImageResource(if (visible) R.drawable.ic_add_white_48dp else R.drawable.ic_map )
+
+        if (visible){
+            //supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_minus)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            supportActionBar?.setHomeButtonEnabled(true)
+
+            if (mapFragment?.isMapReadyToWork == true)
+                mapFragment?.setUpToolbar(false)
+
+        } else {
+            supportActionBar?.setDisplayHomeAsUpEnabled(false)
+            supportActionBar?.setHomeButtonEnabled(false)
+        }
 
     }
 
@@ -312,12 +380,14 @@ class AddFeatureActivity :
 
                 mapFragment?.setHighlight()
                 mapFragment?.overlay?.setHasEdits(false)
-                //mapFragment?.setMode(MODE_SELECT_ACTION)
+                //mapFragment?.setModпзe(MODE_SELECT_ACTION)
 
                 if (map == null)
                     return;
 
                 map.loadViewFeature(id,mapFragment?.selectedLayer!!.id)
+
+                map.originalSelectedFeature = mapFragment?.overlay?.selectedFeature // MPLFeaturesUtils.getFeatureFromNGFeature( map.viewedFeature)
                 map.finishCreateNewFeature(id,mapFragment?.selectedLayer!! )
                 map.loadViewFeature(id,mapFragment?.selectedLayer!!.id)
                 map.reloadFeatureToMaplibre(id, mapFragment?.selectedLayer)

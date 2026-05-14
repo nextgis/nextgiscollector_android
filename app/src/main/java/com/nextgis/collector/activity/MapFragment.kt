@@ -14,31 +14,31 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.nextgis.collector.util.toast
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.activity.ProjectActivity.OnPermissionCallback
 import com.nextgis.collector.adapter.LayersAdapter
 import com.nextgis.collector.databinding.MapFragmentBinding
+import com.nextgis.collector.util.IntentFor
 import com.nextgis.collector.util.locationManager
-import com.nextgis.collector.util.runDelayed
+import com.nextgis.collector.util.toast
 import com.nextgis.maplib.api.GpsEventListener
 import com.nextgis.maplib.api.ILayerView
+import com.nextgis.maplib.datasource.Feature
 import com.nextgis.maplib.datasource.GeoEnvelope
 import com.nextgis.maplib.datasource.GeoGeometry
+import com.nextgis.maplib.datasource.GeoGeometryFactory
 import com.nextgis.maplib.datasource.GeoLineString
 import com.nextgis.maplib.datasource.GeoLinearRing
 import com.nextgis.maplib.datasource.GeoMultiLineString
@@ -50,6 +50,7 @@ import com.nextgis.maplib.map.Layer
 import com.nextgis.maplib.map.MLP.MLGeometryEditClass
 import com.nextgis.maplib.map.MPLFeaturesUtils
 import com.nextgis.maplib.map.MapDrawable.MODE_EDIT_BY_TOUCH
+import com.nextgis.maplib.map.MapDrawable.MODE_NONE
 import com.nextgis.maplib.map.MaplibreMapInteraction
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.VectorLayer
@@ -71,6 +72,7 @@ import com.nextgis.maplibui.overlay.EditLayerOverlay.MODE_EDIT
 import com.nextgis.maplibui.overlay.EditLayerOverlay.MODE_EDIT_BY_WALK
 import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.service.TrackerService
+import com.nextgis.maplibui.service.WalkEditService
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI.DEFAUL_BORDERS_WAS_APPLY
@@ -81,7 +83,6 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.module.http.HttpRequestImpl
-
 import org.maplibre.geojson.LineString
 import org.maplibre.geojson.MultiLineString
 import org.maplibre.geojson.MultiPoint
@@ -94,7 +95,6 @@ import kotlin.math.atan
 import kotlin.math.ln
 import kotlin.math.sinh
 import kotlin.math.tan
-import com.nextgis.maplib.datasource.Feature
 
 class MapFragment : Fragment(),
         View.OnClickListener,
@@ -114,6 +114,9 @@ class MapFragment : Fragment(),
         const val NEW_FEATURE = "new_feature"
         const val NEW_FEATURE_BY_WALK = "new_feature_by_walk"
         const val CLICKED_FORM_ID = "clicked_form_id"
+        const val SKIP_NEW_FEATURE_CREATION = "skip_new_feature_creation"
+        const val MOVE_MAP = "move_map"
+        //const val NEW_FEATURE_BY_WALK = "new_feature_by_walk"
     }
 
     public lateinit var overlay: EditLayerOverlay
@@ -138,6 +141,11 @@ class MapFragment : Fragment(),
 
     // be true after mapLibre map init done and all layers loaded
     var isMapReadyToWork = false;
+
+    protected val KEY_MODE: String = "mode"
+    protected val BUNDLE_KEY_LAYER: String = "layer"
+    protected val BUNDLE_KEY_FEATURE_ID: String = "feature"
+    protected val BUNDLE_KEY_SAVED_FEATURE: String = "feature_blob"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -257,23 +265,24 @@ class MapFragment : Fragment(),
         }
     }
 
-//    override fun init() {
-//        val layers = ArrayList<Layer>()
-//        var hasChanges = false
-//        for (i in 0 until map.layerCount) {
-//            val layer = map.getLayer(map.layerCount -1 - i)
-//            if (layer is Layer)
-//                layers.add(layer)
-//            if (layer is NGWVectorLayer && !hasChanges) {
-//                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
-//                hasChanges = changesCount > 0
-//            }
-//        }
-//
-//        val layersAdapter = LayersAdapter(layers, this)
-//        binding.layers.adapter = layersAdapter
-//        setUpToolbar(hasChanges)
-//    }
+    fun init() {
+        val layers = ArrayList<Layer>()
+        var hasChanges = false
+        for (i in 0 until (activity as AddFeatureActivity).mapView.map.layerCount) {
+            val layer = (activity as AddFeatureActivity).mapView.map.getLayer(
+                (activity as AddFeatureActivity).mapView.map.layerCount -1 - i)
+            if (layer is Layer)
+                layers.add(layer)
+            if (layer is NGWVectorLayer && !hasChanges) {
+                val changesCount = FeatureChanges.getChangeCount(layer.changeTableName)
+                hasChanges = changesCount > 0
+            }
+        }
+
+        val layersAdapter = LayersAdapter(layers, this)
+        binding.layers.adapter = layersAdapter
+        setUpToolbar(hasChanges)
+    }
 
     override fun onResume() {
         super.onResume()
@@ -338,11 +347,11 @@ class MapFragment : Fragment(),
         var result: Boolean
         when (item?.itemId) {
 
-            0 -> {
-                (activity as AddFeatureActivity).mapView.isLockMap = false
-                setMode(MODE_EDIT)
-                return true
-            }
+//            0 -> {
+//                (activity as AddFeatureActivity).mapView.isLockMap = false
+//                setMode(MODE_EDIT)
+//                return true
+//            }
 
             R.id.menu_edit_save -> return saveEdits()
             R.id.menu_edit_undo, R.id.menu_edit_redo -> {
@@ -372,12 +381,6 @@ class MapFragment : Fragment(),
                 cancelEdits()
                 true
             }
-
-//            0 -> {
-//                (activity as AddFeatureActivity).mapView.isLockMap = false
-//                setMode(MODE_EDIT)
-//                true
-//            }
 
             com.nextgis.maplibui.R.id.menu_edit_undo, com.nextgis.maplibui.R.id.menu_edit_redo -> {
                 result = historyOverlay!!.onOptionsItemSelected(item.itemId)
@@ -507,7 +510,7 @@ class MapFragment : Fragment(),
             delay)
     }
 
-    public fun setUpToolbar(hasChanges: Boolean? = null) {
+    fun setUpToolbar(hasChanges: Boolean? = null) {
         (requireActivity() as BaseActivity).title = (requireActivity() as BaseActivity).project.title
         val toggle = ActionBarDrawerToggle(
             requireActivity(),
@@ -597,14 +600,22 @@ class MapFragment : Fragment(),
             setUpToolbar()
         (activity as AddFeatureActivity).mapView.map.unselectFeatureFromEdit(true,false)
         (activity as AddFeatureActivity).mapView.map.hideMarker()
+        if ((activity as AddFeatureActivity).returnToList)
+            (activity as AddFeatureActivity).showMap(false)
+
     }
 
     // run creating new object
     fun startEditIfNeed(intent: Intent?){
+        Log.d("WWALK", "startEditIfNeed + ")
+
         if (intent == null)
             return
         historyOverlay.defineUndoRedo()
         intent?.let {
+            val skipCreate = intent.getBooleanExtra(SKIP_NEW_FEATURE_CREATION, false)
+            val moveMap = intent.getBooleanExtra(MOVE_MAP, false)
+
             if (it.hasExtra(NEW_FEATURE) || it.hasExtra(NEW_FEATURE_BY_WALK)) {
                 var extraName : String
                 val id : Int?
@@ -632,9 +643,12 @@ class MapFragment : Fragment(),
                         centerPoint = lastKnown()
                 } else
                     centerPoint = currentCenter
-                centerPoint?.let { center ->
-                    val zoom = (activity as BaseActivity).map.zoomLevel
-                    (activity as BaseActivity).map.setZoomAndCenter(zoom, center, false, 0)
+
+                overlay.setSelectedLayer(selectedLayer)
+                if (moveMap)
+                    centerPoint?.let { center ->
+                        val zoom = (activity as BaseActivity).map.zoomLevel
+                        (activity as BaseActivity).map.setZoomAndCenter(zoom, center, false, 0)
                 }
 
 
@@ -652,7 +666,8 @@ class MapFragment : Fragment(),
                         when(extraName == NEW_FEATURE){
                             true -> {
 
-                                overlay.createNewGeometry()
+                                if (!skipCreate)
+                                    overlay.createNewGeometry()
 
                                 if ((activity as AddFeatureActivity).mapView.map == null)
                                     Log.e("NNULL", "mapView.map == null")
@@ -673,23 +688,23 @@ class MapFragment : Fragment(),
 
                                 setMode(MODE_EDIT)
                             }  else -> {
-                            overlay.newGeometryByWalk()
-                            (activity as AddFeatureActivity).mapView.map!!.startFeatureSelectionForEdit(
-                                mSelectedLayer,
-                                mSelectedLayer!!.geometryType,
-                                overlay!!.selectedFeature,
-                                true,
-                                mSelectedLayer!!.defaultStyleNoExcept,
-                                true )
+                                if (!skipCreate)
+                                    overlay.newGeometryByWalk()
 
-                            // update rudiment code - created geometry on old pre-maplibre code
-                            // on editing it updates on MotionEvent.ACTION_UP actions
-                            updateGeometryFromMaplibre(
-                                (activity as AddFeatureActivity).mapView.map!!.editingObject.editingFeature,
-                                (activity as AddFeatureActivity).mapView.map!!.originalSelectedFeature,
-                                (activity as AddFeatureActivity).mapView.map!!.editingObject   )
-                            setMode(MODE_EDIT_BY_WALK)
-                        }
+                                (activity as AddFeatureActivity).mapView.map!!.startFeatureSelectionForEdit(
+                                    mSelectedLayer,
+                                    mSelectedLayer!!.geometryType,
+                                    overlay!!.selectedFeature,
+                                    true,
+                                    mSelectedLayer!!.defaultStyleNoExcept,
+                                    true )
+
+//                                updateGeometryFromMaplibre(
+//                                    (activity as AddFeatureActivity).mapView.map!!.editingObject.editingFeature,
+//                                    (activity as AddFeatureActivity).mapView.map!!.originalSelectedFeature,
+//                                    (activity as AddFeatureActivity).mapView.map!!.editingObject   )
+                                setMode(MODE_EDIT_BY_WALK)
+                            }
                         }
                         overlay.setHasEdits(true)
                         historyOverlay.saveToHistory(overlay.selectedFeature)
@@ -731,11 +746,20 @@ class MapFragment : Fragment(),
             (requireActivity() as AddFeatureActivity).binding.toolbar.menu.clear()
             (requireActivity() as AddFeatureActivity).binding.toolbar.inflateMenu(R.menu.edit_geometry)
 
+
+            val item =  (requireActivity() as AddFeatureActivity).binding.bottomToolbar.menu.findItem(R.id.menu_settings)
+            if (item != null)
+                item.setVisible(false)
+
+
             overlay.mode = MODE_EDIT
             overlay.mode = MODE_EDIT_BY_WALK
 
             (requireActivity() as AddFeatureActivity).binding.bottomToolbar.setOnMenuItemClickListener {
-                val result = overlay.onOptionsItemSelected(it.itemId)
+
+                var result = onOptionsItemSelected(it)
+                if (!result)
+                    result = overlay.onOptionsItemSelected(it.itemId)
                 if (result)
                     historyOverlay.saveToHistory(overlay.selectedFeature)
                 else
@@ -1027,7 +1051,7 @@ class MapFragment : Fragment(),
         binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
         (requireActivity() as AddFeatureActivity).binding.toolbar.setNavigationIcon(R.drawable.ic_action_cancel_dark)
         (requireActivity() as AddFeatureActivity).binding.toolbar.setNavigationOnClickListener {
-            if (overlay.mode == EditLayerOverlay.MODE_EDIT)
+            if (overlay.mode == EditLayerOverlay.MODE_EDIT || overlay.mode == EditLayerOverlay.MODE_EDIT_BY_WALK)
                 cancelEdits()
             else
                 setUpToolbar()
@@ -1361,11 +1385,13 @@ class MapFragment : Fragment(),
     }
 
     override fun changeProgress(show: Boolean) {
+        if (binding == null)
+            return
         if (show)
-            binding.stylingProgress?.visibility = View.VISIBLE
+            binding.stylingProgress.visibility = View.VISIBLE
         else {
-            binding.stylingProgress?.visibility = View.GONE
-            binding.textStyling ?.text = ""
+            binding.stylingProgress.visibility = View.GONE
+            binding.textStyling.text = ""
         }
     }
 
@@ -1373,15 +1399,24 @@ class MapFragment : Fragment(),
 //        runDelayed(2000, {
 //            startEditIfNeed(newIntent)
 //        })
+
+        Log.d("WWALK", "checkCreateIfNeed")
+
         if (!(requireActivity() is AddFeatureActivity))
             return
+
+        init()
+
         val intentToEdit = (requireActivity() as AddFeatureActivity).postponedIntent
         if (intentToEdit != null)
             startEditIfNeed(intentToEdit)
+
     }
 
     override fun setMapLayersLoaded() {
         isMapReadyToWork = true
+        Log.d("WWALK", "isMapReadyToWork = true")
+
     }
 
     override fun onCameraIdle() {
@@ -1543,7 +1578,6 @@ class MapFragment : Fragment(),
                 setMode(MODE_EDIT)
                 return true
             }
-
             com.nextgis.maplibui.R.id.menu_edit_undo, com.nextgis.maplibui.R.id.menu_edit_redo -> {
                 result = historyOverlay!!.onOptionsItemSelected(it.itemId)
                 if (result) {
@@ -1677,5 +1711,152 @@ class MapFragment : Fragment(),
             }
         }
         return false
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+
+        Log.d("WWALK", "onSaveInstanceState  ")
+
+        //outState.putBoolean(BUNDLE_KEY_IS_MEASURING, mRulerOverlay!!.isMeasuring)
+
+        outState.putInt(KEY_MODE, mode!!)
+        outState.putInt(BUNDLE_KEY_LAYER,
+            if (null == mSelectedLayer) Constants.NOT_FOUND else mSelectedLayer!!.id)
+
+        val feature = overlay!!.selectedFeature
+        outState.putLong(
+            BUNDLE_KEY_FEATURE_ID,
+            feature?.id ?: Constants.NOT_FOUND.toLong()
+        )
+
+        if (null != feature && feature.geometry != null) {
+            try {
+                outState.putByteArray(BUNDLE_KEY_SAVED_FEATURE, feature.geometry.toBlob())
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    override fun onViewStateRestored( savedInstanceState: Bundle? ) {
+        super.onViewStateRestored(savedInstanceState)
+
+        Log.d("WWALK", "onViewStateRestored")
+        if (null == savedInstanceState) {
+            //overlay.mode = MODE_NONE
+            Log.d("WWALK", "onViewStateRestored savedInstanceState = null")
+        } else {
+            //overlay.mode = savedInstanceState.getInt(KEY_MODE)
+
+            val layerId = savedInstanceState.getInt(BUNDLE_KEY_LAYER)
+            Log.d("WWALK", "onViewStateRestored layerId = " + layerId)
+
+            val layer = (activity as AddFeatureActivity).mapView.map!!.getLayerById(layerId)
+
+            Log.d("WWALK", "onViewStateRestored layer = " + layer?.name)
+
+            var feature: Feature? = null
+
+            if (null != layer && layer is VectorLayer) {
+                mSelectedLayer = layer
+
+                if (savedInstanceState.containsKey(BUNDLE_KEY_SAVED_FEATURE)) {
+                    var geometry: GeoGeometry? = null
+
+                    try {
+                        geometry = GeoGeometryFactory.fromBlob(
+                            savedInstanceState.getByteArray(
+                                BUNDLE_KEY_SAVED_FEATURE))
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+
+                    feature = Feature()
+                    feature.id = savedInstanceState.getLong(BUNDLE_KEY_FEATURE_ID)
+                    feature.geometry = geometry
+                }
+            }
+
+            Log.d("WWALK", "onViewStateRestored feature = " + feature?.toString())
+            overlay!!.setSelectedLayer(mSelectedLayer)
+            overlay!!.selectedFeature = feature
+        }
+
+        if (WalkEditService.isServiceRunning(context)){
+
+            Log.d("WWALK", "onViewStateRestored WalkEditService.isServiceRunning(context) ")
+
+
+            val preferences = requireContext().getSharedPreferences(
+                WalkEditService.TEMP_PREFERENCES,
+                Context.MODE_MULTI_PROCESS
+            )
+            val layerId = preferences.getInt(ConstantsUI.KEY_LAYER_ID, Constants.NOT_FOUND)
+            val featureId = preferences.getLong(ConstantsUI.KEY_FEATURE_ID, Constants.NOT_FOUND.toLong())
+            val layer = (activity as AddFeatureActivity).mapView.map.getLayerById(layerId)
+            if (layer != null && layer is VectorLayer) {
+                mSelectedLayer = layer
+                overlay!!.setSelectedLayer(mSelectedLayer)
+
+                if (featureId > Constants.NOT_FOUND)
+                    overlay!!.setSelectedFeature(featureId)
+                else
+                    overlay!!.newGeometryByWalk()
+
+                val geometry = GeoGeometryFactory.fromWKT(
+                    preferences.getString(ConstantsUI.KEY_GEOMETRY, ""),
+                    GeoConstants.CRS_WEB_MERCATOR )
+                if (geometry != null) overlay!!.setGeometryFromWalkEdit(geometry)
+                //need start ByWalking editing on maplibre
+
+                (activity as AddFeatureActivity).mapView.map.startEditByWalkFromRestore(
+                    mSelectedLayer,
+                    overlay!!.selectedFeature)
+
+
+                //overlay.mode = MODE_EDIT_BY_WALK
+
+                val intent = IntentFor<AddFeatureActivity>(requireContext())
+                intent.putExtra(NEW_FEATURE_BY_WALK, layer?.id)
+                intent.putExtra(SKIP_NEW_FEATURE_CREATION, true)
+
+
+                if (isMapReadyToWork == true)
+                    startEditIfNeed(intent)
+                else {
+                    (requireActivity() as AddFeatureActivity).postponedIntent = intent
+                }
+            }
+        }
+
+//        if (mode == MODE_EDIT_BY_WALK) {
+//            overlay.setMode(mode!!)
+//            // start fill data from service
+//        }
+//        else
+//            overlay.setMode(mode!!)
+    }
+
+    fun createPointFromOverlay(isFillByWalking: Boolean) {
+        overlay!!.selectedFeature = Feature()
+
+        val mCurrentCenter = lastKnown()
+        if (mCurrentCenter != null)
+            overlay!!.selectedFeature.geometry = GeoPoint(mCurrentCenter!!.x, mCurrentCenter!!.y)
+        else
+            overlay!!.selectedFeature.geometry = GeoPoint()
+        // setMode(MODE_EDIT)
+        historyOverlay!!.clearHistory()
+        val mapLibreMap = (activity as AddFeatureActivity).mapView.map!!.maplibreMap
+        overlay!!.createPointFromOverlay()
+        overlay!!.setHasEdits(true)
+        historyOverlay!!.saveToHistory(overlay!!.selectedFeature)
+
+//        (activity as AddFeatureActivity).mapView.map!!.startFeatureSelectionForEdit(mSelectedLayer,
+//            mSelectedLayer!!.geometryType,
+//            overlay!!.selectedFeature, true,mSelectedLayer!!.defaultStyleNoExcept,
+//            isFillByWalking)
     }
 }

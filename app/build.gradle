@@ -13,7 +13,13 @@ android {
         Properties sentryProp = new Properties()
         sentryProp.load(sentryPropFile.newDataInputStream())
         sentryDsn = sentryProp.get("sentry.dsn")
+        if (sentryDsn == null || sentryDsn.trim().isEmpty()) {
+            throw new GradleException("sentry.dsn is missing or empty in sentry.properties")
+        }
+    }else{
+        throw new GradleException("Missing required file: sentry.properties. Build cannot continue.")
     }
+
 
     signingConfigs {
         debug {
@@ -39,7 +45,7 @@ android {
         compileSdk 36
         targetSdkVersion 36
 
-        versionCode 98
+        versionCode 99
         versionName "2.0.0-debug"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'

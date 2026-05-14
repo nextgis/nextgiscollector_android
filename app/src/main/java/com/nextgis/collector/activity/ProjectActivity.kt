@@ -201,16 +201,7 @@ abstract class ProjectActivity : BaseActivity() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main, menu)
-        if (trackItem == null)
-            menu?.findItem(R.id.menu_track).let {
-                trackItem = menu?.findItem(R.id.menu_track)
-            }
-        setTracksTitle(menu?.findItem(R.id.menu_track))
-        //updateTracksMenuItems(menu)
-        return super.onCreateOptionsMenu(menu)
-    }
+
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         //updateTracksMenuItems(menu)
@@ -453,7 +444,7 @@ abstract class ProjectActivity : BaseActivity() {
         }
     }
 
-    private fun setTracksTitle(item: MenuItem?): Boolean {
+    public fun setTracksTitle(item: MenuItem?): Boolean {
 
         val unfinished = hasUnfinishedTracks(this)
         val caption = getString(if (unfinished) R.string.tracks_stop else R.string.start)

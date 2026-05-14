@@ -144,17 +144,18 @@
             android:layout_gravity="start"
             android:background="@color/color_white">
 
-            <TextView
-                android:id="@+id/title"
-                style="@style/Base.TextAppearance.AppCompat.Medium"
-                android:layout_width="240dp"
-                android:layout_height="?attr/actionBarSize"
-                android:background="@color/primary_dark"
-                android:gravity="center_vertical"
-                android:padding="8dp"
-                android:text="@string/track_list"
-                android:textColor="@color/color_white"
-                app:layout_constraintTop_toTopOf="parent"/>
+<!--            <TextView-->
+<!--                android:id="@+id/title"-->
+<!--                style="@style/Base.TextAppearance.AppCompat.Medium"-->
+<!--                android:layout_width="240dp"-->
+<!--                android:layout_height="?attr/actionBarSize"-->
+<!--                android:background="@color/primary_dark"-->
+<!--                android:gravity="center_vertical"-->
+<!--                android:padding="8dp"-->
+<!--                android:text="@string/track_list"-->
+<!--                android:textColor="@color/color_white"-->
+<!--                app:layout_constraintTop_toTopOf="parent"/>
+-->
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/layers"
@@ -163,7 +164,7 @@
                 android:clipToPadding="false"
                 android:indeterminate="true"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/title"
+                app:layout_constraintTop_toTopOf="parent"
                 tools:listitem="@layout/item_layer"/>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
