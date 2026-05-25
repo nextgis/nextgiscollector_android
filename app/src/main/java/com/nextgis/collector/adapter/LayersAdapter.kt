@@ -21,16 +21,14 @@
 
 package com.nextgis.collector.adapter
 
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.nextgis.collector.R
 import com.nextgis.collector.databinding.ItemLayerBinding
-import com.nextgis.maplib.datasource.GeoEnvelope
 import com.nextgis.maplib.map.Layer
-import com.nextgis.maplibui.mapui.NGWRasterLayerUI
-import com.nextgis.maplibui.mapui.NGWWebMapLayerUI
-import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
+import com.nextgis.maplib.map.RemoteTMSLayer
+import com.nextgis.maplib.map.TMSLayer
 
 
 class LayersAdapter(private var items: List<Layer>,
@@ -54,15 +52,22 @@ class LayersAdapter(private var items: List<Layer>,
         fun bind(repo: Layer, listener: OnItemClickListener?) {
             binding.layer = repo
             binding.visibility.setOnClickListener {
+                //(binding.layer as Layer).setVisible(!(binding.layer as Layer).isVisible())
+                //binding.layer?.save()
+
                 repo.isVisible = !repo.isVisible
                 repo.save()
                 val on = R.drawable.ic_action_visibility_on_light
                 val off = R.drawable.ic_action_visibility_off_light
                 binding.visibility.setImageResource(if (repo.isVisible) on else off)
             }
+            if (repo is RemoteTMSLayer){
+                val tms = repo as RemoteTMSLayer
+                if (tms.isOfflie)
+                    binding.downloadTiles.setImageResource(android.R.color.transparent)
+            }
             binding.downloadTiles.setOnClickListener { listener?.onDownloadTilesClick(repo) }
             binding.root.setOnClickListener { listener?.onItemClick(repo) }
-
             binding.executePendingBindings()
         }
     }

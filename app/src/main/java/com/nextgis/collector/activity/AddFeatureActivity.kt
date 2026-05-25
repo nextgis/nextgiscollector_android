@@ -21,48 +21,56 @@
 
 package com.nextgis.collector.activity
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
+import com.nextgis.collector.activity.MapFragment.Companion.CLICKED_FORM_ID
+import com.nextgis.collector.activity.MapFragment.Companion.MOVE_MAP
+import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE
+import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE_BY_WALK
 import com.nextgis.collector.adapter.EditableLayersAdapter
 import com.nextgis.collector.data.ResourceTree
 import com.nextgis.collector.databinding.ActivityAddFeatureBinding
 import com.nextgis.collector.util.IntentFor
-import com.nextgis.collector.util.startActivity
+import com.nextgis.collector.util.longToast
 import com.nextgis.collector.util.toast
+import com.nextgis.maplib.api.IGISApplication
+import com.nextgis.maplib.datasource.GeoPoint
+import com.nextgis.maplib.map.MapDrawable.MODE_EDIT_BY_WALK
+import com.nextgis.maplib.map.MapDrawable.MODE_HIGHLIGHT
+import com.nextgis.maplib.map.MapDrawable.MODE_NONE
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.util.Constants
+import com.nextgis.maplib.util.Constants.MESSAGE_INTENT_RELOAD
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.GeoConstants
 import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.nextgis.maplibui.service.TrackerService
-import io.sentry.IPerformanceContinuousCollector
-import java.io.File
-import java.io.FileNotFoundException
-import androidx.core.view.isVisible
-import com.nextgis.collector.activity.MapFragment.Companion.CLICKED_FORM_ID
-import com.nextgis.collector.activity.MapFragment.Companion.MOVE_MAP
-import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE
-import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE_BY_WALK
-import com.nextgis.maplib.datasource.GeoPoint
-import com.nextgis.maplib.map.MPLFeaturesUtils
-import com.nextgis.maplib.map.MapDrawable
-import com.nextgis.maplib.map.MapDrawable.MODE_EDIT
-import com.nextgis.maplib.map.MapDrawable.MODE_EDIT_BY_WALK
-import com.nextgis.maplib.map.MapDrawable.MODE_HIGHLIGHT
-import com.nextgis.maplib.map.MapDrawable.MODE_NONE
-import com.nextgis.maplib.util.Constants
 import com.nextgis.maplibui.service.WalkEditService
 import com.nextgis.maplibui.util.ConstantsUI
-import kotlin.concurrent.thread
+import com.nextgis.maplibui.util.ConstantsUI.KEY_BATTERY
+import com.nextgis.maplibui.util.ConstantsUI.KEY_TRACK_ACTION
+import com.nextgis.maplibui.util.ConstantsUI.VALUE_TRACK_START
+import java.io.File
+import java.io.FileNotFoundException
 
 class AddFeatureActivity :
     ProjectActivity(),
@@ -78,6 +86,11 @@ class AddFeatureActivity :
     private val tree = ResourceTree(arrayListOf())
     private val layers = ArrayList<NGWVectorLayerUI>()
     private var history = ArrayList<String>()
+
+    private var receiverRegistered = false
+    private var mMessageReload: MessageReloadLayer? = null
+
+    var startMap = false;
 
     var mapFragment: MapFragment? = null
 
@@ -122,10 +135,23 @@ class AddFeatureActivity :
                 .replace(R.id.map_fragment_container,mapFragment!!)
                 .commit()
 
-        if (intent != null && intent.getBooleanExtra(IS_MAP_START, false))
+        if (intent != null && intent.getBooleanExtra(IS_MAP_START, false)) {
+            startMap = true
             showMap(true)
+
+        }
         else if (WalkEditService.isServiceRunning(this))
             showMap(true)
+
+        mMessageReload = MessageReloadLayer()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (receiverRegistered) {
+            unregisterReceiver(mMessageReload)
+            receiverRegistered = false
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -134,10 +160,10 @@ class AddFeatureActivity :
             isEditMode = false
 
         menuInflater.inflate( if (isEditMode) R.menu.main else R.menu.edit_geometry, menu)
-        if (trackItem == null)
-            menu?.findItem(R.id.menu_track).let {
-                trackItem = menu?.findItem(R.id.menu_track)
-            }
+
+        menu?.findItem(R.id.menu_track).let {
+            trackItem = menu?.findItem(R.id.menu_track)
+        }
         setTracksTitle(menu?.findItem(R.id.menu_track))
         //updateTracksMenuItems(menu)
         return super.onCreateOptionsMenu(menu)
@@ -204,7 +230,20 @@ class AddFeatureActivity :
         requestForPermissions(object : OnPermissionCallback {
             override fun onPermissionGranted() {
                 returnToList = true
-                startEdit(true, false, clickedFormId)
+                startEdit(true, false, clickedFormId, false)
+            }
+
+            override fun onPermissionDenied() {
+                val builder = AlertDialog.Builder(this@AddFeatureActivity)
+                    .setTitle(R.string.permissions)
+                    .setMessage(R.string.location_permissions_ext)
+                    .setPositiveButton(
+                        com.nextgis.maplibui.R.string.ok, null)
+                    .create()
+                builder.setCanceledOnTouchOutside(false)
+                builder.show()
+                returnToList = true
+                startEdit(true, false, clickedFormId, false)
             }
         }, true)
     }
@@ -217,7 +256,19 @@ class AddFeatureActivity :
                 mapFragment?.mSelectedLayer = layer
                 mapFragment?.overlay?.setSelectedLayer(layer)
                 mapFragment?.createPointFromOverlay(false)
-                startEdit(false, useMap, clickedFormId)
+                startEdit(false, useMap, clickedFormId, false)
+                checkBatteryOptimize()
+            }
+
+            override fun onPermissionDenied() {
+                val builder = AlertDialog.Builder(this@AddFeatureActivity)
+                    .setTitle(R.string.permissions)
+                    .setMessage(R.string.location_permissions_ext)
+                    .setPositiveButton(
+                        com.nextgis.maplibui.R.string.ok, null)
+                    .create()
+                builder.setCanceledOnTouchOutside(false)
+                builder.show()
             }
         }, true)
     }
@@ -228,9 +279,9 @@ class AddFeatureActivity :
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
         val trackInProgress = TrackerService.hasUnfinishedTracks(this) && TrackerService.isTrackerServiceRunning(this)
         val itemName = getString(if (trackInProgress) R.string.tracks_stop else R.string.start)
+        Log.d("TRACCK", "onOptionsItemSelected trackInProgress " + trackInProgress)
         trackItem?.setTitle(itemName)
 
         when (item.itemId) {
@@ -248,16 +299,16 @@ class AddFeatureActivity :
         return super.onOptionsItemSelected(item)
     }
 
-    private fun startEdit(map: Boolean, useMap : Boolean, clickedFormId: Long) {
+    private fun startEdit(map: Boolean, useMap : Boolean, clickedFormId: Long, skipVisibleCheck: Boolean){
         if (layer != null) {
             mapFragment?.mSelectedLayer = layer
-            if (layer?.isVisible == false){
-                mapView.map.reloadLayerByID(layer!!.id)
-                try {
-                    Thread.sleep(500)
-                } catch (ex: Exception){
-
-                }
+            if (!skipVisibleCheck &&  layer?.isVisible == false){
+//
+                mapView.map.reloadLayerByID(layer!!.id,
+                    Runnable(){
+                        startEdit(map, useMap , clickedFormId, true)
+                })
+                return
             }
             if (layer?.geometryType == GeoConstants.GTPoint || layer?.geometryType == GeoConstants.GTMultiPoint
                     || layer?.geometryType == GeoConstants.GTLineString || layer?.geometryType == GeoConstants.GTPolygon
@@ -280,6 +331,8 @@ class AddFeatureActivity :
 
                     if (map)
                         intent.putExtra(MOVE_MAP, false)
+
+                    Log.e("MMAPPEE", "ready to work = " + mapFragment?.isMapReadyToWork)
                     if (mapFragment?.isMapReadyToWork == true)
                         mapFragment?.startEditIfNeed(intent)
                     else {
@@ -313,10 +366,29 @@ class AddFeatureActivity :
             else
                 toast(R.string.not_implemented)
         }
+
+        val intentFilterReload = IntentFilter()
+        intentFilterReload.addAction( MESSAGE_INTENT_RELOAD)
+
+        if (!receiverRegistered) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(mMessageReload, intentFilterReload, RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(mMessageReload, intentFilterReload)
+            }
+            receiverRegistered = true
+        }
     }
 
     fun getFormId(): Long{
         return savedFormId
+    }
+
+    fun getMapVisible(): Boolean{
+        if (binding.mapFragmentContainer.visibility == View.VISIBLE)
+            return  true
+        else
+            return false
     }
 
     fun showMap(visible : Boolean){
@@ -368,9 +440,17 @@ class AddFeatureActivity :
             }
         }
 
-        if (requestCode == IVectorLayerUI.MODIFY_REQUEST && data != null) {
-            val id = data.getLongExtra(ConstantsUI.KEY_FEATURE_ID, Constants.NOT_FOUND.toLong())
+        if (requestCode ==TRACKS_REQUEST ){
+            //refresh Tracks
+            if (mapFragment != null)
+                mapFragment?.reloadTracksToMap()
 
+        }
+        else if (requestCode == IVectorLayerUI.MODIFY_REQUEST && data != null) {
+            if (mapFragment!= null && ! mapFragment!!.isMapReadyToWork) // case
+                return
+
+            val id = data.getLongExtra(ConstantsUI.KEY_FEATURE_ID, Constants.NOT_FOUND.toLong())
             if (id != Constants.NOT_FOUND.toLong()) {
                 mapFragment?.overlay!!.setSelectedFeature(id)
 
@@ -382,11 +462,12 @@ class AddFeatureActivity :
                 mapFragment?.overlay?.setHasEdits(false)
                 //mapFragment?.setModпзe(MODE_SELECT_ACTION)
 
-                if (map == null)
+                if (map == null )
                     return;
+                if ((mapFragment?.isMapReadyToWork == false)) // skip if map wasnt open
+                    return
 
                 map.loadViewFeature(id,mapFragment?.selectedLayer!!.id)
-
                 map.originalSelectedFeature = mapFragment?.overlay?.selectedFeature // MPLFeaturesUtils.getFeatureFromNGFeature( map.viewedFeature)
                 map.finishCreateNewFeature(id,mapFragment?.selectedLayer!! )
                 map.loadViewFeature(id,mapFragment?.selectedLayer!!.id)
@@ -397,5 +478,48 @@ class AddFeatureActivity :
             }
         } else if  (mapFragment?.overlay!!.selectedFeatureGeometry != null)
             mapFragment?.overlay!!.setHasEdits(true)
+    }
+
+    override fun reloadAllTracks() {
+        if (mapFragment != null) {
+            mapFragment?.reloadTracksToMap()
+            mapFragment?.reloadCurrentTrackToMap()
+        }
+    }
+
+    private inner class MessageReloadLayer : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent ){
+            if (intent.action == MESSAGE_INTENT_RELOAD) {
+                val layerid = intent.getIntExtra(ConstantsUI.KEY_LAYER_ID, -1);
+                (context.applicationContext  as IGISApplication).removeLayerToRefresh(layerid)
+                if (map != null && layerid != -1){
+
+                    if (map!!.getLayerVisible(layerid) == true) {
+                        Handler().postDelayed({
+                            map!!.refreshLayerVisibility(layerid, false)
+                        }, 300)
+
+                        Handler().postDelayed({
+                            map!!.refreshLayerVisibility(layerid, true)
+                        }, 600)
+                    }
+                }
+            }
+        }
+    }
+
+    public fun checkBatteryOptimize(){
+        val batteryOK = TrackerService.checkIsBatteryPermOK(this)
+        if (!batteryOK) {
+            Handler().postDelayed(Runnable () {
+                val msg = Intent(ConstantsUI.MESSAGE_INTENT_TRACK)
+                msg.setPackage(this.getPackageName())
+                msg.putExtra(ConstantsUI.KEY_MESSAGE_TRACK, true)
+                msg.putExtra(KEY_BATTERY, false)
+                msg.putExtra(KEY_TRACK_ACTION, VALUE_TRACK_START)
+                msg.setPackage(getPackageName())
+                sendBroadcast(msg)
+            }, 1000)
+        }
     }
 }

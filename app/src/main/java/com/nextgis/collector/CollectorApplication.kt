@@ -29,6 +29,8 @@ import android.content.IntentFilter
 import android.util.Log
 import android.widget.Toast
 import com.hypertrack.hyperlog.HyperLog
+import com.nextgis.collector.activity.PreferenceActivity
+import com.nextgis.collector.activity.ProjectActivity.Companion.TRACKS_REQUEST
 import com.nextgis.collector.util.Logger
 import com.nextgis.maplib.api.ILayer
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
@@ -38,12 +40,14 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplib.util.NetworkUtil
 import com.nextgis.maplibui.GISApplication
+import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.mapui.TrackLayerUI
 import com.nextgis.maplibui.service.TrackerService
 import kotlin.system.exitProcess
 
 class CollectorApplication : GISApplication() {
 
+    private  var posponedLayeId = -1;
     private var syncReceiver: SyncReceiver = SyncReceiver()
     companion object {
         const val BASE_URL = "https://collector.nextgis.com/api/project"
@@ -117,7 +121,8 @@ class CollectorApplication : GISApplication() {
     }
 
     override fun showSettings(setting: String?, code: Int, activity: Activity?) {
-
+        val intent = Intent(this, PreferenceActivity::class.java)
+        activity?.startActivity(intent)
     }
 
     override fun sendEvent(category: String?, action: String?, label: String?) {
@@ -183,6 +188,14 @@ class CollectorApplication : GISApplication() {
             mMap.addLayer(trackLayer)
             mMap.save()
         }
+    }
+
+    override fun setPostponedLayerId(layerId: Int) {
+        this.posponedLayeId = layerId
+    }
+
+    override fun getPostponedLayerId(): Int {
+        return this.posponedLayeId
     }
 
 //    override fun checkTracksLayerExist() {

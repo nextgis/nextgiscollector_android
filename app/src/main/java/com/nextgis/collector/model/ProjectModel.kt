@@ -34,10 +34,11 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.HttpResponse
 import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_PROJECTS_URL
+import okio.IOException
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.CompletableFuture.runAsync
-
+import kotlin.reflect.KClass
 
 class ProjectModel {
     companion object {
@@ -93,8 +94,6 @@ class ProjectModel {
                     onDataReadyCallback.onProjectGetError("Error on get project: " + e.message )
                     return@runAsync
                 }
-
-
                 try {
                     // change single form to layer (with default form notation)
                     if (json != null && json.has("items")) {
@@ -161,8 +160,6 @@ class ProjectModel {
                                 layers.put(i, newItem)
                             }
                         }
-
-
 //                        val retrievedValue = mutableMapOf<Long, MutableList<Long>>()
 //
 //
@@ -214,7 +211,6 @@ class ProjectModel {
                     onResetLoadProjectCallback.onReset()
                     return@runAsync
                 }
-
                 project = parseProject(json, private)
             }
             onDataReadyCallback.onProjectReady(project)
@@ -282,8 +278,6 @@ class ProjectModel {
         } catch (exeption:Exception){
             Log.e("project", "exception "  + exeption.message)
         }
-
-
         return Project(id, ngwId, title, description, screen, version, layers, tree.json, private, url, user, hash, one, two, three, four)
     }
 
@@ -365,9 +359,7 @@ class ProjectModel {
         fun onProjectGetError(errorText: String)
     }
 
-
     interface OnResetLoadProjectCallback {
         fun onReset()
     }
-
     }

@@ -22,6 +22,7 @@
 package com.nextgis.collector.activity
 
 import android.Manifest
+import android.accounts.AccountManagerCallback
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -84,6 +85,7 @@ import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.nextgis.maplibui.util.SettingsConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI.DEFAUL_BORDERS_WAS_APPLY
+import okio.IOException
 import java.io.File
 import java.util.Objects
 import java.util.concurrent.CompletableFuture.runAsync
@@ -563,10 +565,25 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         if (needAccount(project)) {
             val fullUrl = getFullUrl(project)
             val authority = fullUrl.split("://")[1]
-            app.getAccount(authority)?.let { app.removeAccount(it) }
+            app.getAccount(authority)?.let {
+                app.removeAccount(it
+                    , AccountManagerCallback<Boolean>() {
+                    val success = app.addAccount(authority, fullUrl, project.user, project.password, "ngw")
+                    if (!success) {
+                        val dialog = AlertDialog.Builder(this)
+                        dialog.setTitle(R.string.error_header)
+                            .setMessage(R.string.error_account_create)
+                            .setPositiveButton(com.nextgis.maplibui.R.string.ok, null)
+                            .show()
+                        reset(true)
+                    } else
+                        runAsync { create(project) }
+                }
+                )
+                return
+            }
             val success = app.addAccount(authority, fullUrl, project.user, project.password, "ngw")
             if (!success) {
-
                 val dialog = AlertDialog.Builder(this)
                 dialog.setTitle(R.string.error_header)
                     .setMessage(R.string.error_account_create)
@@ -576,7 +593,6 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                 return
             }
         }
-
         runAsync { create(project) }
     }
 
@@ -649,10 +665,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         intent.putExtra(LayerFillService.KEY_URI, Uri.parse(url))
 
         val idsArray = arrayListOf(selectedForm)
-
-
         intent.putExtra(LayerFillService.KEY_DEFAULT_FORM_IDS, if (selectedForm == -1L) null else idsArray)
-
         var exists = false
         for (q in queue){
             if (q.hasExtra(LayerFillService.KEY_LAYER_PATH) && intent.hasExtra(LayerFillService.KEY_LAYER_PATH) &&
@@ -688,10 +701,8 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
     }
 
     private fun addVector(layer: RemoteLayerNGW, accountName: String, url: String, user: String, pass: String): Boolean {
-
         val intent = Intent(this, LayerFillService::class.java)
         intent.action = LayerFillService.ACTION_ADD_TASK
-
         val uri = Uri.parse(Uri.decode(layer.url))
         val id = uri.lastPathSegment?.toLongOrNull()
         intent.putExtra(LayerFillService.KEY_REMOTE_ID, id)

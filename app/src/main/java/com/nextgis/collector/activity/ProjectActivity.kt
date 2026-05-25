@@ -23,6 +23,7 @@ package com.nextgis.collector.activity
 
 import android.Manifest
 import android.accounts.Account
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.*
 import android.content.pm.PackageManager
@@ -31,17 +32,18 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.provider.Settings
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.CheckBox
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -51,7 +53,6 @@ import androidx.lifecycle.OnLifecycleEvent
 import com.google.android.material.snackbar.Snackbar
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.R
-import com.nextgis.collector.activity.IntroActivity.Companion.PERMISSIONS_CODE
 import com.nextgis.collector.model.ProjectModel
 import com.nextgis.collector.service.OfflineIntentService
 import com.nextgis.collector.util.IntentFor
@@ -60,6 +61,7 @@ import com.nextgis.collector.util.accountManager
 import com.nextgis.collector.util.longToast
 import com.nextgis.collector.util.runDelayedOnUiThread
 import com.nextgis.collector.util.startActivity
+import com.nextgis.collector.util.startActivityForResult
 import com.nextgis.collector.util.toast
 import com.nextgis.maplib.api.IGISApplication
 import com.nextgis.maplib.api.INGWLayer
@@ -70,7 +72,6 @@ import com.nextgis.maplib.map.TrackLayer
 import com.nextgis.maplib.map.VectorLayer
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
-import com.nextgis.maplib.util.MapUtil
 import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.activity.TracksActivity
@@ -78,21 +79,23 @@ import com.nextgis.maplibui.fragment.NGWSettingsFragment
 import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.service.TrackerService.*
 import com.nextgis.maplibui.util.*
+import com.nextgis.maplibui.util.ConstantsUI.KEY_BATTERY
+import com.nextgis.maplibui.util.ConstantsUI.VALUE_TRACK_STOP
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.get
 import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_OFFLINE_SYNC_ON
 import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_SHOW_SYNC
 import org.json.JSONObject
 import java.io.*
+import java.lang.ref.WeakReference
 import java.util.concurrent.CompletableFuture.runAsync
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 
 abstract class ProjectActivity : BaseActivity() {
 
     companion object {
         const val LOCATION_REQUEST = 703
+        const val TRACKS_REQUEST = 704
     }
 
     @Volatile
@@ -109,6 +112,7 @@ abstract class ProjectActivity : BaseActivity() {
 
     interface OnPermissionCallback {
         fun onPermissionGranted()
+        fun onPermissionDenied()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,7 +134,7 @@ abstract class ProjectActivity : BaseActivity() {
                 }
             }
         }
-        mMessageReceiver = MessageReceiver()
+        mMessageReceiver = MessageReceiver(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -215,11 +219,9 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
         val trackInProgress = TrackerService.hasUnfinishedTracks(this) && TrackerService.isTrackerServiceRunning(this)
         val itemName = getString(if (trackInProgress) R.string.tracks_stop else R.string.start)
         trackItem?.setTitle(itemName)
-
 
         when (item.itemId) {
             R.id.menu_sync -> sync()
@@ -235,7 +237,10 @@ abstract class ProjectActivity : BaseActivity() {
                 mMessageReceiver?.updateTrackItem(item)
                 checkForBackgroundPermission(item)
             }
-            R.id.menu_track_list -> startActivity<TracksActivity>()
+            R.id.menu_track_list -> {
+                intent = Intent(this, TracksActivity::class.java)
+                startActivityForResult(intent,TRACKS_REQUEST)
+            }
             R.id.menu_settings -> startActivity<PreferenceActivity>()
             R.id.action_about -> startActivity<AboutActivity>()
             else -> return super.onOptionsItemSelected(item)
@@ -275,6 +280,9 @@ abstract class ProjectActivity : BaseActivity() {
                     HyperLog.v(Constants.TAG, "Write permission granted")
                     backup()
                 }
+                override fun onPermissionDenied() {
+                    longToast(R.string.permission_denied)
+                }
             }, true, geo = false)
             return
         }
@@ -292,10 +300,8 @@ abstract class ProjectActivity : BaseActivity() {
                 layers.add(layer)
             }
         }
-
         // add tracksinfo
         val tracksList = ArrayList<android.util.Pair<Int,String >>()
-
         val application = application as IGISApplication
         val authority = application.authority
         val projection = null //arrayOf(TrackLayer.FIELD_ID, TrackLayer.FIELD_NAME, TrackLayer.FIELD_VISIBLE)
@@ -370,6 +376,9 @@ abstract class ProjectActivity : BaseActivity() {
                 override fun onPermissionGranted() {
                     checkForBackgroundPermission(item)
                 }
+                override fun onPermissionDenied() {
+                    longToast(R.string.permission_denied)
+                }
             }, false)
             return
         }
@@ -434,10 +443,6 @@ abstract class ProjectActivity : BaseActivity() {
         } else {
             ContextCompat.startForegroundService(this, trackerService)
         }
-//        runDelayedOnUiThread(2500) {
-//            Log.e("TRACCKK", "runDelayedOnUiThread(2500)")
-//            setTracksTitle(item)
-//        }
 
         runDelayedOnUiThread(300) {
             setTracksTitle(item)
@@ -445,7 +450,6 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     public fun setTracksTitle(item: MenuItem?): Boolean {
-
         val unfinished = hasUnfinishedTracks(this)
         val caption = getString(if (unfinished) R.string.tracks_stop else R.string.start)
         item?.setTitle(caption)
@@ -482,7 +486,6 @@ abstract class ProjectActivity : BaseActivity() {
                                             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-
         for (i in permissions.indices) {
             if (permissions[i] == Manifest.permission.POST_NOTIFICATIONS && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
                 PreferenceManager.getDefaultSharedPreferences(applicationContext).edit()
@@ -505,7 +508,7 @@ abstract class ProjectActivity : BaseActivity() {
                 mMessageReceiver?.clearTrackItem()
             }
         } else
-            longToast(R.string.permission_denied)
+            onPermissionCallback?.onPermissionDenied()
     }
 
     private fun updateSubtitle() {
@@ -537,11 +540,9 @@ abstract class ProjectActivity : BaseActivity() {
         }
     }
 
-
     protected fun sync() {
         val accounts = ArrayList<Account>()
         val layers = ArrayList<INGWLayer>()
-
         accountManager?.let {
             for (account in it.getAccountsByType(app.accountsType)) {
                 checkAccountForSync(this, account)
@@ -551,10 +552,7 @@ abstract class ProjectActivity : BaseActivity() {
                 if (layers.size > 0 && syncEnabled)
                     accounts.add(account)
             }
-
-//            for (account in accounts) {
             accounts.firstOrNull()?.let {
-
                 val mPreferences = PreferenceManager.getDefaultSharedPreferences(this)
                 val base = mPreferences.getString("ngid_url", NGIDUtils.NGID_MY)
 
@@ -583,7 +581,6 @@ abstract class ProjectActivity : BaseActivity() {
                     )
                 }
             }
-//            }
         }
     }
 
@@ -650,13 +647,12 @@ abstract class ProjectActivity : BaseActivity() {
                         (application as GISApplication).setError(null, null, 0)
                     }
 
-                    AlertDialog.Builder(context).setTitle(R.string.alert_sync_error_title)
-                        //.setMessage(intent.getStringExtra(SyncAdapter.EXCEPTION) ?: getString(R.string.sync_error))
-                        .setMessage(errorText)
-                        .setPositiveButton(R.string.ok, null)
-                        .show()
+                    if (!isFinishing && !isDestroyed)
+                        AlertDialog.Builder(this@ProjectActivity).setTitle(R.string.alert_sync_error_title)
+                            .setMessage(errorText)
+                            .setPositiveButton(R.string.ok, null)
+                            .show()
                 }
-                   // toast(intent.getStringExtra(SyncAdapter.EXCEPTION) ?: getString(R.string.sync_error))
 
                 findViewById<FrameLayout>(R.id.overlay).visibility = View.GONE
                 if (update)
@@ -667,8 +663,10 @@ abstract class ProjectActivity : BaseActivity() {
         }
     }
 
-    protected class MessageReceiver() : BroadcastReceiver() {
+    inner class MessageReceiver(activity: ProjectActivity)
+       : BroadcastReceiver() {
 
+       val projActivity = WeakReference(activity)
         var trackItem : MenuItem? = null;
 
         fun updateTrackItem(item : MenuItem){
@@ -682,16 +680,59 @@ abstract class ProjectActivity : BaseActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == ConstantsUI.MESSAGE_INTENT_TRACK) {
                 val trackAction = intent.getBooleanExtra(ConstantsUI.KEY_MESSAGE_TRACK, false)
-
                 val caption = context.getString(if (trackAction) R.string.tracks_stop else R.string.start)
-
                 trackItem?.setTitle(caption)
+                if (intent.getStringExtra(ConstantsUI.KEY_TRACK_ACTION).equals(VALUE_TRACK_STOP)){
+                    // stop track - need update
+                    if (projActivity.get()!= null)
+                        projActivity.get()?.reloadAllTracks()
+                }
 
+                val batteryOK =  intent.getBooleanExtra(KEY_BATTERY, true)
+                if (!batteryOK) {
+                    val name = getPackageName() + "_preferences"
+                    val mSharedPreferences = getSharedPreferences(name, MODE_MULTI_PROCESS)
+
+                    val prefBatteryName =  "battery_dont_show_pref"
+                    val dontShow = mSharedPreferences.getBoolean(prefBatteryName, false)
+
+                    if (!dontShow) {
+                        val container = LinearLayout(this@ProjectActivity).apply {
+                            orientation = LinearLayout.VERTICAL
+                            setPadding(50, 0, 50, 0)
+                        }
+
+                        val checkBox = CheckBox(this@ProjectActivity).apply {
+                            text =
+                                this@ProjectActivity.getString(com.nextgis.maplibui.R.string.do_not_ask_again)
+                        }
+                        container.addView(checkBox)
+
+                        val builder = android.app.AlertDialog.Builder(this@ProjectActivity)
+                        builder.setMessage(com.nextgis.maplibui.R.string.battery_optimization)
+                            .setPositiveButton(com.nextgis.maplibui.R.string.battery_optimization_turnoff) { dialog, which ->
+                                if (checkBox.isChecked) {
+                                    mSharedPreferences.edit().putBoolean(prefBatteryName, true).apply()
+                                }
+
+                                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                                intent.setData(Uri.parse("package:" + getPackageName()))
+                                startActivity(intent)
+                            }
+                            .setTitle(com.nextgis.maplibui.R.string.battery_optimization_title)
+                            .setNegativeButton(com.nextgis.maplibui.R.string.cancel) { dialog, which ->
+                                if (checkBox.isChecked) {
+                                    mSharedPreferences.edit().putBoolean(prefBatteryName, true).apply()
+                                }
+                            }
+                            .setView(container)
+                        val alertDialog = builder.create()
+                        alertDialog.show()
+                    }
+                }
             }
-
         }
     }
-
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     override fun onResume() {
@@ -699,17 +740,13 @@ abstract class ProjectActivity : BaseActivity() {
         val intentFilter = IntentFilter()
         intentFilter.addAction(ConstantsUI.MESSAGE_INTENT_TRACK)
         registerReceiver(mMessageReceiver, intentFilter, RECEIVER_EXPORTED)
-
-
-
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     override fun onPause() {
         super.onPause()
         unregisterReceiver(mMessageReceiver)
-
     }
 
-
+    abstract fun reloadAllTracks()
 }

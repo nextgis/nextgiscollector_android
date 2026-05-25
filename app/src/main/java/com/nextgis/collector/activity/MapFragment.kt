@@ -19,6 +19,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
@@ -32,6 +33,7 @@ import com.nextgis.collector.adapter.LayersAdapter
 import com.nextgis.collector.databinding.MapFragmentBinding
 import com.nextgis.collector.util.IntentFor
 import com.nextgis.collector.util.locationManager
+import com.nextgis.collector.util.longToast
 import com.nextgis.collector.util.toast
 import com.nextgis.maplib.api.GpsEventListener
 import com.nextgis.maplib.api.ILayerView
@@ -90,6 +92,7 @@ import org.maplibre.geojson.MultiPolygon
 import org.maplibre.geojson.Point
 import org.maplibre.geojson.Polygon
 import java.io.IOException
+import java.lang.ref.WeakReference
 import java.util.concurrent.TimeUnit
 import kotlin.math.atan
 import kotlin.math.ln
@@ -132,7 +135,7 @@ class MapFragment : Fragment(),
             returnToList = false
             return prev
         }
-    private var currentCenter = GeoPoint()
+    private val currentCenter = GeoPoint()
     private var newIntent: Intent? = null
     public var mSelectedLayer: VectorLayer? = null
     protected var mTolerancePX: Float = 0f
@@ -161,7 +164,8 @@ class MapFragment : Fragment(),
         overlay = EditLayerOverlay(requireContext(), (activity as AddFeatureActivity).mapView)
         binding.apply {
             val matchParent = FrameLayout.LayoutParams.MATCH_PARENT
-            mapContainer.addView((activity as AddFeatureActivity).mapView, FrameLayout.LayoutParams(matchParent, matchParent))
+            if (mapContainer.getChildAt(0) != null)
+                mapContainer.addView((activity as AddFeatureActivity).mapView, FrameLayout.LayoutParams(matchParent, matchParent))
         }
 
         val defBOrdersWasApply = (requireActivity() as BaseActivity).preferences.getBoolean(DEFAUL_BORDERS_WAS_APPLY, false);
@@ -208,6 +212,29 @@ class MapFragment : Fragment(),
         binding.mapViewMaplibre.onCreate(savedInstanceState)
         binding.mapViewMaplibre.getMapAsync(this)
         (requireActivity() as AddFeatureActivity).binding.bottomToolbar.setOnMenuItemClickListener(this)
+
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+
+                    // ваши действия
+                    if (mode == MODE_EDIT)
+                        cancelEdits()
+                    else {
+                        if (!(requireActivity() as AddFeatureActivity).startMap
+                            && (requireActivity() as AddFeatureActivity).getMapVisible())
+                                (requireActivity() as AddFeatureActivity).showMap(false)
+                        else {
+                            isEnabled = false
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+
+                        }
+                    }
+                }
+            }
+        )
+
     }
 
     override fun onMapReady(mapboxMap: MapLibreMap) {
@@ -226,7 +253,7 @@ class MapFragment : Fragment(),
         HttpRequestImpl.setOkHttpClient(client)
 
         val mapboxMaplibre = mapboxMap
-        (activity as AddFeatureActivity).mapView.map!!.maplibreMap = mapboxMaplibre
+        (activity as AddFeatureActivity).mapView.map!!.maplibreMap = WeakReference(mapboxMaplibre)
 
         mapboxMaplibre.uiSettings.isRotateGesturesEnabled = false
         mapboxMaplibre.uiSettings.isCompassEnabled = false
@@ -237,7 +264,6 @@ class MapFragment : Fragment(),
         val vectorLayers = (activity as AddFeatureActivity).mapView.getVectorLayersByType(GeoConstants.GTAnyCheck)
         val layersTrack =  (activity as AddFeatureActivity).mapView.getLayersByType(Constants.LAYERTYPE_TRACKS)
         vectorLayers.addAll(layersTrack);
-
         val allLayers = (activity as AddFeatureActivity).mapView.getAllLayers()
 
         (activity as AddFeatureActivity).mapView.map!!.loadLayersToMaplibreMap(styleJson, allLayers, true, true)
@@ -287,8 +313,9 @@ class MapFragment : Fragment(),
     override fun onResume() {
         super.onResume()
         overlay.onResume()
-//        if ( !(application as CollectorApplication).isTrackInProgress)
-//            binding.overlay.visibility = View.GONE;
+
+        if (TrackerService.hasUnfinishedTracks(requireContext()))
+            (activity as AddFeatureActivity).mapView.map!!.reloadCurrentTrackToMap()
     }
 
     override fun onPause() {
@@ -299,10 +326,18 @@ class MapFragment : Fragment(),
     override fun onStart() {
         super.onStart()
         (activity as AddFeatureActivity).mapView.addListener(this)
+
         locationOverlay.startShowingCurrentLocation()
         (requireContext().applicationContext as CollectorApplication).gpsEventSource.addListener(this)
-        currentCenter.crs = 0
 
+        val mGpsEventSource = (requireContext().applicationContext as CollectorApplication).gpsEventSource
+        if (mGpsEventSource != null && mGpsEventSource.lastKnownLocation != null) {
+            currentCenter.setCoordinates(mGpsEventSource.lastKnownLocation.longitude, mGpsEventSource.lastKnownLocation.latitude)
+            currentCenter!!.crs = GeoConstants.CRS_WGS84
+
+            if (!currentCenter!!.project(GeoConstants.CRS_WEB_MERCATOR))
+                currentCenter.crs = 0
+        }
     }
 
     override fun onStop() {
@@ -336,6 +371,20 @@ class MapFragment : Fragment(),
         }
 
         return point
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun lastKnownLatLng(): LatLng? {
+        var latlng: LatLng? = null
+        val location = (requireContext().applicationContext as GISApplication).gpsEventSource.lastKnownLocation
+        if (location != null){
+            latlng = LatLng(location.latitude, location.longitude)
+            return latlng
+        }
+        (requireActivity() as BaseActivity).locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { location ->
+            latlng = LatLng(location.latitude, location.longitude)
+        }
+        return latlng
     }
 
 //    override fun onNewIntent(intent: Intent) {
@@ -379,7 +428,7 @@ class MapFragment : Fragment(),
 
             android.R.id.home -> {
                 cancelEdits()
-                true
+                return true
             }
 
             com.nextgis.maplibui.R.id.menu_edit_undo, com.nextgis.maplibui.R.id.menu_edit_redo -> {
@@ -400,7 +449,7 @@ class MapFragment : Fragment(),
                     (activity as AddFeatureActivity).mapView.buffer()
                     (activity as AddFeatureActivity).mapView.postInvalidate()
                 }
-                result
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_by_touch -> {
@@ -412,7 +461,7 @@ class MapFragment : Fragment(),
                 (activity as AddFeatureActivity).mapView.map!!.hideVertex()
                 (activity as AddFeatureActivity).mapView.map!!.hideMarker()
 
-                result
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_by_walk -> {
@@ -424,69 +473,71 @@ class MapFragment : Fragment(),
 
 
                 ((activity as AddFeatureActivity).mapView.map).updateHistoryByWalkEnd()
-                result
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_delete_point  ->{
                 val result = (activity as AddFeatureActivity).mapView.map!!.deleteCurrentPoint();
-                result
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_delete_line  ->{
                 val result = (activity as AddFeatureActivity).mapView.map!!.deleteCurrentLine();
-                result
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_add_new_line  ->{
-                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
-                val result = (activity as AddFeatureActivity).mapView.map!!.addNewLine(center, (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getProjection());
-                result
+                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
+                val result = (activity as AddFeatureActivity).mapView.map!!.addNewLine(center, (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.getProjection());
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_add_new_point  ->{
-                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
+                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
                 val result = (activity as AddFeatureActivity).mapView.map!!.addNewPoint(center);
-                result
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_add_new_inner_ring  ->{
-                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
-                val result = (activity as AddFeatureActivity).mapView.map!!.addHole( center, (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getProjection());
-                result
+                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
+                val result = (activity as AddFeatureActivity).mapView.map!!.addHole( center, (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.getProjection());
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_delete_inner_ring  ->{
                 val result = (activity as AddFeatureActivity).mapView.map!!.deleteCurrentHole();
-                result
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_delete_polygon  ->{
                 val result = (activity as AddFeatureActivity).mapView.map!!.deleteCurrentPolygon();
-                result
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_add_new_polygon  ->{
-                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
-                val result = (activity as AddFeatureActivity).mapView.map!!.addNewPolygon(center, (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getProjection());
-                result
+                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
+                val result = (activity as AddFeatureActivity).mapView.map!!.addNewPolygon(center, (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.getProjection());
+                return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_move_point_to_center  ->{
-                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
+                val center = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
                 (activity as AddFeatureActivity).mapView.map!!.moveToPoint(center);
+                return true
             }
 
             com.nextgis.maplibui.R.id.menu_edit_move_point_to_current_location  ->{
-                val latlng = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getCameraPosition().target
-                (activity as AddFeatureActivity).mapView.map!!.moveToPoint(latlng)
-                false;
+
+                val latlng = lastKnownLatLng()
+                if (latlng != null)
+                    (activity as AddFeatureActivity).mapView.map!!.moveToPoint(latlng)
+                return false;
             }
 //            else -> {
 //                result = overlay!!.onOptionsItemSelected(item.itemId)
 //                if (result) historyOverlay!!.saveToHistory(overlay!!.selectedFeature)
 //                result
 //            }
-
             else -> super.onOptionsItemSelected(item)
         }
         return true
@@ -579,12 +630,12 @@ class MapFragment : Fragment(),
             (activity as AddFeatureActivity).mapView.map.unselectFeatureFromEdit(false,false)
             //finish()
         }
-
     }
 
     private fun setMenu() {
         (requireActivity() as AddFeatureActivity).binding.toolbar.menu.clear()
         (requireActivity() as AddFeatureActivity).binding.toolbar.inflateMenu(R.menu.main)
+        (requireActivity() as AddFeatureActivity).onPrepareOptionsMenu((requireActivity() as AddFeatureActivity).binding.toolbar.menu)
     }
 
     private fun cancelEdits() {
@@ -602,7 +653,6 @@ class MapFragment : Fragment(),
         (activity as AddFeatureActivity).mapView.map.hideMarker()
         if ((activity as AddFeatureActivity).returnToList)
             (activity as AddFeatureActivity).showMap(false)
-
     }
 
     // run creating new object
@@ -638,6 +688,9 @@ class MapFragment : Fragment(),
                             override fun onPermissionGranted() {
                                 lastKnown()?.let { point -> (activity as AddFeatureActivity).mapView.panTo(point) }
                             }
+                            override fun onPermissionDenied() {
+                                requireActivity()?.longToast(R.string.permission_denied)
+                            }
                         }, false)
                     } else
                         centerPoint = lastKnown()
@@ -650,8 +703,6 @@ class MapFragment : Fragment(),
                         val zoom = (activity as BaseActivity).map.zoomLevel
                         (activity as BaseActivity).map.setZoomAndCenter(zoom, center, false, 0)
                 }
-
-
                 id?.let {
                     val selected = (activity as BaseActivity).map.getLayerById(id) as NGWVectorLayerUI?
                     selected?.let { layer ->
@@ -659,16 +710,13 @@ class MapFragment : Fragment(),
                         setTitle(getString(R.string.new_feature), layer.name)
                         setToolbar()
                         overlay.setSelectedLayer(layer)
-
                         overlay.selectedFeature = Feature()
-
                         mSelectedLayer = layer
                         when(extraName == NEW_FEATURE){
                             true -> {
-
                                 if (!skipCreate)
-                                    overlay.createNewGeometry()
-
+                                    //(activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
+                                    overlay.createNewGeometry() //xxx
                                 if ((activity as AddFeatureActivity).mapView.map == null)
                                     Log.e("NNULL", "mapView.map == null")
                                 (activity as AddFeatureActivity).mapView.map!!.startFeatureSelectionForEdit(
@@ -690,7 +738,6 @@ class MapFragment : Fragment(),
                             }  else -> {
                                 if (!skipCreate)
                                     overlay.newGeometryByWalk()
-
                                 (activity as AddFeatureActivity).mapView.map!!.startFeatureSelectionForEdit(
                                     mSelectedLayer,
                                     mSelectedLayer!!.geometryType,
@@ -698,12 +745,8 @@ class MapFragment : Fragment(),
                                     true,
                                     mSelectedLayer!!.defaultStyleNoExcept,
                                     true )
-
-//                                updateGeometryFromMaplibre(
-//                                    (activity as AddFeatureActivity).mapView.map!!.editingObject.editingFeature,
-//                                    (activity as AddFeatureActivity).mapView.map!!.originalSelectedFeature,
-//                                    (activity as AddFeatureActivity).mapView.map!!.editingObject   )
                                 setMode(MODE_EDIT_BY_WALK)
+                                locateCurrentPosition()
                             }
                         }
                         overlay.setHasEdits(true)
@@ -735,7 +778,6 @@ class MapFragment : Fragment(),
 
             (activity as AddFeatureActivity).mapView.map!!.showVertex()
             (activity as AddFeatureActivity).mapView.map!!.showMarker();
-
         }
 
         if (mode == MODE_EDIT_BY_WALK){
@@ -746,17 +788,14 @@ class MapFragment : Fragment(),
             (requireActivity() as AddFeatureActivity).binding.toolbar.menu.clear()
             (requireActivity() as AddFeatureActivity).binding.toolbar.inflateMenu(R.menu.edit_geometry)
 
-
             val item =  (requireActivity() as AddFeatureActivity).binding.bottomToolbar.menu.findItem(R.id.menu_settings)
             if (item != null)
                 item.setVisible(false)
-
 
             overlay.mode = MODE_EDIT
             overlay.mode = MODE_EDIT_BY_WALK
 
             (requireActivity() as AddFeatureActivity).binding.bottomToolbar.setOnMenuItemClickListener {
-
                 var result = onOptionsItemSelected(it)
                 if (!result)
                     result = overlay.onOptionsItemSelected(it.itemId)
@@ -814,9 +853,7 @@ class MapFragment : Fragment(),
         historyOverlay.saveToHistory(selectedFeature)
         overlay.setHasEdits(false)
 
-
         (activity as AddFeatureActivity).mapView.map.startFeatureSelectionForEdit(
-
             mSelectedLayer,
             mSelectedLayer!!.geometryType,
             overlay!!.selectedFeature,
@@ -835,7 +872,6 @@ class MapFragment : Fragment(),
             featureId = feature.id
         }
 
-
         if (overlay.mode == EditLayerOverlay.MODE_EDIT_BY_WALK) {
             overlay.stopGeometryByWalk()
             overlay.setMode(EditLayerOverlay.MODE_EDIT)
@@ -845,6 +881,12 @@ class MapFragment : Fragment(),
             mSelectedLayer!!.isLocked = true
             (activity as AddFeatureActivity).mapView.map!!.showVertex()
             (activity as AddFeatureActivity).mapView.map!!.showMarker();
+
+            if ((activity as AddFeatureActivity).mapView.map!= null && (activity as AddFeatureActivity).mapView.map!!.editingObject != null
+                && (activity as AddFeatureActivity).mapView.map!!.originalSelectedFeature != null)
+            updateGeometryFromMaplibre( (activity as AddFeatureActivity).mapView.map!!.editingObject.editingFeature,
+                (activity as AddFeatureActivity).mapView.map!!.originalSelectedFeature,
+                (activity as AddFeatureActivity).mapView.map!!.editingObject);
             return true
         }
 
@@ -865,7 +907,6 @@ class MapFragment : Fragment(),
 
         selectedLayer?.let {
             if (featureId == -1L) {
-
                 it.showEditForm(requireContext(), featureId, geometry,  (requireActivity() as AddFeatureActivity).getFormId())
             } else {
                 var uri = Uri.parse("content://" + getApp().authority + "/" + it.path.name)
@@ -883,7 +924,6 @@ class MapFragment : Fragment(),
                 overlay.setHasEdits(false)
 
                 (activity as AddFeatureActivity).mapView.map!!.cancelFeatureEdit(false)
-                // setNewMode(MODE_SELECT_ACTION)
             }
         }
         return true
@@ -936,21 +976,35 @@ class MapFragment : Fragment(),
     }
 
     override fun onPermissionGranted() {
-        if (currentCenter.crs != 0)
+        if (currentCenter.crs != 0) {
             (activity as AddFeatureActivity).mapView.panTo(currentCenter)
+
+            val lnglat = convert3857To4326(currentCenter.x, currentCenter.y)
+            val pointC =  Point.fromLngLat(lnglat[0], lnglat[1])
+            (activity as AddFeatureActivity).mapView.map!!.updateLocation(
+                pointC,
+                true,
+                null)
+        }
         else
             requireActivity().toast(R.string.error_no_location)
     }
 
+    override fun onPermissionDenied() {
+        requireActivity()?.longToast(R.string.permission_denied)
+    }
+
     override fun onLocationChanged(location: Location?) {
+        Log.d("TRACCK", "mapFrg  onLocationChanged" );
         location?.let {
+            Log.d("TRACCK", "mapFrg  onLocationChanged location" );
             currentCenter.setCoordinates(it.longitude, it.latitude)
             currentCenter.crs = GeoConstants.CRS_WGS84
 
-            if (!currentCenter.project(GeoConstants.CRS_WEB_MERCATOR))
+            if (!currentCenter.project(GeoConstants.CRS_WEB_MERCATOR)) {
+                Log.d("TRACCK", "on  location - no CRS!!!!" )
                 currentCenter.crs = 0
-
-
+            }
             val isStanding =
                 location == null || !location.hasBearing() || !location.hasSpeed() || location.getSpeed() == 0f
 
@@ -959,28 +1013,22 @@ class MapFragment : Fragment(),
                 isStanding,
                 location.bearing)
 
-//            Log.e("TTRR", "location at" + ": " + location.longitude + " : " + location.latitude)
-
-
             if (TrackerService.hasUnfinishedTracks(requireContext()))
                 (activity as AddFeatureActivity).mapView.map!!.reloadCurrentTrackToMap()
 
-//            Log.e("TTRR", "end olLocChange update---------------" )
-
-            if (mode == EditLayerOverlay.MODE_EDIT_BY_WALK){
+            if (mode == EditLayerOverlay.MODE_EDIT_BY_WALK && location.provider.equals(LocationManager.GPS_PROVIDER)){
                 if (location != null)
-                    (activity as AddFeatureActivity).mapView.map!!.addPointByWalk(LatLng(location.latitude, location.longitude));
+                    (activity as AddFeatureActivity).mapView.map!!.addPointByWalk(
+                        LatLng(location.latitude, location.longitude));
             }
-
         }
     }
 
     override fun onBestLocationChanged(location: Location) {
-
+        onLocationChanged(location)
     }
 
     override fun onGpsStatusChanged(event: Int) {
-
     }
 
     override fun onClick(view: View?) {
@@ -988,28 +1036,26 @@ class MapFragment : Fragment(),
             R.id.zoom_in -> {
                 //if ((activity as AddFeatureActivity).mapView.canZoomIn()) mapView.zoomIn()
 
-                val currentZoom = (activity as AddFeatureActivity).mapView.map.maplibreMap.cameraPosition.zoom
+                val currentZoom = (activity as AddFeatureActivity).mapView.map.maplibreMap.get()?.cameraPosition?.zoom!!
                 var newZoom = currentZoom + 1.0
-                if (newZoom > (activity as AddFeatureActivity).mapView.map.maplibreMap.maxZoomLevel)
-                    newZoom = (activity as AddFeatureActivity).mapView.map.maplibreMap.maxZoomLevel
+                if (newZoom > (activity as AddFeatureActivity).mapView.map.maplibreMap.get()?.maxZoomLevel!!)
+                    newZoom = (activity as AddFeatureActivity).mapView.map.maplibreMap.get()?.maxZoomLevel!!
                 val cameraUpdate = CameraUpdateFactory.zoomTo(newZoom)
-                (activity as AddFeatureActivity).mapView.map.maplibreMap.animateCamera(cameraUpdate)
+                (activity as AddFeatureActivity).mapView.map.maplibreMap.get()?.animateCamera(cameraUpdate)
             }
             R.id.zoom_out -> {
                 //if (mapView.canZoomOut()) mapView.zoomOut()
 
-                val currentZoom = (activity as AddFeatureActivity).mapView.map.maplibreMap.cameraPosition.zoom
-                var newZoom = currentZoom - 1.0
-                if (newZoom < (activity as AddFeatureActivity).mapView.map.maplibreMap.minZoomLevel)
-                    newZoom = (activity as AddFeatureActivity).mapView.map.maplibreMap.minZoomLevel
+                val currentZoom = (activity as AddFeatureActivity).mapView.map.maplibreMap.get()?.cameraPosition?.zoom
+                var newZoom = currentZoom!! - 1.0
+                if (newZoom < (activity as AddFeatureActivity).mapView.map.maplibreMap.get()?.minZoomLevel!!)
+                    newZoom = (activity as AddFeatureActivity).mapView.map.maplibreMap.get()?.minZoomLevel!!
                 val cameraUpdate = CameraUpdateFactory.zoomTo(newZoom)
-                (activity as AddFeatureActivity).mapView.map.maplibreMap.animateCamera(cameraUpdate)
+                (activity as AddFeatureActivity).mapView.map.maplibreMap.get()?.animateCamera(cameraUpdate)
             }
             R.id.locate -> locateCurrentPosition()
             R.id.add_feature -> {
                 closeFragment()
-//                finish()
-//                startActivity<AddFeatureActivity>()
             }
             R.id.edit_geometry -> startEdit(MODE_EDIT)
             R.id.edit_attributes -> selectedFeature?.let {
@@ -1034,8 +1080,9 @@ class MapFragment : Fragment(),
         }
     }
 
-
     override fun onLayerAdded(id: Int) {
+        if (isMapReadyToWork)
+            init()
     }
 
     override fun onLayerDeleted(id: Int) {
@@ -1151,7 +1198,8 @@ class MapFragment : Fragment(),
     }
 
     override fun onLayerVisibleChanged(id: Int) {
-        // its from mobile
+        // only gfor collector
+        (activity as AddFeatureActivity).mapView.map.checkLayerVisibility(id)
     }
 
     override fun onLayerChangedFeatureId(
@@ -1189,7 +1237,6 @@ class MapFragment : Fragment(),
 
         overlay!!.updateActions(editObject)
         historyOverlay!!.saveToHistory(originalSelectedFeature)
-
     }
 
     override fun getSelectedLayer(): VectorLayer? {
@@ -1256,7 +1303,6 @@ class MapFragment : Fragment(),
             return geomultiPolygon
         }
 
-
         if (feature.geometry()!= null && feature.geometry() is Polygon){
             val poly = feature.geometry() as Polygon
 
@@ -1314,9 +1360,7 @@ class MapFragment : Fragment(),
             return geoPoint
         }
 
-
         if (feature.geometry()!= null && feature.geometry() is LineString){
-
             val geoLineObj = GeoLineString()
             geoLineObj.crs = GeoConstants.CRS_WEB_MERCATOR
 
@@ -1385,7 +1429,7 @@ class MapFragment : Fragment(),
     }
 
     override fun changeProgress(show: Boolean) {
-        if (binding == null)
+        if (_binding == null)
             return
         if (show)
             binding.stylingProgress.visibility = View.VISIBLE
@@ -1396,27 +1440,18 @@ class MapFragment : Fragment(),
     }
 
     override fun checkCreateIfNeed() {
-//        runDelayed(2000, {
-//            startEditIfNeed(newIntent)
-//        })
-
         Log.d("WWALK", "checkCreateIfNeed")
-
         if (!(requireActivity() is AddFeatureActivity))
             return
-
         init()
-
         val intentToEdit = (requireActivity() as AddFeatureActivity).postponedIntent
         if (intentToEdit != null)
             startEditIfNeed(intentToEdit)
-
     }
 
     override fun setMapLayersLoaded() {
         isMapReadyToWork = true
         Log.d("WWALK", "isMapReadyToWork = true")
-
     }
 
     override fun onCameraIdle() {
@@ -1429,8 +1464,10 @@ class MapFragment : Fragment(),
     }
 
     fun onSingleTapUpFromMaplibre(screenx: Float, screeny :Float) {
-
         Log.e("MMAAPP", "On Create - mMapRef created")
+        if (overlay.mode == EditLayerOverlay.MODE_EDIT_BY_WALK) {
+            return
+        }
 
         if (overlay.mode == EditLayerOverlay.MODE_EDIT) {
             if (overlay.selectGeometryInScreenCoordinates(screenx, screeny))
@@ -1445,11 +1482,11 @@ class MapFragment : Fragment(),
         val screenPointMin = PointF(dMinX, dMinY)
         val screenPointMax = PointF(dMaxX, dMaxY)
 
-        val minPoint = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getProjection().fromScreenLocation(screenPointMin)
-        val maxPoint = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getProjection().fromScreenLocation(screenPointMax)
+        val minPoint = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.getProjection()?.fromScreenLocation(screenPointMin)
+        val maxPoint = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.getProjection()?.fromScreenLocation(screenPointMax)
 
-        val pointsMin = convert4326To3857(minPoint.longitude, minPoint.latitude)
-        val pointsMax = convert4326To3857(maxPoint.longitude, maxPoint.latitude);
+        val pointsMin = convert4326To3857(minPoint!!.longitude, minPoint!!.latitude)
+        val pointsMax = convert4326To3857(maxPoint!!.longitude, maxPoint!!.latitude);
 
         var minx =   pointsMin[0];
         var maxx =   pointsMax[0];
@@ -1465,7 +1502,7 @@ class MapFragment : Fragment(),
             maxy =   pointsMin[1]
         }
         val pointClick = PointF(screenx, screeny)
-        val exactEnv: GeoEnvelope = getClickEnelope(pointClick, (activity as AddFeatureActivity).mapView.map!!.maplibreMap)
+        val exactEnv: GeoEnvelope = getClickEnelope(pointClick, (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()!!)
 
         val types = GeoConstants.GTPointCheck or GeoConstants.GTMultiPointCheck or
                 GeoConstants.GTLineStringCheck or GeoConstants.GTMultiLineStringCheck or
@@ -1643,27 +1680,27 @@ class MapFragment : Fragment(),
 
             com.nextgis.maplibui.R.id.menu_edit_add_new_line -> {
                 val center =
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
+                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
                 val result = (activity as AddFeatureActivity).mapView.map!!.addNewLine(
                     center,
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getProjection()
+                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.getProjection()
                 );
                 return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_add_new_point -> {
                 val center =
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
+                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
                 val result = (activity as AddFeatureActivity).mapView.map!!.addNewPoint(center);
                 return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_add_new_inner_ring -> {
                 val center =
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
+                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
                 val result = (activity as AddFeatureActivity).mapView.map!!.addHole(
                     center,
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getProjection()
+                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.getProjection()
                 );
                 return result
             }
@@ -1680,27 +1717,26 @@ class MapFragment : Fragment(),
 
             com.nextgis.maplibui.R.id.menu_edit_add_new_polygon -> {
                 val center =
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
+                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
                 val result = (activity as AddFeatureActivity).mapView.map!!.addNewPolygon(
                     center,
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getProjection()
+                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.getProjection()
                 );
                 return result
             }
 
             com.nextgis.maplibui.R.id.menu_edit_move_point_to_center -> {
                 val center =
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.cameraPosition.target
+                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
                 (activity as AddFeatureActivity).mapView.map!!.moveToPoint(center);
             }
 
             com.nextgis.maplibui.R.id.menu_edit_move_point_to_current_location -> {
-                val latlng =
-                    (activity as AddFeatureActivity).mapView.map!!.maplibreMap.getCameraPosition().target
-                (activity as AddFeatureActivity).mapView.map!!.moveToPoint(latlng)
+                val latlng = lastKnownLatLng()
+                if (latlng != null)
+                    (activity as AddFeatureActivity).mapView.map!!.moveToPoint(latlng)
                 return false;
             }
-
             else -> {
                 if (it != null) {
                     result = overlay!!.onOptionsItemSelected(it!!.itemId)
@@ -1858,5 +1894,15 @@ class MapFragment : Fragment(),
 //            mSelectedLayer!!.geometryType,
 //            overlay!!.selectedFeature, true,mSelectedLayer!!.defaultStyleNoExcept,
 //            isFillByWalking)
+    }
+
+    fun reloadTracksToMap(){
+        if (isMapReadyToWork && (activity as AddFeatureActivity).mapView.map != null)
+            (activity as AddFeatureActivity).mapView.map!!.reloadTrackListToMap()
+    }
+
+    fun reloadCurrentTrackToMap(){
+        if (isMapReadyToWork && (activity as AddFeatureActivity).mapView.map != null)
+            (activity as AddFeatureActivity).mapView.map!!.reloadCurrentTrackToMap()
     }
 }
