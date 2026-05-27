@@ -170,36 +170,36 @@
 
 
     </androidx.drawerlayout.widget.DrawerLayout>
-    <FrameLayout
-        android:id="@+id/overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:alpha="0.5"
-        android:background="@color/actionBarColor"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:visibility="gone">
+<!--    <FrameLayout-->
+<!--        android:id="@+id/overlay"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:alpha="0.5"-->
+<!--        android:background="@color/actionBarColor"-->
+<!--        android:clickable="true"-->
+<!--        android:focusable="true"-->
+<!--        android:gravity="center"-->
+<!--        android:orientation="vertical"-->
+<!--        android:visibility="gone">-->
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="64dp"
-            android:src="@drawable/ic_cloud_sync"
-            app:tint="@color/color_black"
-            tools:ignore="ContentDescription"/>
+<!--        <ImageView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:padding="64dp"-->
+<!--            android:src="@drawable/ic_cloud_sync"-->
+<!--            app:tint="@color/color_black"-->
+<!--            tools:ignore="ContentDescription"/>-->
 
-        <TextView
-            style="@style/TextAppearance.AppCompat.Large"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginBottom="64dp"
-            android:gravity="center"
-            android:padding="64dp"
-            android:text="@string/sync_progress"/>
-    </FrameLayout>
+<!--        <TextView-->
+<!--            style="@style/TextAppearance.AppCompat.Large"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="bottom"-->
+<!--            android:layout_marginBottom="64dp"-->
+<!--            android:gravity="center"-->
+<!--            android:padding="64dp"-->
+<!--            android:text="@string/sync_progress"/>-->
+<!--    </FrameLayout>-->
 
 
     <RelativeLayout

@@ -132,7 +132,7 @@ class MapActivity
 {
 //
 //
-//    private lateinit var binding: ActivityMapBinding
+    private lateinit var binding: ActivityMapBinding
 //    private lateinit var overlay: EditLayerOverlay
 //    private lateinit var historyOverlay: UndoRedoOverlay
 //    private lateinit var locationOverlay: CurrentLocationOverlay

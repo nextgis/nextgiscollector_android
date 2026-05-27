@@ -650,6 +650,7 @@ class MapFragment : Fragment(),
         else
             setUpToolbar()
         (activity as AddFeatureActivity).mapView.map.unselectFeatureFromEdit(true,false)
+        (activity as AddFeatureActivity).mapView.map.startFeatureSelectionForView(selectedLayer,selectedFeature)
         (activity as AddFeatureActivity).mapView.map.hideMarker()
         if ((activity as AddFeatureActivity).returnToList)
             (activity as AddFeatureActivity).showMap(false)
@@ -1072,11 +1073,11 @@ class MapFragment : Fragment(),
         val env: GeoEnvelope = (activity as BaseActivity).map.currentBounds
 
         if (layer is RemoteTMSLayerUI) {
-            layer.downloadTiles(requireContext(), env)
+            layer.downloadTiles(requireActivity(), env)
         } else if (layer is NGWRasterLayerUI) {
-            layer.downloadTiles(requireContext(), env)
+            layer.downloadTiles(requireActivity(), env)
         } else if (layer is NGWWebMapLayerUI) {
-            layer.downloadTiles(requireContext(), env)
+            layer.downloadTiles(requireActivity(), env)
         }
     }
 
@@ -1464,7 +1465,7 @@ class MapFragment : Fragment(),
     }
 
     fun onSingleTapUpFromMaplibre(screenx: Float, screeny :Float) {
-        Log.e("MMAAPP", "On Create - mMapRef created")
+//        Log.e("MMAAPP", "On Create - mMapRef created")
         if (overlay.mode == EditLayerOverlay.MODE_EDIT_BY_WALK) {
             return
         }

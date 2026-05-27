@@ -70,6 +70,7 @@ abstract class BaseActivity : NGActivity() {
         mapView = MapViewOverlays(this, app.map as MapDrawable)
         mapView.id = R.id.container
         map = mapView.map
+        map.addListener(mapView)
         loadProject()
     }
 
@@ -213,4 +214,8 @@ abstract class BaseActivity : NGActivity() {
         return temp
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        map.removeListener(mapView)
+    }
 }

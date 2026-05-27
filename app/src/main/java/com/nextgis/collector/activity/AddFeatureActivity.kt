@@ -33,6 +33,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.view.isVisible
@@ -56,6 +57,7 @@ import com.nextgis.maplib.map.MapDrawable.MODE_EDIT_BY_WALK
 import com.nextgis.maplib.map.MapDrawable.MODE_HIGHLIGHT
 import com.nextgis.maplib.map.MapDrawable.MODE_NONE
 import com.nextgis.maplib.map.NGWVectorLayer
+import com.nextgis.maplib.service.NGWSyncService
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.Constants.MESSAGE_INTENT_RELOAD
 import com.nextgis.maplib.util.FeatureChanges
@@ -332,7 +334,7 @@ class AddFeatureActivity :
                     if (map)
                         intent.putExtra(MOVE_MAP, false)
 
-                    Log.e("MMAPPEE", "ready to work = " + mapFragment?.isMapReadyToWork)
+//                    Log.e("MMAPPEE", "ready to work = " + mapFragment?.isMapReadyToWork)
                     if (mapFragment?.isMapReadyToWork == true)
                         mapFragment?.startEditIfNeed(intent)
                     else {
@@ -377,6 +379,14 @@ class AddFeatureActivity :
                 registerReceiver(mMessageReload, intentFilterReload)
             }
             receiverRegistered = true
+        }
+
+        try {
+            val visibleFlag = if (CollectorApplication.isSyncProgress)  View.VISIBLE else View.GONE
+            findViewById<FrameLayout>(R.id.overlay).visibility = visibleFlag
+
+        } catch (exception : Exception){
+            Log.e("collector", exception.toString())
         }
     }
 
