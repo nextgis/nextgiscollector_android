@@ -208,7 +208,8 @@ class AddFeatureActivity :
         val layersResources = items.filter {
             val layer = map.getLayerByPathName(it.id)
             (layer as? NGWVectorLayerUI)?.isEditable ?: true
-        }
+        }.filterNotNull()
+
         binding.layers.adapter = EditableLayersAdapter(layersResources, this, layers)
         supportActionBar?.setDisplayHomeAsUpEnabled(history.size != 0)
         supportActionBar?.setHomeButtonEnabled(history.size != 0)
@@ -388,6 +389,7 @@ class AddFeatureActivity :
         } catch (exception : Exception){
             Log.e("collector", exception.toString())
         }
+        mapFragment?.reloadTracksToMap()
     }
 
     fun getFormId(): Long{
@@ -425,9 +427,11 @@ class AddFeatureActivity :
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
+        val localResurnToList = returnToList
+
         if (projectBorders != null && resultCode == RESULT_OK && data!= null){
             if (data.hasExtra(ConstantsUI.KEY_ADDED_POINT)){
-                if (returnToList){
+                if (localResurnToList){
                     // hideMap
                     showMap(false)
                 } else {
@@ -484,7 +488,8 @@ class AddFeatureActivity :
                 map.reloadFeatureToMaplibre(id, mapFragment?.selectedLayer)
                 map.updateSelectedMarker()
                 map.hideSelectedDotSource()
-                mapFragment?.setUpToolbar()
+                if (!localResurnToList)
+                    mapFragment?.setUpToolbar()
             }
         } else if  (mapFragment?.overlay!!.selectedFeatureGeometry != null)
             mapFragment?.overlay!!.setHasEdits(true)

@@ -86,7 +86,21 @@ class ProjectModel {
             val path = getBaseUrl(url, private) + "/$id"
             //com.nextgis.maplib.util.NetworkUtil.configureSSLdefault()
             val response = getResponse(path, email)
-            response?.let { 
+            response?.let {
+
+//                val jsonStr = try {
+//                    val inputStream = context.assets.open("geo.json")
+//                    val size = inputStream.available()
+//                    val buffer = ByteArray(size)
+//                    inputStream.read(buffer)
+//                    inputStream.close()
+//                    String(buffer, Charsets.UTF_8)
+//                } catch (ex: java.io.IOException) {
+//                    ex.printStackTrace()
+//                    null
+//                }
+//                val json = JSONObject(jsonStr)
+
                 val json = try {
                     JSONObject(response.responseBody)
                 } catch (e: Exception) {
@@ -100,10 +114,15 @@ class ProjectModel {
                         val layers = json.getJSONArray("items")
                         for (i in 0 until layers.length()) {
                             val layer = layers[i]
+
+                            if (layer is JSONObject && (layer as JSONObject)
+                                    .getString("item_type")
+                                    .equals("group"))
+                                continue
+
                             if (layer is JSONObject && (layer as JSONObject)
                                     .getString("resource_cls")
-                                    .equals("formbuilder_form")
-                            ) {
+                                    .equals("formbuilder_form")  ) {
                                 val version = json.getInt("version")
                                 val user = json.getString("username")
                                 val hash = json.getString("password")

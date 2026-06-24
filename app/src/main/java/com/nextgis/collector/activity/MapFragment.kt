@@ -1440,10 +1440,12 @@ class MapFragment : Fragment(),
         }
     }
 
+    override fun changeProgress(show: Boolean, text: String?) {
+
+    }
+
     override fun checkCreateIfNeed() {
         Log.d("WWALK", "checkCreateIfNeed")
-        if (!(requireActivity() is AddFeatureActivity))
-            return
         init()
         val intentToEdit = (requireActivity() as AddFeatureActivity).postponedIntent
         if (intentToEdit != null)
@@ -1730,6 +1732,7 @@ class MapFragment : Fragment(),
                 val center =
                     (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()?.cameraPosition?.target
                 (activity as AddFeatureActivity).mapView.map!!.moveToPoint(center);
+                return true;
             }
 
             com.nextgis.maplibui.R.id.menu_edit_move_point_to_current_location -> {
