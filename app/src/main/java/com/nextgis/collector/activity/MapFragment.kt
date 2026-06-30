@@ -843,10 +843,13 @@ class MapFragment : Fragment(),
         overlay.mode = mode
         (requireActivity() as AddFeatureActivity).binding.bottomToolbar.setOnMenuItemClickListener {
             val result = onMenuItemClick(it)
-            if (result)
+            if (result) {
                 historyOverlay.saveToHistory(overlay.selectedFeature)
-            else
+                overlay.setHasEdits(true)
+            }
+            else {
                 (requireActivity() as ProjectActivity).requestForPermissions(this, true)
+            }
             result
         }
 
@@ -883,11 +886,13 @@ class MapFragment : Fragment(),
             (activity as AddFeatureActivity).mapView.map!!.showVertex()
             (activity as AddFeatureActivity).mapView.map!!.showMarker();
 
-            if ((activity as AddFeatureActivity).mapView.map!= null && (activity as AddFeatureActivity).mapView.map!!.editingObject != null
+            if ((activity as AddFeatureActivity).mapView.map!= null
+                && (activity as AddFeatureActivity).mapView.map!!.editingObject != null
                 && (activity as AddFeatureActivity).mapView.map!!.originalSelectedFeature != null)
-            updateGeometryFromMaplibre( (activity as AddFeatureActivity).mapView.map!!.editingObject.editingFeature,
-                (activity as AddFeatureActivity).mapView.map!!.originalSelectedFeature,
-                (activity as AddFeatureActivity).mapView.map!!.editingObject);
+
+                    updateGeometryFromMaplibre( (activity as AddFeatureActivity).mapView.map!!.editingObject.editingFeature,
+                            (activity as AddFeatureActivity).mapView.map!!.originalSelectedFeature,
+                            (activity as AddFeatureActivity).mapView.map!!.editingObject);
             return true
         }
 
@@ -1227,9 +1232,9 @@ class MapFragment : Fragment(),
     }
 
     override fun updateGeometryFromMaplibre(
-        feature: org.maplibre.geojson.Feature?,
-        originalSelectedFeature: Feature?,
-        editObject: MLGeometryEditClass?    ) {
+                feature: org.maplibre.geojson.Feature?,
+                originalSelectedFeature: Feature?,
+                editObject: MLGeometryEditClass?    ) {
         if (feature == null || originalSelectedFeature == null)
             return
         originalSelectedFeature.geometry = getGeometryFromMaplibreGeometry(feature)
@@ -1737,9 +1742,14 @@ class MapFragment : Fragment(),
 
             com.nextgis.maplibui.R.id.menu_edit_move_point_to_current_location -> {
                 val latlng = lastKnownLatLng()
-                if (latlng != null)
+                if (latlng != null){
                     (activity as AddFeatureActivity).mapView.map!!.moveToPoint(latlng)
-                return false;
+                    // WA
+                    overlay.setHasEdits(true)
+                    historyOverlay.saveToHistory(overlay.selectedFeature)
+                    // WA need to move around location camera move
+                }
+                return false; // false for call req perm to move screen to location area
             }
             else -> {
                 if (it != null) {
