@@ -84,7 +84,6 @@ import com.nextgis.maplibui.service.LayerFillService.KEY_START_LAYER_FILL
 import com.nextgis.maplibui.util.NGIDUtils.COLLECTOR_HUB_URL
 import com.nextgis.maplibui.util.NGIDUtils.isLoggedIn
 import com.nextgis.maplibui.util.SettingsConstantsUI
-import com.nextgis.maplibui.util.SettingsConstantsUI.DEFAUL_BORDERS_WAS_APPLY
 import okio.IOException
 import java.io.File
 import java.util.Objects
@@ -208,7 +207,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             if (remote is RemoteLayerNGW) {
                                 ngwLayer.setIsEditable(remote.editable && remote.syncable)
                                 if (remote.syncable) {
-                                    NGWSettingsFragment.setAccountSyncEnabled(account, app.authority, true)
+                                    NGWSettingsFragment.setAccountSyncEnabled(context,  account, app.authority, true)
                                     ngwLayer.syncType = Constants.SYNC_ALL
                                 }
                                 layers.add(ngwLayer)
@@ -434,7 +433,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             }
         val url = preferences.getString("collector_hub_url", COLLECTOR_HUB_URL)
         binding.projectModel?.load(id, private, url ?: COLLECTOR_HUB_URL, context, onResetLoadProjectCallback)
-        preferences.edit().remove (DEFAUL_BORDERS_WAS_APPLY).apply();
+        //preferences.edit().remove (DEFAUL_BORDERS_WAS_APPLY).apply();
     }
 
 
@@ -487,7 +486,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                     }
                 }
             }
-            //map.replaceAllLayers(newList)
+            map.replaceAllLayers(newList)
             map.save()
         }
 
@@ -611,7 +610,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
             var mapLayer: ILayer? = null
             when (layer.type) {
                 "tms" -> {
-                    mapLayer = createTMS(layer as RemoteLayerTMS)
+                    mapLayer = createTMS(layer as RemoteLayerTMS, authority)
                     if (needAccount) {
                         val remoteTMSLayer = mapLayer as RemoteTMSLayer
                         remoteTMSLayer.login = project.user
@@ -723,7 +722,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         return queue(intent, layer, formUrl, selectedForm)
     }
 
-    private fun createTMS(layer: RemoteLayerTMS): ILayer {
+    private fun createTMS(layer: RemoteLayerTMS, account: String): ILayer {
         val tmsLayer = RemoteTMSLayerUI(this, map.createLayerStorage(layer.path))
         tmsLayer.isVisible = layer.visible
         tmsLayer.minZoom = layer.minZoom
@@ -731,6 +730,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
         tmsLayer.name = layer.title
         tmsLayer.url = layer.url
         tmsLayer.tileMaxAge = layer.lifetime * 60 * 1000
+        tmsLayer.setAccountName(account)
         val type = if (layer.tmsType == 0) GeoConstants.TMSTYPE_OSM else layer.tmsType
         tmsLayer.tmsType = type
         return tmsLayer

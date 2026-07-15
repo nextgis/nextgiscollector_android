@@ -23,7 +23,6 @@ package com.nextgis.collector.activity
 
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
@@ -35,7 +34,6 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -49,7 +47,6 @@ import com.nextgis.collector.adapter.EditableLayersAdapter
 import com.nextgis.collector.data.ResourceTree
 import com.nextgis.collector.databinding.ActivityAddFeatureBinding
 import com.nextgis.collector.util.IntentFor
-import com.nextgis.collector.util.longToast
 import com.nextgis.collector.util.toast
 import com.nextgis.maplib.api.IGISApplication
 import com.nextgis.maplib.datasource.GeoPoint
@@ -57,7 +54,6 @@ import com.nextgis.maplib.map.MapDrawable.MODE_EDIT_BY_WALK
 import com.nextgis.maplib.map.MapDrawable.MODE_HIGHLIGHT
 import com.nextgis.maplib.map.MapDrawable.MODE_NONE
 import com.nextgis.maplib.map.NGWVectorLayer
-import com.nextgis.maplib.service.NGWSyncService
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.Constants.MESSAGE_INTENT_RELOAD
 import com.nextgis.maplib.util.FeatureChanges

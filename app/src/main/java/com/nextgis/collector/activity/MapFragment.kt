@@ -77,7 +77,6 @@ import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.service.WalkEditService
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI
-import com.nextgis.maplibui.util.SettingsConstantsUI.DEFAUL_BORDERS_WAS_APPLY
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -168,9 +167,12 @@ class MapFragment : Fragment(),
                 mapContainer.addView((activity as AddFeatureActivity).mapView, FrameLayout.LayoutParams(matchParent, matchParent))
         }
 
-        val defBOrdersWasApply = (requireActivity() as BaseActivity).preferences.getBoolean(DEFAUL_BORDERS_WAS_APPLY, false);
-        if (defBOrdersWasApply)
-            setCenter(0)
+//        val defBOrdersWasApply = (requireActivity() as BaseActivity)
+//            .preferences.
+//            getBoolean(DEFAUL_BORDERS_WAS_APPLY, false);
+
+//        if (defBOrdersWasApply)
+//            setCenter(0)
 
         overlay.setTopToolbar((requireActivity() as AddFeatureActivity).binding.toolbar)
         overlay.setBottomToolbar((requireActivity() as AddFeatureActivity).binding.bottomToolbar)
@@ -199,11 +201,12 @@ class MapFragment : Fragment(),
 
         val projectBorders = (activity as BaseActivity).projectBorders
         val preferences = (activity as BaseActivity).preferences
-        if (projectBorders != null && !defBOrdersWasApply){
+        if (projectBorders != null &&
+            !projectBorders.maxX.isNaN() && !projectBorders.maxY.isNaN() &&
+            !projectBorders.minX.isNaN() && !projectBorders.minY.isNaN()  ){
             projectBorders.let {
-                preferences.edit().putBoolean(DEFAUL_BORDERS_WAS_APPLY, true).apply()
-                (activity as BaseActivity).map.zoomToExtent(GeoEnvelope(projectBorders!!.minX,projectBorders!!.maxX,
-                    projectBorders!!.minY, projectBorders!!.maxY))
+                getApp().setPostponedExtent(GeoEnvelope(projectBorders.minX,projectBorders.maxX,
+                    projectBorders.minY, projectBorders.maxY))
             }
         }
 

@@ -94,7 +94,6 @@ import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.SettingsConstantsUI
-import com.nextgis.maplibui.util.SettingsConstantsUI.DEFAUL_BORDERS_WAS_APPLY
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.internal.http2.Http2Reader

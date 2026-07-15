@@ -45,8 +45,8 @@ android {
         compileSdk 36
         targetSdkVersion 36
 
-        versionCode 107
-        versionName "2.0.2"
+        versionCode 108
+        versionName "2.0.3"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         setProperty("archivesBaseName", "NGCollector-$versionName")

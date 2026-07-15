@@ -30,9 +30,9 @@ import android.util.Log
 import android.widget.Toast
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.activity.PreferenceActivity
-import com.nextgis.collector.activity.ProjectActivity.Companion.TRACKS_REQUEST
 import com.nextgis.collector.util.Logger
 import com.nextgis.maplib.api.ILayer
+import com.nextgis.maplib.datasource.GeoEnvelope
 import com.nextgis.maplib.datasource.ngw.SyncAdapter
 import com.nextgis.maplib.map.LayerGroup
 import com.nextgis.maplib.map.MapBase
@@ -40,7 +40,6 @@ import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.NGWUtil
 import com.nextgis.maplib.util.NetworkUtil
 import com.nextgis.maplibui.GISApplication
-import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.mapui.TrackLayerUI
 import com.nextgis.maplibui.service.TrackerService
 import kotlin.system.exitProcess
@@ -49,10 +48,14 @@ class CollectorApplication : GISApplication() {
 
     private  var posponedLayeId = -1;
     private var syncReceiver: SyncReceiver = SyncReceiver()
+
+    var geoEnvelope: GeoEnvelope? = null;
+    var defBOrdersWasApply = false
+
     companion object {
         const val BASE_URL = "https://collector.nextgis.com/api/project"
         const val TREE = "resource.tree"
-        public var isSyncProgress = false
+        var isSyncProgress = false
     }
 
     protected inner class SyncReceiver : BroadcastReceiver() {
@@ -196,6 +199,29 @@ class CollectorApplication : GISApplication() {
 
     override fun getPostponedLayerId(): Int {
         return this.posponedLayeId
+    }
+
+    override
+    fun setPostponedExtent(geoEnvelopeNew: GeoEnvelope){
+        geoEnvelope = geoEnvelopeNew;
+    }
+
+    override
+    fun getPostponedExtent(): GeoEnvelope?{
+        return geoEnvelope
+    }
+
+    override
+    fun setBordersWasApply(apply: Boolean){
+        defBOrdersWasApply = apply;
+    }
+
+    override fun getBordersWasApply(): Boolean {
+        return defBOrdersWasApply
+    }
+
+    override fun getSelfContext(): Context? {
+        return this
     }
 
 //    override fun checkTracksLayerExist() {

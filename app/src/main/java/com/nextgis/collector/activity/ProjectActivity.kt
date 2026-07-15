@@ -548,7 +548,7 @@ abstract class ProjectActivity : BaseActivity() {
                 checkAccountForSync(this, account)
                 layers.clear()
                 MapContentProviderHelper.getLayersByAccount(map, account.name, layers)
-                val syncEnabled = NGWSettingsFragment.isAccountSyncEnabled(account, app.authority)
+                val syncEnabled = NGWSettingsFragment.isAccountSyncEnabled(this, account, app.authority)
                 if (layers.size > 0 && syncEnabled)
                     accounts.add(account)
             }
