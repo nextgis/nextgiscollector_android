@@ -31,6 +31,7 @@ import com.nextgis.collector.R
 import com.nextgis.collector.data.Project
 import com.nextgis.collector.util.IntentFor
 import com.nextgis.collector.util.toast
+import com.nextgis.maplib.api.IGISApplication
 import com.nextgis.maplib.datasource.Geo
 import com.nextgis.maplib.datasource.GeoEnvelope
 import com.nextgis.maplib.datasource.GeoPoint
@@ -51,6 +52,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.security.AccessController.getContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -126,6 +128,8 @@ abstract class BaseActivity : NGActivity() {
     }
 
     protected fun change(project: Project? = null) {
+        (applicationContext as IGISApplication).setBordersWasApply(true)
+
         deleteAll(true)
         val intent = IntentFor<ProjectListActivity>(this)
         project?.let {
