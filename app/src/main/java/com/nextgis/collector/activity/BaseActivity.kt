@@ -148,7 +148,7 @@ abstract class BaseActivity : NGActivity() {
                 val pointArray :DoubleArray? = data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT);
                 if (pointArray != null && pointArray.size>=2){
                     val geoPoint = GeoPoint(pointArray[0],  pointArray[1])
-                    projectBorders.let {
+                    projectBorders?.let {
                         if (!projectBorders!!.contains(geoPoint)){
                             val builder = android.app.AlertDialog.Builder(this@BaseActivity)
                             builder

@@ -204,7 +204,7 @@ class MapFragment : Fragment(),
         if (projectBorders != null &&
             !projectBorders.maxX.isNaN() && !projectBorders.maxY.isNaN() &&
             !projectBorders.minX.isNaN() && !projectBorders.minY.isNaN()  ){
-            projectBorders.let {
+            projectBorders?.let {
                 getApp().setPostponedExtent(GeoEnvelope(projectBorders.minX,projectBorders.maxX,
                     projectBorders.minY, projectBorders.maxY))
             }
@@ -953,7 +953,7 @@ class MapFragment : Fragment(),
                     val pointArray :DoubleArray? = data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT);
                     if (pointArray != null && pointArray.size>=2) {
                         val geoPoint = GeoPoint(pointArray[0], pointArray[1])
-                        (requireActivity() as BaseActivity).projectBorders.let {
+                        (requireActivity() as BaseActivity).projectBorders?.let {
                             if (!(requireActivity() as BaseActivity).projectBorders!!.contains(geoPoint)) {
                                 val builder = android.app.AlertDialog.Builder(requireActivity())
                                 builder

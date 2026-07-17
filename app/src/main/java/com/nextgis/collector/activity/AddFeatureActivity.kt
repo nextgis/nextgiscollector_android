@@ -159,8 +159,8 @@ class AddFeatureActivity :
 
         menuInflater.inflate( if (isEditMode) R.menu.main else R.menu.edit_geometry, menu)
 
-        menu?.findItem(R.id.menu_track).let {
-            trackItem = menu?.findItem(R.id.menu_track)
+        menu?.findItem(R.id.menu_track)?.let {
+            trackItem = menu.findItem(R.id.menu_track)
         }
         setTracksTitle(menu?.findItem(R.id.menu_track))
         //updateTracksMenuItems(menu)
@@ -214,6 +214,7 @@ class AddFeatureActivity :
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.show_map ->  {
+                //throwException()
                 showMap(! (binding.mapFragmentContainer.isVisible))
             } else ->
                 mapFragment?.onClick(view)
@@ -425,24 +426,27 @@ class AddFeatureActivity :
 
         val localResurnToList = returnToList
 
-        if (projectBorders != null && resultCode == RESULT_OK && data!= null){
-            if (data.hasExtra(ConstantsUI.KEY_ADDED_POINT)){
+        if (resultCode == RESULT_OK && data!= null){
+            if (data.hasExtra(ConstantsUI.KEY_ADDED_POINT) ||
+                data.hasExtra(ConstantsUI.KEY_ADDED_OTHERS)){
                 if (localResurnToList){
                     // hideMap
                     showMap(false)
                 } else {
-                    val pointArray :DoubleArray? = data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT);
-                    if (pointArray != null && pointArray.size>=2) {
-                        val geoPoint = GeoPoint(pointArray[0], pointArray[1])
-                        projectBorders.let {
-                            if (!projectBorders!!.contains(geoPoint)) {
-                                val builder = android.app.AlertDialog.Builder(this@AddFeatureActivity)
-                                builder
-                                    .setPositiveButton("ok", null)
-                                    .setTitle(R.string.out_of_area_header)
-                                    .setMessage(R.string.out_of_area_text)
-                                val alertDialog = builder.create()
-                                alertDialog.show()
+                    if (data.hasExtra(ConstantsUI.KEY_ADDED_OTHERS)) {
+                        val pointArray :DoubleArray? = data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT);
+                        if (pointArray != null && pointArray.size>=2) {
+                            val geoPoint = GeoPoint(pointArray[0], pointArray[1])
+                            projectBorders?.let {
+                                if (!projectBorders!!.contains(geoPoint)) {
+                                    val builder = android.app.AlertDialog.Builder(this@AddFeatureActivity)
+                                    builder
+                                        .setPositiveButton("ok", null)
+                                        .setTitle(R.string.out_of_area_header)
+                                        .setMessage(R.string.out_of_area_text)
+                                    val alertDialog = builder.create()
+                                    alertDialog.show()
+                                }
                             }
                         }
                     }

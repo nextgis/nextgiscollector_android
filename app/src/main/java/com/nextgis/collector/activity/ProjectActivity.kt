@@ -23,7 +23,6 @@ package com.nextgis.collector.activity
 
 import android.Manifest
 import android.accounts.Account
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.*
 import android.content.pm.PackageManager
@@ -61,7 +60,6 @@ import com.nextgis.collector.util.accountManager
 import com.nextgis.collector.util.longToast
 import com.nextgis.collector.util.runDelayedOnUiThread
 import com.nextgis.collector.util.startActivity
-import com.nextgis.collector.util.startActivityForResult
 import com.nextgis.collector.util.toast
 import com.nextgis.maplib.api.IGISApplication
 import com.nextgis.maplib.api.INGWLayer
@@ -70,12 +68,14 @@ import com.nextgis.maplib.map.MapContentProviderHelper
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.TrackLayer
 import com.nextgis.maplib.map.VectorLayer
+import com.nextgis.maplib.util.AccountUtil
 import com.nextgis.maplib.util.Constants
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.PermissionUtil
 import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.activity.TracksActivity
 import com.nextgis.maplibui.fragment.NGWSettingsFragment
+import com.nextgis.maplibui.mapui.SyncAccountWorker
 import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.service.TrackerService.*
 import com.nextgis.maplibui.util.*
@@ -520,16 +520,20 @@ abstract class ProjectActivity : BaseActivity() {
     }
 
     private fun checkAccountForSync(context: Context, account: Account) {
+//        val isYourAccountSyncEnabled =
+//            ContentResolver.getSyncAutomatically(account, getString(R.string.provider_auth))
+
+
         val isYourAccountSyncEnabled =
-            ContentResolver.getSyncAutomatically(account, getString(R.string.provider_auth))
+            NGWSettingsFragment.isAccountSyncEnabled(this, account, this.app.authority)
+
         if (!isYourAccountSyncEnabled) {
             val onClickListener =
                 DialogInterface.OnClickListener { dialog, which ->
-                    ContentResolver.setSyncAutomatically(
-                        account,
-                        getString(R.string.provider_auth),
-                        true
-                    )
+                    val period = Constants.DEFAULT_SYNC_PERIOD
+                    AccountUtil.saveSyncPeriodForAccount(this, account.name, period)
+                    SyncAccountWorker.schedule(this, account.name, period)
+//                    ContentResolver.setSyncAutomatically(account,getString(R.string.provider_auth),true)
                 }
             AlertDialog.Builder(context).setTitle(R.string.alert_sync_title)
                 .setMessage(R.string.alert_sync_turned_off)

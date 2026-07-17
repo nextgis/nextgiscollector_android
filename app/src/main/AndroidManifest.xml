@@ -58,10 +58,10 @@
             android:value="false" /> <!-- enable the performance API by setting a sample-rate, adjust in production env -->
         <meta-data
             android:name="io.sentry.traces.sample-rate"
-            android:value="0.00" /> <!-- enable profiling when starting transactions, adjust in production env -->
+            android:value="0.05" /> <!-- enable profiling when starting transactions, adjust in production env -->
         <meta-data
             android:name="io.sentry.traces.profiling.sample-rate"
-            android:value="0.00" />
+            android:value="0.05" />
 
         <activity
             android:name=".activity.ProjectListActivity"
@@ -132,6 +132,13 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove"/>
+
     </application>
 
 </manifest>

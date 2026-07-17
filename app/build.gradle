@@ -45,7 +45,7 @@ android {
         compileSdk 36
         targetSdkVersion 36
 
-        versionCode 108
+        versionCode 111
         versionName "2.0.3"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
