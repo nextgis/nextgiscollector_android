@@ -50,7 +50,7 @@
     <string name="premium_url">https://nextgis.ru/pricing-base</string>
     <string name="details">Подробнее</string>
     <string name="write_us">Хотите организовать свой сбор данных в NextGIS Collector? Подпишитесь на <a href="https://nextgis.ru/pricing-base">Премиум</a></string>
-    <string name="device_id">Ваш ID устройства</string>
+    <string name="device_id">ID устройства</string>
     <string name="sign_out_ngid">Выйти из аккаунта</string>
     <string name="sign_out_ngid_message">Выйти из аккаунта NextGIS? Все текущие данные и карта будут удалены.</string>
     <string name="track_cloud">Отправлять треки в облако</string>
@@ -115,5 +115,6 @@
 
     <string name="project_get_error">Ошибка при загрузке проекта</string>
     <string name="error_on_check">Ошибка при проверки обновления</string>
+    <string name="copied">Текст скопирован в буфер обмена</string>
 
 </resources>

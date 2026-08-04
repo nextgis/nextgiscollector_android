@@ -50,7 +50,7 @@
     <string name="premium_url">https://nextgis.com/pricing-base</string>
     <string name="details">More</string>
     <string name="write_us">Want to start your own data collection project with NextGIS Collector? Get <a href='https://nextgis.com/pricing-base'>Premium</a></string>
-    <string name="device_id">Your device ID</string>
+    <string name="device_id">device ID</string>
     <string name="account_id">Your account ID</string>
     <string name="sign_out_ngid">Sign out from NextGIS</string>
     <string name="sign_out_ngid_message">>Are you sure to sign out from NextGIS? Current map and data will be deleted.</string>
@@ -115,5 +115,6 @@
     <string name="error_header">Error</string>
     <string name="error_on_check">Error on update check</string>
     <string name="project_get_error">Error on project load</string>
+    <string name="copied">Text copied to clipboard</string>
 
 </resources>

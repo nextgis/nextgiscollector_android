@@ -107,7 +107,6 @@
             android:text="@{settings.uuid}"
             android:textColor="#000"
             android:textSize="16sp"
-
             app:layout_constraintBottom_toBottomOf="parent"
             tools:text="" />
     </androidx.constraintlayout.widget.ConstraintLayout>

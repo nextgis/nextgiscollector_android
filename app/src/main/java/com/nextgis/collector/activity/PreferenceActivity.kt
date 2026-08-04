@@ -23,6 +23,8 @@ package com.nextgis.collector.activity
 
 import android.app.Activity
 import android.app.ProgressDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -37,6 +39,7 @@ import android.os.PowerManager
 import android.preference.PreferenceManager
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -59,7 +62,7 @@ import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_SHOW_SYNC
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
-import java.security.Permission
+import java.security.AccessController.getContext
 import java.text.DateFormat
 import java.util.*
 
@@ -150,6 +153,13 @@ class PreferenceActivity : BaseActivity() {
         binding.executePendingBindings()
 
         supportFragmentManager.beginTransaction().replace(R.id.container, PreferencesFragment()).commit()
+
+        binding.uuid.setOnClickListener { _ ->
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("uid", settingsModel.uuid.get())
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, R.string.copied, Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onDestroy() {

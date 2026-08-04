@@ -207,7 +207,7 @@ class ProjectListActivity : BaseActivity(), View.OnClickListener, ProjectAdapter
                             if (remote is RemoteLayerNGW) {
                                 ngwLayer.setIsEditable(remote.editable && remote.syncable)
                                 if (remote.syncable) {
-                                    NGWSettingsFragment.setAccountSyncEnabled(context,  account, app.authority, true)
+                                    NGWSettingsFragment.isAccountAutoSyncEnabled(context,  account, app.authority)
                                     ngwLayer.syncType = Constants.SYNC_ALL
                                 }
                                 layers.add(ngwLayer)

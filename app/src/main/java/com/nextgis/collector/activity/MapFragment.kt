@@ -1465,6 +1465,10 @@ class MapFragment : Fragment(),
         Log.d("WWALK", "isMapReadyToWork = true")
     }
 
+    override fun getSelfContext(): Context? {
+        return activity
+    }
+
     override fun onCameraIdle() {
 //        val zoom = getCurrentZoom()
 //        setMapLibreZoomInEnabled()
