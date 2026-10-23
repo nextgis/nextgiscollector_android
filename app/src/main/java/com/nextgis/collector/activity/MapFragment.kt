@@ -26,6 +26,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.activity.ProjectActivity.OnPermissionCallback
@@ -51,8 +52,6 @@ import com.nextgis.maplib.datasource.GeoPolygon
 import com.nextgis.maplib.map.Layer
 import com.nextgis.maplib.map.MLP.MLGeometryEditClass
 import com.nextgis.maplib.map.MPLFeaturesUtils
-import com.nextgis.maplib.map.MapDrawable.MODE_EDIT_BY_TOUCH
-import com.nextgis.maplib.map.MapDrawable.MODE_NONE
 import com.nextgis.maplib.map.MaplibreMapInteraction
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.map.VectorLayer
@@ -70,8 +69,6 @@ import com.nextgis.maplibui.mapui.RemoteTMSLayerUI
 import com.nextgis.maplibui.overlay.CurrentLocationOverlay
 import com.nextgis.maplibui.overlay.CurrentTrackOverlay
 import com.nextgis.maplibui.overlay.EditLayerOverlay
-import com.nextgis.maplibui.overlay.EditLayerOverlay.MODE_EDIT
-import com.nextgis.maplibui.overlay.EditLayerOverlay.MODE_EDIT_BY_WALK
 import com.nextgis.maplibui.overlay.UndoRedoOverlay
 import com.nextgis.maplibui.service.TrackerService
 import com.nextgis.maplibui.service.WalkEditService
@@ -92,6 +89,7 @@ import org.maplibre.geojson.Point
 import org.maplibre.geojson.Polygon
 import java.io.IOException
 import java.lang.ref.WeakReference
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.atan
 import kotlin.math.ln
@@ -112,7 +110,19 @@ class MapFragment : Fragment(),
     private var _binding: MapFragmentBinding? = null
     private val binding get() = _binding!!
 
+
+//    private var skipStatusInit = false
+
     companion object {
+
+        const val MODE_NORMAL: Int = 0
+        const val MODE_HIGHLIGHT: Int = 1
+        const val MODE_EDIT: Int = 2
+        const val MODE_CHANGE: Int = 3
+        const val MODE_EDIT_BY_WALK: Int = 4
+        const val MODE_EDIT_BY_TOUCH: Int = 5
+
+
         const val NEW_FEATURE = "new_feature"
         const val NEW_FEATURE_BY_WALK = "new_feature_by_walk"
         const val CLICKED_FORM_ID = "clicked_form_id"
@@ -200,15 +210,20 @@ class MapFragment : Fragment(),
         binding.layers.addItemDecoration(dividerItemDecoration)
 
         val projectBorders = (activity as BaseActivity).projectBorders
-        val preferences = (activity as BaseActivity).preferences
+
+        HyperLog.v("AREA", "mpfrag onViewCreated border" + (if (projectBorders == null) " null " else " not Null"))
+
         if (projectBorders != null &&
             !projectBorders.maxX.isNaN() && !projectBorders.maxY.isNaN() &&
             !projectBorders.minX.isNaN() && !projectBorders.minY.isNaN()  ){
             projectBorders?.let {
+                HyperLog.v("AREA", "mpfrag onViewCreated set border posponed ")
+
                 getApp().setPostponedExtent(GeoEnvelope(projectBorders.minX,projectBorders.maxX,
                     projectBorders.minY, projectBorders.maxY))
             }
-        }
+        } else
+            HyperLog.v("AREA", "mpfrag onViewCreated NO border posponed ")
 
         mTolerancePX = resources.displayMetrics.density * ConstantsUI.TOLERANCE_DP
         (activity as AddFeatureActivity).mapView.map!!.maplibreMapView = binding.mapViewMaplibre
@@ -657,6 +672,13 @@ class MapFragment : Fragment(),
         (activity as AddFeatureActivity).mapView.map.hideMarker()
         if ((activity as AddFeatureActivity).returnToList)
             (activity as AddFeatureActivity).showMap(false)
+
+        if (mode == MODE_NORMAL || mode == MODE_HIGHLIGHT)
+            if ((requireActivity() as AddFeatureActivity).getStatusPanelMode()  != 0) {
+                (requireActivity() as AddFeatureActivity).getStatusPanel()?.visibility =
+                    View.VISIBLE
+                (requireActivity() as AddFeatureActivity).setMarginsToPanel()
+            }
     }
 
     // run creating new object
@@ -765,6 +787,9 @@ class MapFragment : Fragment(),
     }
 
     fun setMode(mode: Int){
+        if ((requireActivity() as AddFeatureActivity).getStatusPanelMode() != 3)
+            (requireActivity() as AddFeatureActivity).getStatusPanel()?.visibility = View.INVISIBLE
+
         // set editing mode (may be not from draft )
         if (mode == MODE_EDIT){
             (requireActivity() as AddFeatureActivity).binding.showMap.visibility = View.GONE
@@ -833,9 +858,25 @@ class MapFragment : Fragment(),
             (activity as AddFeatureActivity).mapView.map!!.hideVertex()
             (activity as AddFeatureActivity).mapView.map!!.hideMarker()
         }
+        if (mode == MODE_NORMAL)
+            if ((requireActivity() as AddFeatureActivity).getStatusPanelMode() != 0) {
+                (requireActivity() as AddFeatureActivity).getStatusPanel()?.visibility =
+                    View.VISIBLE
+                (requireActivity() as AddFeatureActivity).setMarginsToPanel()
+            }
     }
 
     private fun startEdit(mode:Int) {
+        if (mode == MODE_NORMAL)
+            if ((requireActivity() as AddFeatureActivity).getStatusPanelMode() != 0) {
+                (requireActivity() as AddFeatureActivity).getStatusPanel()?.visibility =
+                    View.VISIBLE
+                (requireActivity() as AddFeatureActivity).setMarginsToPanel()
+            }
+
+        if ((requireActivity() as AddFeatureActivity).getStatusPanelMode() != 3)
+            (requireActivity() as AddFeatureActivity).getStatusPanel()?.visibility = View.INVISIBLE
+
         (requireActivity() as AddFeatureActivity).binding.showMap.visibility = View.GONE
         binding.editAttributes.visibility = View.GONE
         binding.editGeometry.visibility = View.GONE
@@ -870,6 +911,8 @@ class MapFragment : Fragment(),
     }
 
     private fun saveEdits(): Boolean {
+        (requireActivity() as AddFeatureActivity).initStatusPanel(mode, true)
+
         val feature = overlay.selectedFeature
         var featureId = -1L
         var geometry: GeoGeometry? = null
@@ -932,6 +975,7 @@ class MapFragment : Fragment(),
                 setHighlight()
                 overlay.setHasEdits(false)
 
+                (requireActivity() as AddFeatureActivity).initStatusPanel(mode, true)
                 (activity as AddFeatureActivity).mapView.map!!.cancelFeatureEdit(false)
             }
         }
@@ -952,6 +996,7 @@ class MapFragment : Fragment(),
                 } else {
                     val pointArray :DoubleArray? = data.getDoubleArrayExtra(ConstantsUI.KEY_ADDED_POINT);
                     if (pointArray != null && pointArray.size>=2) {
+
                         val geoPoint = GeoPoint(pointArray[0], pointArray[1])
                         (requireActivity() as BaseActivity).projectBorders?.let {
                             if (!(requireActivity() as BaseActivity).projectBorders!!.contains(geoPoint)) {
@@ -1030,6 +1075,7 @@ class MapFragment : Fragment(),
                     (activity as AddFeatureActivity).mapView.map!!.addPointByWalk(
                         LatLng(location.latitude, location.longitude));
             }
+            (activity as AddFeatureActivity).fillStatusPanel(location, true)
         }
     }
 
@@ -1470,12 +1516,35 @@ class MapFragment : Fragment(),
     }
 
     override fun onCameraIdle() {
-//        val zoom = getCurrentZoom()
+        val zoom = getCurrentZoom()
 //        setMapLibreZoomInEnabled()
 //        setMapLibreZoomOutEnabled()
-//        mScaleRulerText!!.text = rulerText
-//        if (mZoom != null)
-//            mZoom!!.text = zoomText
+        //mScaleRulerText!!.text = rulerText
+        if ((activity as AddFeatureActivity).mZoom != null)
+            (activity as AddFeatureActivity).mZoom!!.text = zoomText
+    }
+
+
+    protected val zoomText: String
+        get() = getZText()  //
+
+    fun getZText(): String {
+
+        val mapLibreMap = (activity as AddFeatureActivity).mapView.map!!.maplibreMap
+        if (mapLibreMap != null) {
+            return "%.1fz".format(Locale.US, mapLibreMap.get()?.zoom)
+        }
+        else
+            return ".z"
+    }
+
+    fun getCurrentZoom(): Int {
+        val mapLibreMap = (activity as AddFeatureActivity).mapView.map!!.maplibreMap.get()
+        if (mapLibreMap != null)
+            return mapLibreMap.zoom.toInt()
+        else
+            return -1
+
     }
 
     fun onSingleTapUpFromMaplibre(screenx: Float, screeny :Float) {
@@ -1790,7 +1859,7 @@ class MapFragment : Fragment(),
 
         if (null != feature && feature.geometry != null) {
             try {
-                outState.putByteArray(BUNDLE_KEY_SAVED_FEATURE, feature.geometry.toBlob())
+                outState.putByteArray(BUNDLE_KEY_SAVED_FEATURE, feature.geometry?.toBlob())
             } catch (e: IOException) {
                 e.printStackTrace()
             }

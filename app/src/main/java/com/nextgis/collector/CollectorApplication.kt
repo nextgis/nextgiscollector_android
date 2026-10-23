@@ -22,13 +22,18 @@
 package com.nextgis.collector
 
 import android.app.Activity
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
 import com.hypertrack.hyperlog.HyperLog
+import com.nextgis.collector.activity.AddFeatureActivity
 import com.nextgis.collector.activity.PreferenceActivity
 import com.nextgis.collector.util.Logger
 import com.nextgis.maplib.api.ILayer
@@ -42,6 +47,7 @@ import com.nextgis.maplib.util.NetworkUtil
 import com.nextgis.maplibui.GISApplication
 import com.nextgis.maplibui.mapui.TrackLayerUI
 import com.nextgis.maplibui.service.TrackerService
+import com.nextgis.maplibui.util.NotificationHelper
 import kotlin.system.exitProcess
 
 class CollectorApplication : GISApplication() {
@@ -56,6 +62,7 @@ class CollectorApplication : GISApplication() {
         const val BASE_URL = "https://collector.nextgis.com/api/project"
         const val TREE = "resource.tree"
         var isSyncProgress = false
+        const val NOTIFICATION_ID: Int = 517
     }
 
     protected inner class SyncReceiver : BroadcastReceiver() {
@@ -217,11 +224,98 @@ class CollectorApplication : GISApplication() {
     }
 
     override fun getBordersWasApply(): Boolean {
+        HyperLog.v("AREA", "get getBordersWasApply = "  +  (if (defBOrdersWasApply) "true" else "false"))
         return defBOrdersWasApply
     }
 
     override fun getSelfContext(): Context? {
         return this
+    }
+
+    override fun sendNotification(
+        context: Context?,
+        notificationType: String?,
+        message: String?
+    ) {
+        val KEY_PREF_SHOW_SYNC = "show_sync"
+        if (!PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean(KEY_PREF_SHOW_SYNC, false))
+            return
+
+        val notificationIntent: Intent = Intent(context, AddFeatureActivity::class.java)
+        notificationIntent.setFlags(
+            Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        )
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationHelper.createBuilder(context, com.nextgis.maplibui.R.string.sync)
+            .setSmallIcon(R.drawable.ic_action_sync)
+            .setWhen(System.currentTimeMillis())
+            .setContentIntent(contentIntent)
+            .setAutoCancel(true)
+            .setOngoing(false)
+
+        var largeIcon =
+            NotificationHelper.getLargeIcon(R.drawable.ic_action_sync, context!!.getResources())
+        when (notificationType) {
+            SyncAdapter.SYNC_START -> {
+                largeIcon = NotificationHelper.getLargeIcon(
+                    com.nextgis.maplibui.R.drawable.ic_next_dark,
+                    context.getResources()
+                )
+                builder.setProgress(0, 0, true)
+                    .setTicker(context.getString(com.nextgis.maplib.R.string.sync_started))
+                    .setContentTitle(context.getString(com.nextgis.maplib.R.string.synchronization))
+                    .setContentText(context.getString(com.nextgis.maplib.R.string.sync_progress))
+            }
+
+            SyncAdapter.SYNC_FINISH -> {
+                largeIcon = NotificationHelper.getLargeIcon(
+                    com.nextgis.maplibui.R.drawable.ic_action_apply_dark,
+                    context.getResources()
+                )
+                builder.setProgress(0, 0, false)
+                    .setTicker(context.getString(com.nextgis.maplib.R.string.sync_finished))
+                    .setContentTitle(context.getString(com.nextgis.maplib.R.string.synchronization))
+                    .setContentText(context.getString(com.nextgis.maplib.R.string.sync_finished))
+            }
+
+            SyncAdapter.SYNC_CANCELED -> {
+                largeIcon = NotificationHelper.getLargeIcon(
+                    com.nextgis.maplibui.R.drawable.ic_action_cancel_dark,
+                    context.getResources()
+                )
+                builder.setProgress(0, 0, false)
+                    .setTicker(context.getString(com.nextgis.maplib.R.string.sync_canceled))
+                    .setContentTitle(context.getString(com.nextgis.maplib.R.string.synchronization))
+                    .setContentText(context.getString(com.nextgis.maplib.R.string.sync_canceled))
+            }
+
+            SyncAdapter.SYNC_CHANGES -> {
+                largeIcon = NotificationHelper.getLargeIcon(
+                    com.nextgis.maplibui.R.drawable.ic_action_warning_dark,
+                    context.getResources()
+                )
+                builder.setProgress(0, 0, false)
+                    .setTicker(context.getString(com.nextgis.maplib.R.string.sync_error))
+                    .setContentTitle(context.getString(com.nextgis.maplib.R.string.synchronization))
+                    .setStyle(
+                        NotificationCompat.BigTextStyle()
+                            .bigText(message)
+                    )
+                    .setContentText(message)
+            }
+        }
+
+        builder.setLargeIcon(largeIcon)
+        val notificationManager =
+            context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(NOTIFICATION_ID, builder.build())
     }
 
 //    override fun checkTracksLayerExist() {

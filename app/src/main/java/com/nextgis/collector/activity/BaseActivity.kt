@@ -25,6 +25,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.Log
 import com.hypertrack.hyperlog.HyperLog
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
@@ -78,6 +79,8 @@ abstract class BaseActivity : NGActivity() {
 
     protected fun loadProject() {
         val json = preferences.getString("project", null)
+        HyperLog.v("AREA", "loadProject   "+  json)
+
         project = Project(JSONObject(json ?: "{}"))
 
         if (project.one != -1.0 ) {
@@ -87,10 +90,16 @@ abstract class BaseActivity : NGActivity() {
             val xMax = Geo.wgs84ToMercatorSphereX(project.three)
             val yMax = Geo.wgs84ToMercatorSphereY(project.four)
             val hasInfinity = xMin.isInfinite() || xMax.isInfinite() || yMin.isInfinite() || yMax.isInfinite()
-            if (hasInfinity)
+            if (hasInfinity) {
+                HyperLog.v("AREA", "BaseActivity projectBorders = hasInfinity")
+                HyperLog.v("AREA", "aread not load")
                 return
-            else
+            }
+            else {
+                HyperLog.v("AREA", "BaseActivity projectBorders = GeoEnvelope ")
                 projectBorders = GeoEnvelope(xMin, xMax, yMin, yMax)
+                HyperLog.v("AREA", "area  load + "+ " " + xMin + " " + xMax+ " " + yMin+ " " + yMax)
+            }
         }
     }
 
@@ -128,7 +137,7 @@ abstract class BaseActivity : NGActivity() {
     }
 
     protected fun change(project: Project? = null) {
-        (applicationContext as IGISApplication).setBordersWasApply(true)
+        (applicationContext as IGISApplication).setBordersWasApply(false)
 
         deleteAll(true)
         val intent = IntentFor<ProjectListActivity>(this)

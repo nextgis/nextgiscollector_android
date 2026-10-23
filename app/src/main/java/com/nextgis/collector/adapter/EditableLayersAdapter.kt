@@ -77,6 +77,9 @@ class EditableLayersAdapter(private var items: List<Resource>,
             if (repo == null){
                 return
             }
+
+            if (layerByPath(repo.id, layers) == null)
+                return
             layType = layerByPath(repo.id, layers)?.geometryType!!
             if (layType == GTPoint ||layType == GTMultiPoint ||  layType == GTPolygon
                 || layType == GTLineString || layType == GTMultiPolygon || layType == GTMultiLineString) {
