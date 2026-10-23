@@ -1,8 +1,11 @@
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+//apply plugin: 'kotlin-android'
 //apply plugin: 'kotlin-android-extensions'
-apply plugin: 'kotlin-kapt'
+//apply plugin: 'kotlin-kapt'
 apply plugin: 'io.sentry.android.gradle'
+apply plugin: 'com.android.legacy-kapt'
+
+
 
 
 android {
@@ -42,14 +45,14 @@ android {
         applicationId "com.nextgis.collector"
         buildConfigField "long", "BUILD_TIME", System.currentTimeMillis() + "L"
         minSdkVersion 26
-        compileSdk 36
-        targetSdkVersion 36
+        compileSdk 37
+        targetSdkVersion 37
 
-        versionCode 118
-        versionName "2.0.3"
+        versionCode 119
+        versionName "2.1.0"
         buildConfigField "String", "SENTRY_DSN", "\"${sentryDsn}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-        setProperty("archivesBaseName", "NGCollector-$versionName")
+        //setProperty("archivesBaseName", "NGCollector-$versionName")
         signingConfig signingConfigs.debug
         externalNativeBuild {
             cmake {
@@ -90,11 +93,15 @@ android {
         }
     }
 
-    dataBinding {
-        enabled = true
-    }
     buildFeatures {
         viewBinding = true
+        dataBinding = true
+        buildConfig = true
+        resValues = true
+    }
+
+    dataBinding {
+        enabled = true
     }
     compileOptions {
         sourceCompatibility "21"
@@ -112,26 +119,21 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.10"
-    implementation "androidx.core:core-ktx:1.17.0"
-
+    implementation "androidx.core:core-ktx:1.19.0"
     implementation 'androidx.lifecycle:lifecycle-runtime:2.9.3'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 
     implementation "androidx.activity:activity-ktx:1.11.0"
 
-    //implementation 'androidx.activity:activity:1.9.0'
-
-    //kapt 'androidx.lifecycle:lifecycle-compiler:2.9.3'
     implementation "androidx.lifecycle:lifecycle-common-java8:2.9.3"
 
-    implementation('com.google.android.material:material:1.13.0') {
+    implementation('com.google.android.material:material:1.14.0') {
         //force = true
     }
     implementation('androidx.cardview:cardview:1.0.0') {
         //force = true
     }
-    implementation('androidx.appcompat:appcompat:1.7.1') {
+    implementation('androidx.appcompat:appcompat:1.8.0') {
         //force = true
     }
     implementation('androidx.legacy:legacy-support-v4:1.0.0') {
@@ -152,8 +154,9 @@ dependencies {
     implementation 'com.github.apl-devs:appintro:v4.2.3'
     //implementation 'com.github.AppIntro:AppIntro:6.3.1'
     implementation 'com.github.barsrb:hyperlog-android:master-SNAPSHOT'
-    implementation 'androidx.work:work-runtime:2.10.4'
-    implementation 'org.maplibre.gl:android-sdk:13.0.2'
-    implementation 'com.squareup.okhttp3:okhttp:5.3.2'
+    implementation 'androidx.work:work-runtime:2.11.2'
+    //implementation 'org.maplibre.gl:android-sdk:13.6.1'
+    implementation 'org.maplibre.gl:android-sdk-vulkan-opengl:13.6.1'
+    implementation 'com.squareup.okhttp3:okhttp:5.5.0'
 
 }
