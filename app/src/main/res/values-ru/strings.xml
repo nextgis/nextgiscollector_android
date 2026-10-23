@@ -116,5 +116,6 @@
     <string name="project_get_error">Ошибка при загрузке проекта</string>
     <string name="error_on_check">Ошибка при проверки обновления</string>
     <string name="copied">Текст скопирован в буфер обмена</string>
+    <string name="show_status_panel">Показать панель статуса</string>
 
 </resources>

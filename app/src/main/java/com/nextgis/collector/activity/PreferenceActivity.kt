@@ -62,7 +62,6 @@ import com.nextgis.maplibui.util.SettingsConstantsUI.KEY_PREF_SHOW_SYNC
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
-import java.security.AccessController.getContext
 import java.text.DateFormat
 import java.util.*
 
@@ -208,7 +207,28 @@ class PreferenceActivity : BaseActivity() {
             if (activity != null)
                 initializeNotification(requireActivity(), notify)
 
+            //addPreferencesFromResource(R.xml.preferences_map);
+            val showInfoPanel = findPreference<Preference?>(
+                SettingsConstantsUI.KEY_PREF_SHOW_STATUS_PANEL) as ListPreference?
+            initializeShowStatusPanel(showInfoPanel!!)
+        }
 
+        fun initializeShowStatusPanel(listPreference: ListPreference) {
+            listPreference.setSummary(listPreference.getEntry())
+
+            listPreference.setOnPreferenceChangeListener(object :
+                Preference.OnPreferenceChangeListener {
+                override fun onPreferenceChange(
+                    preference: Preference,
+                    newValue: Any?
+                ): Boolean {
+                    preference.setSummary(
+                        listPreference.getEntries()[listPreference.findIndexOfValue(
+                            newValue as String?
+                        )]               )
+                    return true
+                }
+            })
         }
 
         fun initializeNotification( activity: Activity,

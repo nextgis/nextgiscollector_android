@@ -19,7 +19,8 @@
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
         android:key="sign_out"
         android:title="@string/sign_out_ngid" />
@@ -28,6 +29,15 @@
         android:defaultValue="false"
         android:key="show_sync"
         android:title="@string/pref_sync_notification"/>
+
+    <ListPreference
+        app:iconSpaceReserved="false"
+        android:defaultValue="1"
+        android:entries="@array/status_panel_mode"
+        android:entryValues="@array/status_panel_mode_val"
+        android:key="show_status_panel"
+        android:singleLineTitle="false"
+        android:title="@string/show_status_panel"/>
 
     <CheckBoxPreference
         android:defaultValue="false"

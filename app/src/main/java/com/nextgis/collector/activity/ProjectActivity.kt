@@ -532,7 +532,7 @@ abstract class ProjectActivity : BaseActivity() {
                 DialogInterface.OnClickListener { dialog, which ->
                     val period = Constants.DEFAULT_SYNC_PERIOD
                     AccountUtil.saveSyncPeriodForAccount(this, account.name, period)
-                    SyncAccountWorker.schedule(this, account.name, period)
+                    SyncAccountWorker.schedulePeriodic(this, account.name, period)
 //                    ContentResolver.setSyncAutomatically(account,getString(R.string.provider_auth),true)
                 }
             AlertDialog.Builder(context).setTitle(R.string.alert_sync_title)

@@ -83,6 +83,13 @@
                     android:visibility="gone"
                     />
 
+                <FrameLayout
+                    android:id="@+id/fl_status_panel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toTopOf="@id/bottom_toolbar"/>
+
                 <com.nextgis.maplibui.fragment.BottomToolbar
                     android:id="@+id/bottom_toolbar"
                     android:layout_width="match_parent"
@@ -91,20 +98,19 @@
                     android:theme="@style/Theme.NextGIS.AppCompat.ActionBar"
                     android:visibility="gone"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:popupTheme="@style/ThemeOverlay.NextGIS.AppCompat.Light"
-                    />
+                    app:popupTheme="@style/ThemeOverlay.NextGIS.AppCompat.Light"/>
 
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/show_map"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:onClick="onClick"
+                    android:src="@drawable/ic_map"
+                    android:tint="@color/color_white"
+                    app:layout_constraintBottom_toTopOf="@id/fl_status_panel"
+                    app:layout_constraintEnd_toEndOf="parent"/>
             </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/show_map"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end|bottom"
-                android:layout_margin="16dp"
-                android:onClick="onClick"
-                android:src="@drawable/ic_map"
-                android:tint="@color/color_white"/>
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 

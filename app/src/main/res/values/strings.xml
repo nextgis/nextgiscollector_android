@@ -116,5 +116,6 @@
     <string name="error_on_check">Error on update check</string>
     <string name="project_get_error">Error on project load</string>
     <string name="copied">Text copied to clipboard</string>
+    <string name="show_status_panel">Show status info panel</string>
 
 </resources>

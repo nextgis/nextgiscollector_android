@@ -25,21 +25,31 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
+import android.location.Location
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.preference.PreferenceManager
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.nextgis.collector.CollectorApplication
 import com.nextgis.collector.R
 import com.nextgis.collector.activity.MapFragment.Companion.CLICKED_FORM_ID
+import com.nextgis.collector.activity.MapFragment.Companion.MODE_NORMAL
 import com.nextgis.collector.activity.MapFragment.Companion.MOVE_MAP
 import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE
 import com.nextgis.collector.activity.MapFragment.Companion.NEW_FEATURE_BY_WALK
@@ -55,10 +65,12 @@ import com.nextgis.maplib.map.MapDrawable.MODE_HIGHLIGHT
 import com.nextgis.maplib.map.MapDrawable.MODE_NONE
 import com.nextgis.maplib.map.NGWVectorLayer
 import com.nextgis.maplib.util.Constants
+import com.nextgis.maplib.util.Constants.DEFAULT_COORDINATES_FRACTION_DIGITS
 import com.nextgis.maplib.util.Constants.MESSAGE_INTENT_RELOAD
 import com.nextgis.maplib.util.FeatureChanges
 import com.nextgis.maplib.util.FileUtil
 import com.nextgis.maplib.util.GeoConstants
+import com.nextgis.maplib.util.LocationUtil
 import com.nextgis.maplibui.api.IVectorLayerUI
 import com.nextgis.maplibui.mapui.NGWVectorLayerUI
 import com.nextgis.maplibui.service.TrackerService
@@ -67,8 +79,11 @@ import com.nextgis.maplibui.util.ConstantsUI
 import com.nextgis.maplibui.util.ConstantsUI.KEY_BATTERY
 import com.nextgis.maplibui.util.ConstantsUI.KEY_TRACK_ACTION
 import com.nextgis.maplibui.util.ConstantsUI.VALUE_TRACK_START
+import com.nextgis.maplibui.util.SettingsConstantsUI
+import org.maplibre.geojson.Point
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.Locale
 
 class AddFeatureActivity :
     ProjectActivity(),
@@ -87,6 +102,20 @@ class AddFeatureActivity :
 
     private var receiverRegistered = false
     private var mMessageReload: MessageReloadLayer? = null
+
+    protected var mStatusPanel: FrameLayout? = null
+    protected var mStatusPanelMode: Int = 0
+
+    protected var mStatusSource: TextView? = null
+    protected var mStatusAccuracy: TextView? = null
+    protected var mStatusSpeed: TextView? = null
+    protected var mStatusAltitude: TextView? = null
+    protected var mStatusLatitude: TextView? = null
+    protected var mStatusLongitude: TextView? = null
+    public var mZoom: TextView? = null
+
+    protected var mCoordinatesFormat: Int = 0
+    protected var mCoordinatesFraction: Int = 0
 
     var startMap = false;
 
@@ -128,6 +157,8 @@ class AddFeatureActivity :
         binding.layers.addItemDecoration(dividerItemDecoration)
         binding.executePendingBindings()
 
+        mStatusPanel = binding.flStatusPanel //  (R.id.fl_status_panel)
+
         mapFragment = MapFragment()
         supportFragmentManager.beginTransaction()
                 .replace(R.id.map_fragment_container,mapFragment!!)
@@ -142,6 +173,33 @@ class AddFeatureActivity :
             showMap(true)
 
         mMessageReload = MessageReloadLayer()
+        (applicationContext as IGISApplication).setBordersWasApply(false)
+
+        val mPreferences: SharedPreferences? = PreferenceManager.getDefaultSharedPreferences(this)
+        val coordinatesFormat =
+            mPreferences!!.getString(
+                SettingsConstantsUI.KEY_PREF_COORD_FORMAT,
+                Location.FORMAT_DEGREES.toString() + "")!!
+        mCoordinatesFormat =
+            if (FileUtil.isIntegerParseInt(coordinatesFormat))
+                coordinatesFormat.toInt()
+            else Location.FORMAT_DEGREES
+        mCoordinatesFraction = mPreferences!!.getInt(
+            SettingsConstantsUI.KEY_PREF_COORD_FRACTION,
+            DEFAULT_COORDINATES_FRACTION_DIGITS        )
+
+        try {
+            val statusPanelModeStr = mPreferences!!.getString(SettingsConstantsUI.KEY_PREF_SHOW_STATUS_PANEL, "1")!!
+            mStatusPanelMode = if (FileUtil.isIntegerParseInt(statusPanelModeStr)) statusPanelModeStr.toInt()
+            else 0
+        } catch (e: ClassCastException) {
+            mStatusPanelMode = 0
+            Log.d(
+                Constants.TAG,
+                "Previous version of KEY_PREF_SHOW_STATUS_PANEL of bool type. Let set it to 0")
+        }
+        initStatusPanel(MODE_NORMAL, getIsMapVisible())
+
     }
 
     override fun onPause() {
@@ -387,6 +445,17 @@ class AddFeatureActivity :
             Log.e("collector", exception.toString())
         }
         mapFragment?.reloadTracksToMap()
+
+        if (mapFragment != null) {
+            reloadStatusPanelMode()
+            initStatusPanel(mapFragment?.mode, getIsMapVisible())
+        }
+        else
+            initStatusPanel(MODE_NORMAL, getIsMapVisible())
+    }
+
+    fun getIsMapVisible() : Boolean{
+        return binding.mapFragmentContainer.visibility == View.VISIBLE
     }
 
     fun getFormId(): Long{
@@ -404,6 +473,7 @@ class AddFeatureActivity :
         Log.d("WWALK", "AddFeatureActivity showMap " + visible)
 
         binding.mapFragmentContainer.visibility = if (visible) View.VISIBLE else View.GONE
+
         binding.showMap.setImageResource(if (visible) R.drawable.ic_add_white_48dp else R.drawable.ic_map )
 
         if (visible){
@@ -419,6 +489,7 @@ class AddFeatureActivity :
             supportActionBar?.setHomeButtonEnabled(false)
         }
 
+        initStatusPanel(mapFragment?.mode, getIsMapVisible())
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -536,5 +607,192 @@ class AddFeatureActivity :
                 sendBroadcast(msg)
             }, 1000)
         }
+    }
+
+    fun reloadStatusPanelMode(){
+        val mPreferences: SharedPreferences? = PreferenceManager.getDefaultSharedPreferences(this)
+        val coordinatesFormat =
+            mPreferences!!.getString(
+                SettingsConstantsUI.KEY_PREF_COORD_FORMAT,
+                Location.FORMAT_DEGREES.toString() + "")!!
+        mCoordinatesFormat =
+            if (FileUtil.isIntegerParseInt(coordinatesFormat))
+                coordinatesFormat.toInt()
+            else Location.FORMAT_DEGREES
+        mCoordinatesFraction = mPreferences!!.getInt(
+            SettingsConstantsUI.KEY_PREF_COORD_FRACTION,
+            DEFAULT_COORDINATES_FRACTION_DIGITS        )
+        try {
+            val statusPanelModeStr = mPreferences!!.getString(SettingsConstantsUI.KEY_PREF_SHOW_STATUS_PANEL, "1")!!
+            mStatusPanelMode = if (FileUtil.isIntegerParseInt(statusPanelModeStr)) statusPanelModeStr.toInt()
+            else 0
+        } catch (e: ClassCastException) {
+            mStatusPanelMode = 0
+            Log.d(Constants.TAG,"Previous version of KEY_PREF_SHOW_STATUS_PANEL of bool type. Let set it to 0")
+        }
+    }
+
+    fun initStatusPanel(mode: Int?, mapVisible : Boolean){
+        if (null != mStatusPanel) {
+            if (mStatusPanelMode != 0 && mapVisible) {
+                mStatusPanel!!.visibility = View.VISIBLE
+                fillStatusPanel((applicationContext as CollectorApplication).gpsEventSource!!.lastKnownLocation, false)
+
+                if (mode != MODE_NORMAL && mode != MapFragment.MODE_HIGHLIGHT && mStatusPanelMode != 3)
+                    mStatusPanel!!.visibility = View.INVISIBLE
+            } else {
+                mStatusPanel!!.removeAllViews()
+            }
+            setMarginsToPanel()
+            updateLastLocation()
+        }
+    }
+
+    fun updateLastLocation(){
+        if ((applicationContext as CollectorApplication).gpsEventSource == null)
+            return
+        val loc = (applicationContext as CollectorApplication).gpsEventSource!!.lastKnownLocation
+        if (loc ==  null)
+            return
+        val isStanding = loc == null || !loc.hasBearing() || !loc.hasSpeed() || loc.getSpeed() == 0f
+
+        mapView.map!!.updateLocation(Point.fromLngLat(loc.longitude, loc.latitude),
+            isStanding,
+            loc.bearing
+        )
+    }
+
+    fun setMarginsToPanel() { // remove - delete after test
+//        val toolbar = binding.bottomToolbar //
+//
+//        toolbar.post {
+//            val isToolbarVisible = toolbar.visibility == View.VISIBLE
+//            val isPanelVisible = mStatusPanel!!.visibility == View.VISIBLE
+//            val toolbarHeight = toolbar.measuredHeight
+//
+//            val lp = mStatusPanel!!.layoutParams as ConstraintLayout.LayoutParams
+//            var bottom = if (isToolbarVisible && isPanelVisible) toolbarHeight
+//            else 0
+//
+//            lp.setMargins(lp.leftMargin, lp.topMargin, lp.rightMargin, bottom)
+//            mStatusPanel!!.layoutParams = lp
+//
+//            bottom = if (isToolbarVisible && !isPanelVisible) toolbarHeight
+//            else 0
+//
+//            mStatusPanel!!.minimumHeight = bottom
+//            mStatusPanel!!.requestLayout()
+//        }
+    }
+
+
+    public fun fillStatusPanel(location: Location?, skipCreateIfNull : Boolean) {
+        if (mStatusPanelMode == 0) return
+
+        var panel = mStatusPanel!!.getChildAt(0)
+        if (panel == null) {
+            if (!skipCreateIfNull) {
+                panel = this.layoutInflater.inflate(
+                    com.nextgis.maplibui.R.layout.status_panel,
+                    mStatusPanel,
+                    false
+                )
+                defineTextViews(panel)
+                fillTextViews(location)
+                mStatusPanel!!.removeAllViews()
+                //panel.background.alpha = 128
+                mStatusPanel!!.addView(panel)
+            }
+        }
+        else
+            fillTextViews(location)
+    }
+
+    private fun defineTextViews(panel: View) {
+        mStatusSource = panel.findViewById(com.nextgis.maplibui.R.id.tv_source)
+        mStatusAccuracy = panel.findViewById(com.nextgis.maplibui.R.id.tv_accuracy)
+        mStatusSpeed = panel.findViewById(com.nextgis.maplibui.R.id.tv_speed)
+        mStatusAltitude = panel.findViewById(com.nextgis.maplibui.R.id.tv_altitude)
+        mStatusLatitude = panel.findViewById(com.nextgis.maplibui.R.id.tv_latitude)
+        mStatusLongitude = panel.findViewById(com.nextgis.maplibui.R.id.tv_longitude)
+        mZoom = panel.findViewById(com.nextgis.maplibui.R.id.tv_zoom)
+        if (mZoom != null) mZoom!!.visibility = View.VISIBLE
+    }
+
+    private fun fillTextViews(location: Location?) {
+        if (null == location) {
+            setDefaultTextViews()
+        } else {
+            if (location.provider == LocationManager.GPS_PROVIDER) {
+                var text = ""
+                val satellites = if (location.extras != null) location.extras!!
+                    .getInt("satellites") else 0
+                if (satellites > 0) text += satellites
+
+                mStatusSource!!.text = text
+                mStatusSource!!.setCompoundDrawablesWithIntrinsicBounds(
+                    ContextCompat.getDrawable(
+                        this,
+                        com.nextgis.maplibui.R.drawable.ic_location
+                    ), null, null, null
+                )
+            } else {
+                mStatusSource!!.text = ""
+                mStatusSource!!.setCompoundDrawablesWithIntrinsicBounds(
+                    ContextCompat.getDrawable(
+                        this,
+                        com.nextgis.maplibui.R.drawable.ic_signal_wifi
+                    ), null, null, null
+                )
+            }
+
+            mStatusAccuracy!!.text = String.format(
+                Locale.getDefault(),
+                "%.1f %s", location.accuracy, getString(com.nextgis.maplib.R.string.unit_meter)             )
+            mStatusAltitude!!.text = String.format(
+                Locale.getDefault(),
+                "%.1f %s", location.altitude, getString(com.nextgis.maplib.R.string.unit_meter)             )
+            mStatusSpeed!!.text = String.format(
+                Locale.getDefault(),
+                "%.1f %s/%s",
+                location.speed * 3600 / 1000,
+                getString(com.nextgis.maplib.R.string.unit_kilometer),
+                getString(com.nextgis.maplib.R.string.unit_hour)             )
+            mStatusLatitude!!.text =
+                formatCoordinate(
+                    location.latitude,
+                    com.nextgis.maplibui.R.string.latitude_caption_short                 )
+            mStatusLongitude!!.text =
+                formatCoordinate(
+                    location.longitude,
+                    com.nextgis.maplibui.R.string.longitude_caption_short                 )
+        }
+    }
+
+    private fun formatCoordinate(value: Double, appendix: Int): String {
+        return LocationUtil.formatCoordinate(
+            value,
+            mCoordinatesFormat,
+            mCoordinatesFraction
+        ) + " " + getString(appendix)
+    }
+
+    private fun setDefaultTextViews() {
+        mStatusSource!!.setCompoundDrawables(null, null, null, null)
+        mStatusSource!!.text = ""
+        mStatusAccuracy!!.text = getString(com.nextgis.maplibui.R.string.n_a)
+        mStatusAltitude!!.text = getString(com.nextgis.maplibui.R.string.n_a)
+        mStatusSpeed!!.text = getString(com.nextgis.maplibui.R.string.n_a)
+        mStatusLatitude!!.text = getString(com.nextgis.maplibui.R.string.n_a)
+        mStatusLongitude!!.text = getString(com.nextgis.maplibui.R.string.n_a)
+    }
+
+    fun getStatusPanelMode(): Int{
+        return mStatusPanelMode;
+    }
+
+
+    fun getStatusPanel(): FrameLayout?{
+        return mStatusPanel;
     }
 }

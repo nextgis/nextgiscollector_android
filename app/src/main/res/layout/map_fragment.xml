@@ -144,19 +144,6 @@
             android:layout_gravity="start"
             android:background="@color/color_white">
 
-<!--            <TextView-->
-<!--                android:id="@+id/title"-->
-<!--                style="@style/Base.TextAppearance.AppCompat.Medium"-->
-<!--                android:layout_width="240dp"-->
-<!--                android:layout_height="?attr/actionBarSize"-->
-<!--                android:background="@color/primary_dark"-->
-<!--                android:gravity="center_vertical"-->
-<!--                android:padding="8dp"-->
-<!--                android:text="@string/track_list"-->
-<!--                android:textColor="@color/color_white"-->
-<!--                app:layout_constraintTop_toTopOf="parent"/>
--->
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/layers"
                 android:layout_width="match_parent"
@@ -170,37 +157,6 @@
 
 
     </androidx.drawerlayout.widget.DrawerLayout>
-<!--    <FrameLayout-->
-<!--        android:id="@+id/overlay"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent"-->
-<!--        android:alpha="0.5"-->
-<!--        android:background="@color/actionBarColor"-->
-<!--        android:clickable="true"-->
-<!--        android:focusable="true"-->
-<!--        android:gravity="center"-->
-<!--        android:orientation="vertical"-->
-<!--        android:visibility="gone">-->
-
-<!--        <ImageView-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent"-->
-<!--            android:padding="64dp"-->
-<!--            android:src="@drawable/ic_cloud_sync"-->
-<!--            app:tint="@color/color_black"-->
-<!--            tools:ignore="ContentDescription"/>-->
-
-<!--        <TextView-->
-<!--            style="@style/TextAppearance.AppCompat.Large"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_gravity="bottom"-->
-<!--            android:layout_marginBottom="64dp"-->
-<!--            android:gravity="center"-->
-<!--            android:padding="64dp"-->
-<!--            android:text="@string/sync_progress"/>-->
-<!--    </FrameLayout>-->
-
 
     <RelativeLayout
         android:id="@+id/stylingProgress"
